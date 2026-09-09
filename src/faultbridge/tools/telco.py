@@ -28,7 +28,10 @@ class TelcoTools:
 
     def lookup_fault(self, call_id: str, cell_id: str) -> tuple[Any, ToolEvent]:
         fault = self.database.find_active_fault(cell_id)
-        output = {"matched": fault is not None, "fault": asdict(fault) if fault else None}
+        output = {
+            "matched": fault is not None,
+            "fault": asdict(fault) if fault else None,
+        }
         return fault, self._audit(call_id, "lookup_fault", {"cell_id": cell_id}, output)
 
     def inspect_account(self, call_id: str, caller_ref: str) -> tuple[Any, ToolEvent]:
@@ -126,4 +129,3 @@ class TelcoTools:
             )
         result = EscalationResult(ticket_id, signal_count, candidate_id)
         return result, events
-

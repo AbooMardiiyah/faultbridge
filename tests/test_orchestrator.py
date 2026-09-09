@@ -98,9 +98,7 @@ class OrchestratorTests(unittest.TestCase):
         second = self.start_unknown(7)
         self.agent.verify_resolution(second, resolved=False)
         signals = [
-            event
-            for event in second.events
-            if event.tool == "record_complaint_signal"
+            event for event in second.events if event.tool == "record_complaint_signal"
         ]
         self.assertEqual(signals[0].output["distinct_callers"], 1)
         self.assertEqual(self.database.list_candidates(), [])
@@ -121,4 +119,3 @@ class OrchestratorTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

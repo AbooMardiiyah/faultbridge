@@ -74,4 +74,3 @@ def call_events(call_id: str) -> list[dict]:
 @app.get("/candidate-incidents")
 def candidate_incidents() -> list[dict]:
     return database.list_candidates()
-

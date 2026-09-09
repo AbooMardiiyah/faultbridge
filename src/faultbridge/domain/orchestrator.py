@@ -96,7 +96,9 @@ class FaultBridgeOrchestrator:
         if resolved:
             session.tier = Tier.COMPLETE
             session.outcome = Outcome.GUIDED_FIX_RESOLVED
-            session.response = "The service test passed, so I am closing this case as resolved."
+            session.response = (
+                "The service test passed, so I am closing this case as resolved."
+            )
             return session
 
         session.tier = Tier.ESCALATION
@@ -122,4 +124,3 @@ class FaultBridgeOrchestrator:
         )
         session.response = f"I opened ticket {escalation.ticket_id}.{candidate_text}"
         return session
-

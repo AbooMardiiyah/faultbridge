@@ -1,2 +1,1 @@
 """Voice-provider adapter boundaries."""
-

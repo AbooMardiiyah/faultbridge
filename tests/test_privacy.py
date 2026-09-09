@@ -5,10 +5,7 @@ from faultbridge.services.privacy import pseudonymize_caller, redact_text
 
 class PrivacyTests(unittest.TestCase):
     def test_redacts_phone_email_and_account(self) -> None:
-        text = (
-            "Call 08031234567, email ada@example.com, "
-            "account number AB12345678"
-        )
+        text = "Call 08031234567, email ada@example.com, account number AB12345678"
         safe = redact_text(text)
         self.assertNotIn("08031234567", safe)
         self.assertNotIn("ada@example.com", safe)
@@ -31,4 +28,3 @@ class PrivacyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

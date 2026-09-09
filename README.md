@@ -52,3 +52,9 @@ All committed subscribers, faults, accounts, and calls are synthetic. The projec
 does not commit caller audio, raw provider outputs, API credentials, phone numbers,
 or unredacted transcripts.
 
+## Sahara adapter
+
+`SaharaStreamingSTT` implements the official PCM16 WebSocket contract and maps all
+four submission language pairs to Sahara language codes. It has not been exercised
+against the live service because no API key is stored in this repository. Live
+validation is the next integration checkpoint.

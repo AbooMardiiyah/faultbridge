@@ -9,6 +9,7 @@ dependencies = [
     "httpx>=0.28,<1",
     "pydantic-settings>=2.7,<3",
     "uvicorn[standard]>=0.34,<1",
+    "websockets>=15,<17",
 ]
 
 [dependency-groups]
@@ -27,4 +28,3 @@ packages = ["src/faultbridge"]
 [tool.ruff]
 line-length = 88
 target-version = "py311"
-

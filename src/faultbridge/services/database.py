@@ -195,7 +195,11 @@ class Database:
                 (idempotency_key,),
             ).fetchone()
             if existing:
-                return {"credit_id": existing["credit_id"], "amount_mb": existing["amount_mb"], "created": False}
+                return {
+                    "credit_id": existing["credit_id"],
+                    "amount_mb": existing["amount_mb"],
+                    "created": False,
+                }
             connection.execute(
                 """
                 INSERT INTO credits
@@ -313,9 +317,7 @@ class Database:
             ).fetchone()
         return int(row["count"])
 
-    def propose_candidate(
-        self, cell_id: str, symptom: str, evidence_count: int
-    ) -> str:
+    def propose_candidate(self, cell_id: str, symptom: str, evidence_count: int) -> str:
         candidate_id = f"candidate_{uuid4().hex[:10]}"
         with self.connect() as connection:
             existing = connection.execute(
@@ -364,4 +366,3 @@ class Database:
                 "SELECT * FROM candidate_incidents ORDER BY created_at DESC"
             ).fetchall()
         return [dict(row) for row in rows]
-

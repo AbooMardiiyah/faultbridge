@@ -24,4 +24,3 @@ def pseudonymize_caller(caller_id: str, secret: str) -> str:
         raise ValueError("pseudonym secret must be at least 16 characters")
     digest = hmac.new(secret.encode(), caller_id.encode(), hashlib.sha256).hexdigest()
     return f"caller_{digest[:16]}"
-

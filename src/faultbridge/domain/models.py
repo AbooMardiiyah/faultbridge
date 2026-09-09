@@ -71,4 +71,3 @@ class EscalationResult:
     ticket_id: str
     signal_count: int
     candidate_incident_id: str | None
-
