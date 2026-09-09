@@ -29,7 +29,7 @@ class OrchestratorIntegrationTests(unittest.TestCase):
                 """
                 TRUNCATE network_incidents, accounts, call_sessions,
                          candidate_incidents, compensation_commands,
-                         callback_commands
+                         callback_commands, troubleshooting_playbooks
                 RESTART IDENTITY CASCADE
                 """
             )
@@ -108,6 +108,29 @@ class OrchestratorIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(account_event.output, {"found": False})
         self.assertEqual(session.next_action, "run_device_diagnostic")
+
+    def test_approved_playbook_grounds_diagnostic(self) -> None:
+        self.database.upsert_playbook(
+            {
+                "issue_type": "data_unavailable",
+                "title": "Refresh network registration",
+                "steps": ["Open network settings and select automatic registration"],
+                "language_pair": None,
+                "operator": None,
+                "device_os": None,
+                "status": "approved",
+                "source_system": "operator-runbook",
+                "source_reference": "RUNBOOK-DATA-4",
+                "verified_at": datetime.now(UTC),
+                "version": 1,
+            }
+        )
+        session = self.start_unknown(2)
+        playbook_event = next(
+            event for event in session.events if event.tool == "lookup_playbook"
+        )
+        self.assertTrue(playbook_event.output["matched"])
+        self.assertIn("automatic registration", session.response)
 
     def test_guided_fix_requires_verification_and_persists_state(self) -> None:
         session = self.start_unknown(1)

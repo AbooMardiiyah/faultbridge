@@ -14,6 +14,12 @@ class PrivacyTests(unittest.TestCase):
         self.assertIn("[EMAIL_REDACTED]", safe)
         self.assertIn("[ACCOUNT_REDACTED]", safe)
 
+    def test_redacts_spaced_numeric_identifier(self) -> None:
+        safe = redact_text("My NIN is 1234 567 8901 and card is 5399-1234-5678-9012")
+        self.assertNotIn("1234 567 8901", safe)
+        self.assertNotIn("5399-1234-5678-9012", safe)
+        self.assertIn("[NUMERIC_IDENTIFIER_REDACTED]", safe)
+
     def test_pseudonym_is_stable_and_hides_caller(self) -> None:
         secret = "a-secret-with-enough-length"
         first = pseudonymize_caller("08031234567", secret)

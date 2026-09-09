@@ -1,0 +1,11 @@
+.env
+.git
+.ruff_cache
+.uv-cache
+.venv
+__pycache__
+*.pyc
+artifacts
+benchmark/audio
+benchmark/raw_outputs
+references

@@ -52,6 +52,21 @@ class TelcoTools:
             call_id, "inspect_account", {"caller_ref": caller_ref}, safe_output
         )
 
+    def lookup_playbook(
+        self,
+        call_id: str,
+        issue_type: str,
+        *,
+        language_pair: str,
+    ) -> tuple[dict[str, Any] | None, ToolEvent]:
+        playbook = self.database.find_playbook(issue_type, language_pair=language_pair)
+        return playbook, self._audit(
+            call_id,
+            "lookup_playbook",
+            {"issue_type": issue_type, "language_pair": language_pair},
+            {"matched": playbook is not None, "playbook": playbook},
+        )
+
     def apply_compensation(
         self, call_id: str, caller_ref: str, incident_id: str, amount_mb: int = 500
     ) -> ToolEvent:

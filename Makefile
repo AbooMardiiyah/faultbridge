@@ -1,4 +1,4 @@
-.PHONY: install db-up db-down migrate test lint format run
+.PHONY: install db-up db-down migrate test lint format run worker purge
 
 install:
 	UV_CACHE_DIR=.uv-cache uv sync
@@ -25,3 +25,9 @@ format:
 
 run:
 	UV_CACHE_DIR=.uv-cache uv run uvicorn faultbridge.api:app --reload --port 8000 --env-file .env
+
+worker:
+	UV_CACHE_DIR=.uv-cache uv run --env-file .env python3 scripts/run_worker.py
+
+purge:
+	UV_CACHE_DIR=.uv-cache uv run --env-file .env python3 scripts/purge_expired_calls.py

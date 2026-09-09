@@ -79,11 +79,24 @@ class FaultBridgeOrchestrator:
             session.call_id, session.caller_ref
         )
         session.events.append(account_event)
+        playbook, playbook_event = self.tools.lookup_playbook(
+            session.call_id,
+            session.symptom,
+            language_pair=session.language_pair,
+        )
+        session.events.append(playbook_event)
+        first_step = (
+            str(playbook["steps_json"][0])
+            if playbook and playbook.get("steps_json")
+            else None
+        )
         if account is None:
             session.next_action = "run_device_diagnostic"
             session.response = (
                 "I could not verify account state, so I will not make an account "
-                "change. Check signal strength and toggle airplane mode, then test again."
+                "change. "
+                + (first_step or "Check signal strength and toggle airplane mode")
+                + ", then test again."
             )
         elif account.barred:
             session.next_action = "restore_account_access"
@@ -93,7 +106,12 @@ class FaultBridgeOrchestrator:
             session.response = "There is no active data balance. Restore a bundle, then tell me whether data works."
         else:
             session.next_action = "toggle_airplane_mode"
-            session.response = "Your account looks active. Turn airplane mode on for ten seconds, turn it off, then test the service."
+            guidance = first_step or (
+                "Turn airplane mode on for ten seconds, turn it off"
+            )
+            session.response = (
+                f"Your account looks active. {guidance}, then test the service."
+            )
         self.tools.database.save_session(session)
         return session
 

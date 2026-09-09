@@ -8,13 +8,15 @@ _ACCOUNT = re.compile(
     r"\b(?:account|acct|subscriber|customer)\s*(?:number|no|id)?\s*[:#-]?\s*[A-Z0-9-]{6,}\b",
     re.IGNORECASE,
 )
+_CARD_OR_GOVERNMENT_ID = re.compile(r"(?<!\w)(?:\d[\s-]?){10,16}(?!\w)", re.IGNORECASE)
 
 
 def redact_text(text: str) -> str:
     """Remove common contact and subscriber identifiers before persistence."""
     redacted = _EMAIL.sub("[EMAIL_REDACTED]", text)
     redacted = _PHONE.sub("[PHONE_REDACTED]", redacted)
-    return _ACCOUNT.sub("[ACCOUNT_REDACTED]", redacted)
+    redacted = _ACCOUNT.sub("[ACCOUNT_REDACTED]", redacted)
+    return _CARD_OR_GOVERNMENT_ID.sub("[NUMERIC_IDENTIFIER_REDACTED]", redacted)
 
 
 def pseudonymize_caller(caller_id: str, secret: str) -> str:

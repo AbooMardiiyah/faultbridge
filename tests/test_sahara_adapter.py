@@ -1,6 +1,6 @@
 import unittest
 
-from faultbridge.adapters.sahara import language_code, pcm16_chunks
+from faultbridge.adapters.sahara import language_code, pcm16_chunks, text_chunks
 
 
 class SaharaAdapterTests(unittest.TestCase):
@@ -30,6 +30,14 @@ class SaharaAdapterTests(unittest.TestCase):
     def test_rejects_unknown_language_pair(self) -> None:
         with self.assertRaises(ValueError):
             language_code("French-English")
+
+    def test_tts_chunks_respect_provider_limits(self) -> None:
+        text = " ".join(
+            ["FaultBridge explains the verified network status clearly."] * 8
+        )
+        chunks = text_chunks(text)
+        self.assertTrue(all(10 <= len(chunk) <= 100 for chunk in chunks))
+        self.assertEqual(" ".join(chunks), text)
 
 
 if __name__ == "__main__":

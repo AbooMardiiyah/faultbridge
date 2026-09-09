@@ -8,17 +8,19 @@ This repository is the Sahara-first entry for the Intron CodeSwitch Africa
 Challenge. A separate AssemblyAI-first repository will be created after this
 submission is complete.
 
-## Current vertical slice
+## Implemented System
 
-The domain engine implements the agentic loop independently of voice-provider keys:
+FaultBridge composes a provider-independent voice pipeline around a constrained
+agentic loop:
 
-1. accept consent and pseudonymize the caller;
-2. persist only a redacted transcript;
-3. look up an exact active fault for the caller's cell;
-4. otherwise inspect account state and recommend a grounded diagnostic;
-5. verify whether the action worked;
-6. escalate unresolved calls with a structured handoff;
-7. cluster distinct complaints and propose a candidate incident at the threshold.
+1. transcribe PCM16 audio through the selected STT adapter;
+2. redact PII before structured LLM analysis;
+3. accept consent and pseudonymize the caller;
+4. look up an exact active fault for the caller's cell;
+5. otherwise inspect account state and retrieve an approved diagnostic playbook;
+6. synthesize the grounded response through the selected TTS adapter;
+7. verify the outcome, escalate unresolved calls, and cluster distinct complaints;
+8. queue callbacks and compensation for idempotent operator delivery.
 
 Run it with Python 3.11+, Docker, and `uv`:
 
@@ -33,6 +35,10 @@ make run
 
 Then open `http://localhost:8000/docs`.
 
+The operations dashboard is at `http://localhost:8000/`. Live provider endpoints
+remain unavailable until their credentials are present; the rest of the service
+starts without them.
+
 ## Repository layout
 
 - `src/faultbridge/domain/`: call state and deterministic orchestration policy.
@@ -42,6 +48,7 @@ Then open `http://localhost:8000/docs`.
 - `migrations/`: versioned PostgreSQL schema.
 - `tests/`: policy, privacy, idempotency, and clustering tests.
 - `docs/`: architecture and responsible-AI documentation.
+- `src/faultbridge/static/`: authenticated operations dashboard.
 
 ## Data status
 
@@ -61,7 +68,10 @@ unknown; the agent does not manufacture a fault, balance, or compensation status
 
 ## Sahara adapter
 
-`SaharaStreamingSTT` implements the official PCM16 WebSocket contract and maps all
-four submission language pairs to Sahara language codes. It has not been exercised
-against the live service because no API key is stored in this repository. Live
-validation is the next integration checkpoint.
+`SaharaStreamingSTT` and `SaharaStreamingTTS` implement the official WebSocket
+contracts. `SaharaConversationCall` starts active outbound conversation workflows.
+They have contract coverage but cannot be exercised against the live service until
+`SAHARA_API_KEY` is configured.
+
+See [Operations](docs/OPERATIONS.md) for provider selection, deployment, action
+delivery, privacy controls, and health checks.
