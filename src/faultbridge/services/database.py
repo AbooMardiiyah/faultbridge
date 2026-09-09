@@ -1,168 +1,227 @@
 from __future__ import annotations
 
-import json
-import sqlite3
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
+from enum import Enum
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 from uuid import uuid4
 
-from faultbridge.domain.models import AccountState, Fault, ToolEvent
+import psycopg
+from psycopg.rows import dict_row
+from psycopg.types.json import Jsonb
+from psycopg_pool import ConnectionPool
+
+from faultbridge.domain.models import (
+    AccountState,
+    CallSession,
+    Fault,
+    Outcome,
+    Tier,
+    ToolEvent,
+)
+
+
+def json_safe(value: Any) -> Any:
+    """Normalize typed tool values before storing them in JSONB."""
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, dict):
+        return {key: json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [json_safe(item) for item in value]
+    return value
+
+
+def apply_migrations(database_url: str, directory: Path) -> list[str]:
+    """Apply each immutable SQL migration once, in filename order."""
+    applied: list[str] = []
+    with psycopg.connect(database_url) as connection:
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS schema_migrations (
+                version TEXT PRIMARY KEY,
+                applied_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        existing = {
+            row[0]
+            for row in connection.execute(
+                "SELECT version FROM schema_migrations"
+            ).fetchall()
+        }
+        for path in sorted(directory.glob("*.sql")):
+            if path.name in existing:
+                continue
+            connection.execute(path.read_text(), prepare=False)
+            connection.execute(
+                "INSERT INTO schema_migrations (version) VALUES (%s)",
+                (path.name,),
+            )
+            applied.append(path.name)
+    return applied
 
 
 class Database:
-    """Small SQLite store for authoritative demo state and auditable actions."""
+    """PostgreSQL store for operational state, commands, and audit events."""
 
-    def __init__(self, path: str | Path = ":memory:") -> None:
-        self.path = str(path)
-        self._memory_connection: sqlite3.Connection | None = None
-        if self.path == ":memory:":
-            self._memory_connection = sqlite3.connect(self.path)
-            self._memory_connection.row_factory = sqlite3.Row
-        else:
-            Path(self.path).parent.mkdir(parents=True, exist_ok=True)
+    def __init__(self, database_url: str, *, min_size: int = 1, max_size: int = 10):
+        self.pool = ConnectionPool(
+            conninfo=database_url,
+            min_size=min_size,
+            max_size=max_size,
+            kwargs={"row_factory": dict_row},
+            open=True,
+        )
 
     @contextmanager
-    def connect(self) -> Iterator[sqlite3.Connection]:
-        if self._memory_connection is not None:
-            yield self._memory_connection
-            self._memory_connection.commit()
-            return
-        connection = sqlite3.connect(self.path)
-        connection.row_factory = sqlite3.Row
-        try:
+    def connect(self) -> Iterator[psycopg.Connection]:
+        with self.pool.connection() as connection:
             yield connection
-            connection.commit()
-        finally:
-            connection.close()
 
-    def initialize(self) -> None:
+    def close(self) -> None:
+        self.pool.close()
+
+    def is_ready(self) -> bool:
         with self.connect() as connection:
-            connection.executescript(
+            return connection.execute("SELECT 1 AS ready").fetchone()["ready"] == 1
+
+    def upsert_incident(self, incident: dict[str, Any]) -> None:
+        with self.connect() as connection:
+            connection.execute(
                 """
-                CREATE TABLE IF NOT EXISTS faults (
-                    incident_id TEXT PRIMARY KEY,
-                    cell_id TEXT NOT NULL,
-                    area TEXT NOT NULL,
-                    fault_type TEXT NOT NULL,
-                    status TEXT NOT NULL,
-                    cause TEXT NOT NULL,
-                    estimated_restoration TEXT NOT NULL
-                );
-                CREATE INDEX IF NOT EXISTS idx_fault_cell_status
-                    ON faults(cell_id, status);
-
-                CREATE TABLE IF NOT EXISTS accounts (
-                    caller_ref TEXT PRIMARY KEY,
-                    data_balance_mb INTEGER NOT NULL,
-                    barred INTEGER NOT NULL,
-                    compensation_eligible INTEGER NOT NULL
-                );
-
-                CREATE TABLE IF NOT EXISTS action_events (
-                    event_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    call_id TEXT NOT NULL,
-                    tool TEXT NOT NULL,
-                    inputs_json TEXT NOT NULL,
-                    output_json TEXT NOT NULL,
-                    created_at TEXT NOT NULL
-                );
-
-                CREATE TABLE IF NOT EXISTS complaint_signals (
-                    signal_id TEXT PRIMARY KEY,
-                    call_id TEXT NOT NULL UNIQUE,
-                    caller_ref TEXT NOT NULL,
-                    cell_id TEXT NOT NULL,
-                    symptom TEXT NOT NULL,
-                    created_at TEXT NOT NULL
-                );
-
-                CREATE TABLE IF NOT EXISTS candidate_incidents (
-                    candidate_id TEXT PRIMARY KEY,
-                    cell_id TEXT NOT NULL,
-                    symptom TEXT NOT NULL,
-                    status TEXT NOT NULL,
-                    evidence_count INTEGER NOT NULL,
-                    created_at TEXT NOT NULL,
-                    UNIQUE(cell_id, symptom)
-                );
-
-                CREATE TABLE IF NOT EXISTS tickets (
-                    ticket_id TEXT PRIMARY KEY,
-                    call_id TEXT NOT NULL UNIQUE,
-                    caller_ref TEXT NOT NULL,
-                    cell_id TEXT NOT NULL,
-                    symptom TEXT NOT NULL,
-                    summary TEXT NOT NULL,
-                    status TEXT NOT NULL,
-                    created_at TEXT NOT NULL
-                );
-
-                CREATE TABLE IF NOT EXISTS credits (
-                    credit_id TEXT PRIMARY KEY,
-                    idempotency_key TEXT NOT NULL UNIQUE,
-                    caller_ref TEXT NOT NULL,
-                    incident_id TEXT NOT NULL,
-                    amount_mb INTEGER NOT NULL,
-                    created_at TEXT NOT NULL
-                );
-
-                CREATE TABLE IF NOT EXISTS callbacks (
-                    callback_id TEXT PRIMARY KEY,
-                    caller_ref TEXT NOT NULL,
-                    trigger TEXT NOT NULL,
-                    incident_id TEXT,
-                    created_at TEXT NOT NULL,
-                    UNIQUE(caller_ref, trigger, incident_id)
-                );
-                """
+                INSERT INTO network_incidents
+                (incident_id, operator, cell_id, area, fault_type, status, cause,
+                 estimated_restoration, source_system, source_reference, verified_at)
+                VALUES
+                (%(incident_id)s, %(operator)s, %(cell_id)s, %(area)s,
+                 %(fault_type)s, %(status)s, %(cause)s,
+                 %(estimated_restoration)s, %(source_system)s,
+                 %(source_reference)s, %(verified_at)s)
+                ON CONFLICT (incident_id) DO UPDATE SET
+                    operator = EXCLUDED.operator,
+                    cell_id = EXCLUDED.cell_id,
+                    area = EXCLUDED.area,
+                    fault_type = EXCLUDED.fault_type,
+                    status = EXCLUDED.status,
+                    cause = EXCLUDED.cause,
+                    estimated_restoration = EXCLUDED.estimated_restoration,
+                    source_system = EXCLUDED.source_system,
+                    source_reference = EXCLUDED.source_reference,
+                    verified_at = EXCLUDED.verified_at,
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                incident,
             )
 
-    def seed_faults(self, faults: list[dict[str, Any]]) -> None:
+    def upsert_account(self, account: dict[str, Any]) -> None:
         with self.connect() as connection:
-            connection.executemany(
+            connection.execute(
                 """
-                INSERT OR REPLACE INTO faults
-                (incident_id, cell_id, area, fault_type, status, cause,
-                 estimated_restoration)
-                VALUES (:incident_id, :cell_id, :area, :fault_type, :status,
-                        :cause, :estimated_restoration)
+                INSERT INTO accounts
+                (caller_ref, data_balance_mb, barred, compensation_eligible,
+                 source_system, source_reference, verified_at)
+                VALUES
+                (%(caller_ref)s, %(data_balance_mb)s, %(barred)s,
+                 %(compensation_eligible)s, %(source_system)s,
+                 %(source_reference)s, %(verified_at)s)
+                ON CONFLICT (caller_ref) DO UPDATE SET
+                    data_balance_mb = EXCLUDED.data_balance_mb,
+                    barred = EXCLUDED.barred,
+                    compensation_eligible = EXCLUDED.compensation_eligible,
+                    source_system = EXCLUDED.source_system,
+                    source_reference = EXCLUDED.source_reference,
+                    verified_at = EXCLUDED.verified_at,
+                    updated_at = CURRENT_TIMESTAMP
                 """,
-                faults,
-            )
-
-    def seed_accounts(self, accounts: list[dict[str, Any]]) -> None:
-        with self.connect() as connection:
-            connection.executemany(
-                """
-                INSERT OR REPLACE INTO accounts
-                (caller_ref, data_balance_mb, barred, compensation_eligible)
-                VALUES (:caller_ref, :data_balance_mb, :barred,
-                        :compensation_eligible)
-                """,
-                accounts,
+                account,
             )
 
     def find_active_fault(self, cell_id: str) -> Fault | None:
         with self.connect() as connection:
             row = connection.execute(
-                "SELECT * FROM faults WHERE cell_id = ? AND status = 'active' LIMIT 1",
+                """
+                SELECT incident_id, operator, cell_id, area, fault_type, status,
+                       cause, estimated_restoration, source_system,
+                       source_reference, verified_at
+                FROM network_incidents
+                WHERE cell_id = %s AND status = 'active'
+                ORDER BY verified_at DESC
+                LIMIT 1
+                """,
                 (cell_id,),
             ).fetchone()
-        return Fault(**dict(row)) if row else None
+        return Fault(**row) if row else None
 
-    def get_account(self, caller_ref: str) -> AccountState:
+    def get_account(self, caller_ref: str) -> AccountState | None:
         with self.connect() as connection:
             row = connection.execute(
-                "SELECT * FROM accounts WHERE caller_ref = ?", (caller_ref,)
+                """
+                SELECT caller_ref, data_balance_mb, barred,
+                       compensation_eligible, source_system, source_reference,
+                       verified_at
+                FROM accounts WHERE caller_ref = %s
+                """,
+                (caller_ref,),
+            ).fetchone()
+        return AccountState(**row) if row else None
+
+    def save_session(self, session: CallSession) -> None:
+        with self.connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO call_sessions
+                (call_id, caller_ref, area, cell_id, language_pair, symptom,
+                 safe_transcript, consent, tier, outcome, next_action, response)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (call_id) DO UPDATE SET
+                    tier = EXCLUDED.tier,
+                    outcome = EXCLUDED.outcome,
+                    next_action = EXCLUDED.next_action,
+                    response = EXCLUDED.response,
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                (
+                    session.call_id,
+                    session.caller_ref,
+                    session.area,
+                    session.cell_id,
+                    session.language_pair,
+                    session.symptom,
+                    session.safe_transcript,
+                    session.consent,
+                    session.tier.value,
+                    session.outcome.value,
+                    session.next_action,
+                    session.response,
+                ),
+            )
+
+    def get_session(self, call_id: str) -> CallSession | None:
+        with self.connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM call_sessions WHERE call_id = %s", (call_id,)
             ).fetchone()
         if row is None:
-            return AccountState(caller_ref, 1024, False, True)
-        values = dict(row)
-        values["barred"] = bool(values["barred"])
-        values["compensation_eligible"] = bool(values["compensation_eligible"])
-        return AccountState(**values)
+            return None
+        return CallSession(
+            call_id=str(row["call_id"]),
+            caller_ref=row["caller_ref"],
+            area=row["area"],
+            cell_id=row["cell_id"],
+            language_pair=row["language_pair"],
+            symptom=row["symptom"],
+            safe_transcript=row["safe_transcript"],
+            consent=row["consent"],
+            tier=Tier(row["tier"]),
+            outcome=Outcome(row["outcome"]),
+            next_action=row["next_action"],
+            response=row["response"],
+        )
 
     def record_event(self, call_id: str, event: ToolEvent) -> None:
         with self.connect() as connection:
@@ -170,82 +229,89 @@ class Database:
                 """
                 INSERT INTO action_events
                 (call_id, tool, inputs_json, output_json, created_at)
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s)
                 """,
                 (
                     call_id,
                     event.tool,
-                    json.dumps(event.inputs, sort_keys=True),
-                    json.dumps(event.output, sort_keys=True),
-                    event.created_at.isoformat(),
+                    Jsonb(json_safe(event.inputs)),
+                    Jsonb(json_safe(event.output)),
+                    event.created_at,
                 ),
             )
 
-    def create_credit(
+    def queue_compensation(
         self,
         caller_ref: str,
         incident_id: str,
         amount_mb: int,
         idempotency_key: str,
     ) -> dict[str, Any]:
-        credit_id = f"credit_{uuid4().hex[:10]}"
+        command_id = str(uuid4())
         with self.connect() as connection:
-            existing = connection.execute(
-                "SELECT credit_id, amount_mb FROM credits WHERE idempotency_key = ?",
-                (idempotency_key,),
-            ).fetchone()
-            if existing:
-                return {
-                    "credit_id": existing["credit_id"],
-                    "amount_mb": existing["amount_mb"],
-                    "created": False,
-                }
-            connection.execute(
+            created = connection.execute(
                 """
-                INSERT INTO credits
-                (credit_id, idempotency_key, caller_ref, incident_id, amount_mb, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO compensation_commands
+                (command_id, idempotency_key, caller_ref, incident_id,
+                 amount_mb, status, created_at)
+                VALUES (%s, %s, %s, %s, %s, 'queued', %s)
+                ON CONFLICT (idempotency_key) DO NOTHING
+                RETURNING command_id, amount_mb, status
                 """,
                 (
-                    credit_id,
+                    command_id,
                     idempotency_key,
                     caller_ref,
                     incident_id,
                     amount_mb,
-                    datetime.now(UTC).isoformat(),
+                    datetime.now(UTC),
                 ),
+            ).fetchone()
+            row = (
+                created
+                or connection.execute(
+                    """
+                SELECT command_id, amount_mb, status
+                FROM compensation_commands WHERE idempotency_key = %s
+                """,
+                    (idempotency_key,),
+                ).fetchone()
             )
-        return {"credit_id": credit_id, "amount_mb": amount_mb, "created": True}
+        return {**row, "command_id": str(row["command_id"]), "created": bool(created)}
 
     def schedule_callback(
         self, caller_ref: str, trigger: str, incident_id: str | None
     ) -> dict[str, Any]:
-        callback_id = f"callback_{uuid4().hex[:10]}"
+        command_id = str(uuid4())
         with self.connect() as connection:
-            existing = connection.execute(
+            created = connection.execute(
                 """
-                SELECT callback_id FROM callbacks
-                WHERE caller_ref = ? AND trigger = ? AND incident_id IS ?
-                """,
-                (caller_ref, trigger, incident_id),
-            ).fetchone()
-            if existing:
-                return {"callback_id": existing["callback_id"], "created": False}
-            connection.execute(
-                """
-                INSERT INTO callbacks
-                (callback_id, caller_ref, trigger, incident_id, created_at)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO callback_commands
+                (command_id, caller_ref, trigger, incident_id, status, created_at)
+                VALUES (%s, %s, %s, %s, 'queued', %s)
+                ON CONFLICT (caller_ref, trigger, incident_id) DO NOTHING
+                RETURNING command_id, status
                 """,
                 (
-                    callback_id,
+                    command_id,
                     caller_ref,
                     trigger,
                     incident_id,
-                    datetime.now(UTC).isoformat(),
+                    datetime.now(UTC),
                 ),
+            ).fetchone()
+            row = (
+                created
+                or connection.execute(
+                    """
+                SELECT command_id, status FROM callback_commands
+                WHERE caller_ref = %s AND trigger = %s
+                  AND incident_id IS NOT DISTINCT FROM %s
+                """,
+                    (caller_ref, trigger, incident_id),
+                ).fetchone()
             )
-        return {"callback_id": callback_id, "created": True}
+        return {**row, "command_id": str(row["command_id"]), "created": bool(created)}
 
     def create_ticket(
         self,
@@ -255,19 +321,16 @@ class Database:
         symptom: str,
         summary: str,
     ) -> str:
-        ticket_id = f"ticket_{uuid4().hex[:10]}"
+        ticket_id = str(uuid4())
         with self.connect() as connection:
-            existing = connection.execute(
-                "SELECT ticket_id FROM tickets WHERE call_id = ?", (call_id,)
-            ).fetchone()
-            if existing:
-                return str(existing["ticket_id"])
-            connection.execute(
+            created = connection.execute(
                 """
                 INSERT INTO tickets
                 (ticket_id, call_id, caller_ref, cell_id, symptom, summary,
                  status, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, 'open', ?)
+                VALUES (%s, %s, %s, %s, %s, %s, 'open', %s)
+                ON CONFLICT (call_id) DO NOTHING
+                RETURNING ticket_id
                 """,
                 (
                     ticket_id,
@@ -276,10 +339,16 @@ class Database:
                     cell_id,
                     symptom,
                     summary,
-                    datetime.now(UTC).isoformat(),
+                    datetime.now(UTC),
                 ),
+            ).fetchone()
+            row = (
+                created
+                or connection.execute(
+                    "SELECT ticket_id FROM tickets WHERE call_id = %s", (call_id,)
+                ).fetchone()
             )
-        return ticket_id
+        return str(row["ticket_id"])
 
     def record_signal(
         self,
@@ -293,76 +362,57 @@ class Database:
         with self.connect() as connection:
             connection.execute(
                 """
-                INSERT OR IGNORE INTO complaint_signals
+                INSERT INTO complaint_signals
                 (signal_id, call_id, caller_ref, cell_id, symptom, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (call_id) DO NOTHING
                 """,
-                (
-                    f"signal_{uuid4().hex[:10]}",
-                    call_id,
-                    caller_ref,
-                    cell_id,
-                    symptom,
-                    now.isoformat(),
-                ),
+                (str(uuid4()), call_id, caller_ref, cell_id, symptom, now),
             )
-            cutoff = (now - timedelta(minutes=window_minutes)).isoformat()
+            cutoff = now - timedelta(minutes=window_minutes)
             row = connection.execute(
                 """
                 SELECT COUNT(DISTINCT caller_ref) AS count
                 FROM complaint_signals
-                WHERE cell_id = ? AND symptom = ? AND created_at >= ?
+                WHERE cell_id = %s AND symptom = %s AND created_at >= %s
                 """,
                 (cell_id, symptom, cutoff),
             ).fetchone()
         return int(row["count"])
 
     def propose_candidate(self, cell_id: str, symptom: str, evidence_count: int) -> str:
-        candidate_id = f"candidate_{uuid4().hex[:10]}"
         with self.connect() as connection:
-            existing = connection.execute(
-                """
-                SELECT candidate_id FROM candidate_incidents
-                WHERE cell_id = ? AND symptom = ?
-                """,
-                (cell_id, symptom),
-            ).fetchone()
-            if existing:
-                connection.execute(
-                    """
-                    UPDATE candidate_incidents SET evidence_count = ?
-                    WHERE candidate_id = ?
-                    """,
-                    (evidence_count, existing["candidate_id"]),
-                )
-                return str(existing["candidate_id"])
-            connection.execute(
+            row = connection.execute(
                 """
                 INSERT INTO candidate_incidents
                 (candidate_id, cell_id, symptom, status, evidence_count, created_at)
-                VALUES (?, ?, ?, 'unconfirmed', ?, ?)
+                VALUES (%s, %s, %s, 'unconfirmed', %s, %s)
+                ON CONFLICT (cell_id, symptom) DO UPDATE SET
+                    evidence_count = GREATEST(
+                        candidate_incidents.evidence_count,
+                        EXCLUDED.evidence_count
+                    ),
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING candidate_id
                 """,
-                (
-                    candidate_id,
-                    cell_id,
-                    symptom,
-                    evidence_count,
-                    datetime.now(UTC).isoformat(),
-                ),
-            )
-        return candidate_id
+                (str(uuid4()), cell_id, symptom, evidence_count, datetime.now(UTC)),
+            ).fetchone()
+        return str(row["candidate_id"])
 
     def list_events(self, call_id: str) -> list[dict[str, Any]]:
         with self.connect() as connection:
             rows = connection.execute(
-                "SELECT * FROM action_events WHERE call_id = ? ORDER BY event_id",
+                """
+                SELECT event_id, call_id, tool, inputs_json, output_json, created_at
+                FROM action_events WHERE call_id = %s ORDER BY event_id
+                """,
                 (call_id,),
             ).fetchall()
-        return [dict(row) for row in rows]
+        return [{**row, "call_id": str(row["call_id"])} for row in rows]
 
     def list_candidates(self) -> list[dict[str, Any]]:
         with self.connect() as connection:
             rows = connection.execute(
                 "SELECT * FROM candidate_incidents ORDER BY created_at DESC"
             ).fetchall()
-        return [dict(row) for row in rows]
+        return [{**row, "candidate_id": str(row["candidate_id"])} for row in rows]

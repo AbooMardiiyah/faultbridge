@@ -13,8 +13,9 @@ before using real caller data.
 Network faults are confirmed only from authoritative structured records. Complaint
 clusters create **unconfirmed candidate incidents** for NOC review; they are never
 presented as verified outages. Distinct-caller thresholds reduce duplicate and
-coordinated reports. Compensation is simulated in the prototype, policy-gated,
-idempotent, and labelled in the interface.
+coordinated reports. Compensation requests are policy-gated and written as durable,
+idempotent commands; the agent reports them as queued until a billing connector
+confirms completion.
 
 Benchmark results are reported separately by language pair, model, natural or
 synthetic source, and noise condition. Synthetic speech is disclosed. Known

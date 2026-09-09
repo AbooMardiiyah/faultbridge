@@ -32,10 +32,12 @@ class FaultBridgeOrchestrator:
             safe_transcript=redact_text(transcript),
             consent=consent,
         )
+        self.tools.database.save_session(session)
         if not consent:
             session.tier = Tier.COMPLETE
             session.outcome = Outcome.CONSENT_DECLINED
             session.response = "Recording and automated processing are off. I can transfer you to an agent."
+            self.tools.database.save_session(session)
             return session
 
         fault, fault_event = self.tools.lookup_fault(session.call_id, session.cell_id)
@@ -46,7 +48,7 @@ class FaultBridgeOrchestrator:
                 session.call_id, session.caller_ref
             )
             session.events.append(account_event)
-            if account.compensation_eligible:
+            if account and account.compensation_eligible:
                 session.events.append(
                     self.tools.apply_compensation(
                         session.call_id, session.caller_ref, fault.incident_id
@@ -59,11 +61,17 @@ class FaultBridgeOrchestrator:
             )
             session.tier = Tier.COMPLETE
             session.outcome = Outcome.KNOWN_FAULT_HANDLED
+            restoration = (
+                fault.estimated_restoration.isoformat()
+                if fault.estimated_restoration
+                else "being assessed"
+            )
             session.response = (
                 f"I found an active {fault.fault_type} affecting {fault.area}. "
-                f"The current restoration estimate is {fault.estimated_restoration}. "
+                f"The current restoration estimate is {restoration}. "
                 "I have scheduled an update when service is restored."
             )
+            self.tools.database.save_session(session)
             return session
 
         session.tier = Tier.DIAGNOSIS
@@ -71,7 +79,13 @@ class FaultBridgeOrchestrator:
             session.call_id, session.caller_ref
         )
         session.events.append(account_event)
-        if account.barred:
+        if account is None:
+            session.next_action = "run_device_diagnostic"
+            session.response = (
+                "I could not verify account state, so I will not make an account "
+                "change. Check signal strength and toggle airplane mode, then test again."
+            )
+        elif account.barred:
             session.next_action = "restore_account_access"
             session.response = "The line is barred. I can guide you through restoring access, then we will test again."
         elif account.data_balance_mb <= 0:
@@ -80,6 +94,7 @@ class FaultBridgeOrchestrator:
         else:
             session.next_action = "toggle_airplane_mode"
             session.response = "Your account looks active. Turn airplane mode on for ten seconds, turn it off, then test the service."
+        self.tools.database.save_session(session)
         return session
 
     def verify_resolution(self, session: CallSession, *, resolved: bool) -> CallSession:
@@ -99,6 +114,7 @@ class FaultBridgeOrchestrator:
             session.response = (
                 "The service test passed, so I am closing this case as resolved."
             )
+            self.tools.database.save_session(session)
             return session
 
         session.tier = Tier.ESCALATION
@@ -123,4 +139,5 @@ class FaultBridgeOrchestrator:
             else " The complaint was added to the local fault signal."
         )
         session.response = f"I opened ticket {escalation.ticket_id}.{candidate_text}"
+        self.tools.database.save_session(session)
         return session

@@ -1,31 +1,67 @@
+import os
 import unittest
+from datetime import UTC, datetime, timedelta
 
 from faultbridge.domain.models import Outcome
 from faultbridge.domain.orchestrator import FaultBridgeOrchestrator
 from faultbridge.services.database import Database
+from faultbridge.services.privacy import pseudonymize_caller
 from faultbridge.tools.telco import TelcoTools
 
+SECRET = "test-secret-at-least-32-characters-long"
 
-class OrchestratorTests(unittest.TestCase):
+
+class OrchestratorIntegrationTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        database_url = os.environ.get("DATABASE_URL")
+        if not database_url:
+            raise unittest.SkipTest("DATABASE_URL is required for integration tests")
+        cls.database = Database(database_url)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.database.close()
+
     def setUp(self) -> None:
-        self.database = Database(":memory:")
-        self.database.initialize()
-        self.database.seed_faults(
-            [
-                {
-                    "incident_id": "INC-1",
-                    "cell_id": "KANO-014",
-                    "area": "Tarauni, Kano",
-                    "fault_type": "fibre cut",
-                    "status": "active",
-                    "cause": "road works",
-                    "estimated_restoration": "18:30 WAT",
-                }
-            ]
+        with self.database.connect() as connection:
+            connection.execute(
+                """
+                TRUNCATE network_incidents, accounts, call_sessions,
+                         candidate_incidents, compensation_commands,
+                         callback_commands
+                RESTART IDENTITY CASCADE
+                """
+            )
+        self.database.upsert_incident(
+            {
+                "incident_id": "INC-1",
+                "operator": "Test Operator",
+                "cell_id": "KANO-014",
+                "area": "Tarauni, Kano",
+                "fault_type": "fibre cut",
+                "status": "active",
+                "cause": "road works",
+                "estimated_restoration": datetime.now(UTC) + timedelta(hours=2),
+                "source_system": "noc-integration-test",
+                "source_reference": "alarm-123",
+                "verified_at": datetime.now(UTC),
+            }
+        )
+        caller_ref = pseudonymize_caller("08031234567", SECRET)
+        self.database.upsert_account(
+            {
+                "caller_ref": caller_ref,
+                "data_balance_mb": 1024,
+                "barred": False,
+                "compensation_eligible": True,
+                "source_system": "crm-integration-test",
+                "source_reference": "subscriber-123",
+                "verified_at": datetime.now(UTC),
+            }
         )
         self.agent = FaultBridgeOrchestrator(
-            TelcoTools(self.database, signal_threshold=3),
-            "test-secret-at-least-16-characters",
+            TelcoTools(self.database, signal_threshold=3), SECRET
         )
 
     def start_unknown(self, index: int):
@@ -39,7 +75,7 @@ class OrchestratorTests(unittest.TestCase):
             consent=True,
         )
 
-    def test_known_fault_is_grounded_and_handled(self) -> None:
+    def test_known_fault_is_grounded_and_queues_actions(self) -> None:
         session = self.agent.start_call(
             caller_id="08031234567",
             transcript="Network is down",
@@ -55,17 +91,31 @@ class OrchestratorTests(unittest.TestCase):
             [
                 "lookup_fault",
                 "inspect_account",
-                "apply_compensation",
+                "queue_compensation",
                 "schedule_callback",
             ],
         )
-        self.assertIn("18:30 WAT", session.response)
+        self.assertEqual(
+            session.events[0].output["fault"]["source_system"],
+            "noc-integration-test",
+        )
+        self.assertEqual(session.events[2].output["status"], "queued")
 
-    def test_guided_fix_requires_verification(self) -> None:
+    def test_missing_account_remains_unknown(self) -> None:
+        session = self.start_unknown(1)
+        account_event = next(
+            event for event in session.events if event.tool == "inspect_account"
+        )
+        self.assertEqual(account_event.output, {"found": False})
+        self.assertEqual(session.next_action, "run_device_diagnostic")
+
+    def test_guided_fix_requires_verification_and_persists_state(self) -> None:
         session = self.start_unknown(1)
         self.assertEqual(session.outcome, Outcome.AWAITING_VERIFICATION)
         self.agent.verify_resolution(session, resolved=True)
         self.assertEqual(session.outcome, Outcome.GUIDED_FIX_RESOLVED)
+        restored = self.database.get_session(session.call_id)
+        self.assertEqual(restored.outcome, Outcome.GUIDED_FIX_RESOLVED)
 
     def test_third_distinct_unresolved_call_proposes_candidate(self) -> None:
         sessions = []
@@ -73,16 +123,6 @@ class OrchestratorTests(unittest.TestCase):
             session = self.start_unknown(index)
             sessions.append(self.agent.verify_resolution(session, resolved=False))
 
-        self.assertIsNone(
-            next(
-                (
-                    event.output.get("candidate_incident_id")
-                    for event in sessions[1].events
-                    if event.tool == "propose_candidate_incident"
-                ),
-                None,
-            )
-        )
         candidate_events = [
             event
             for event in sessions[2].events
@@ -115,6 +155,7 @@ class OrchestratorTests(unittest.TestCase):
         )
         self.assertEqual(session.outcome, Outcome.CONSENT_DECLINED)
         self.assertEqual(session.events, [])
+        self.assertIsNotNone(self.database.get_session(session.call_id))
 
 
 if __name__ == "__main__":

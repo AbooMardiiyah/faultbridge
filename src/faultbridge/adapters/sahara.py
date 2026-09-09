@@ -8,7 +8,6 @@ from urllib.parse import urlencode
 
 import websockets
 
-
 LANGUAGE_CODES = {
     "english": "en",
     "hausa-english": "ha",

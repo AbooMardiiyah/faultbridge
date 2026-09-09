@@ -36,11 +36,18 @@ class TelcoTools:
 
     def inspect_account(self, call_id: str, caller_ref: str) -> tuple[Any, ToolEvent]:
         account = self.database.get_account(caller_ref)
-        safe_output = {
-            "data_balance_mb": account.data_balance_mb,
-            "barred": account.barred,
-            "compensation_eligible": account.compensation_eligible,
-        }
+        safe_output = (
+            {
+                "found": True,
+                "data_balance_mb": account.data_balance_mb,
+                "barred": account.barred,
+                "compensation_eligible": account.compensation_eligible,
+                "source_system": account.source_system,
+                "verified_at": account.verified_at.isoformat(),
+            }
+            if account
+            else {"found": False}
+        )
         return account, self._audit(
             call_id, "inspect_account", {"caller_ref": caller_ref}, safe_output
         )
@@ -48,16 +55,15 @@ class TelcoTools:
     def apply_compensation(
         self, call_id: str, caller_ref: str, incident_id: str, amount_mb: int = 500
     ) -> ToolEvent:
-        output = self.database.create_credit(
+        output = self.database.queue_compensation(
             caller_ref,
             incident_id,
             amount_mb,
             idempotency_key=f"{caller_ref}:{incident_id}:data-credit",
         )
-        output["simulated"] = True
         return self._audit(
             call_id,
-            "apply_compensation",
+            "queue_compensation",
             {"caller_ref": caller_ref, "incident_id": incident_id},
             output,
         )

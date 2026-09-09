@@ -4,8 +4,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
-*.db
+.uv-cache/
 artifacts/
 benchmark/audio/
 benchmark/raw_outputs/
-

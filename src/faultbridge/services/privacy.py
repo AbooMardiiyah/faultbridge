@@ -2,7 +2,6 @@ import hashlib
 import hmac
 import re
 
-
 _EMAIL = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
 _PHONE = re.compile(r"(?<!\w)(?:\+?234|0)[\s-]?[789]\d(?:[\s-]?\d){8}(?!\w)")
 _ACCOUNT = re.compile(

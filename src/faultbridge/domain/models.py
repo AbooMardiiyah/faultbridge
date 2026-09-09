@@ -25,12 +25,16 @@ class Outcome(StrEnum):
 @dataclass(frozen=True, slots=True)
 class Fault:
     incident_id: str
+    operator: str
     cell_id: str
     area: str
     fault_type: str
     status: str
-    cause: str
-    estimated_restoration: str
+    cause: str | None
+    estimated_restoration: datetime | None
+    source_system: str
+    source_reference: str
+    verified_at: datetime
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,6 +43,9 @@ class AccountState:
     data_balance_mb: int
     barred: bool
     compensation_eligible: bool
+    source_system: str
+    source_reference: str
+    verified_at: datetime
 
 
 @dataclass(slots=True)
