@@ -1,0 +1,12 @@
+[
+  {
+    "incident_id": "INC-KANO-001",
+    "cell_id": "KANO-014",
+    "area": "Tarauni, Kano",
+    "fault_type": "fibre cut",
+    "status": "active",
+    "cause": "third-party road construction",
+    "estimated_restoration": "18:30 WAT"
+  }
+]
+
