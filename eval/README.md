@@ -1,0 +1,106 @@
+# FaultBridge Evaluation Harness
+
+The harness implements the evaluation protocol in
+[`docs/VOICE_BENCHMARK_RESEARCH.md`](../docs/VOICE_BENCHMARK_RESEARCH.md). It keeps
+model inference, transcript scoring, and executable agent grading separate so a
+provider error cannot be hidden by downstream aggregation.
+
+## Manifest
+
+The frozen UTF-8 CSV manifest requires these columns:
+
+```text
+sample_id,audio_path,audio_sha256,language_pair,reference,reference_tagged,duration_seconds,cmi,switch_points,source_group,source_kind,condition
+```
+
+Audio paths are relative to the manifest. Every WAV must be mono PCM16, and its
+SHA-256 must match the manifest. `reference_tagged` uses AfriSwitch's
+`[[EN]]...[[/EN]]` English-span notation.
+
+## Run Providers
+
+Accept AfriSwitch's access conditions on Hugging Face, set `HF_TOKEN`, and install
+the benchmark tools in their own virtual environment:
+
+```bash
+make benchmark-install
+make benchmark-prepare
+```
+
+Preparation streams dataset metadata, deterministically chooses 100 samples from
+each language, materializes only the frozen panel as 16 kHz PCM16 WAV, and writes
+content hashes to `benchmark/manifest.csv`. The selection balances CMI, switch
+count, and duration strata. Do not tune against this test-only panel.
+
+`make benchmark-robustness` creates a second manifest with the clean clips plus
+fixed PSTN μ-law, 10 dB noise, and 3% 20 ms frame-erasure variants. The command can
+also generate 5/20 dB noise, 1/5% random loss, burst loss, and mild reverberation.
+The transforms preserve duration, use stable per-clip seeds, and never modify the
+frozen originals.
+
+The application environment is enough for Sahara and AssemblyAI. Use the separate
+benchmark Python for Faster-Whisper. Its weights download only when that provider
+run starts. Results resume by successful sample ID; `--retry-failures` records a
+new attempt without deleting the original evidence.
+
+```bash
+PYTHONPATH=src:eval uv run --env-file .env -m faultbridge_eval.runner \
+  --manifest benchmark/manifest.csv --provider sahara
+PYTHONPATH=src:eval uv run --env-file .env -m faultbridge_eval.runner \
+  --manifest benchmark/manifest.csv --provider assemblyai
+PYTHONPATH=src:eval .venv-benchmark/bin/python -m faultbridge_eval.runner \
+  --manifest benchmark/manifest.csv --provider faster-whisper
+```
+
+Both remote providers receive audio at real-time pace unless
+`--no-realtime-pacing` is supplied. AssemblyAI uses `whisper-rt` because
+Universal-3 Pro Streaming does not currently cover the four Nigerian languages.
+Requests use real-time pacing for a fair streaming latency measurement.
+
+## Score
+
+```bash
+PYTHONPATH=src:eval uv run -m faultbridge_eval.scorer \
+  --manifest benchmark/manifest.csv eval/results/raw/*.jsonl
+```
+
+The scorer reports raw and normalized WER/CER, separate substitution/deletion/
+insertion rates, embedded-English and matrix-language error, switch-context recall,
+failures, latency percentiles, and source-clustered 95% bootstrap intervals. It
+also produces paired model-difference intervals and equal-language macro results.
+Failed transcriptions remain in the denominator as empty hypotheses. Incomplete
+provider panels are rejected unless `--allow-incomplete` is explicitly used for
+development.
+
+## Executable agent evaluation
+
+Write the 48 reviewed telco scenarios against `scenario.schema.json`. Set a
+dedicated `EVALUATION_DATABASE_URL` whose database name contains `eval` or `test`;
+the runner refuses the runtime database and clears this evaluation database before
+each run. Then run the gold transcript and provider hypotheses three times through
+the real configured LLM, orchestrator, PostgreSQL tools, and state assertions:
+
+```bash
+PYTHONPATH=src:eval uv run --env-file .env -m faultbridge_eval.agent_runner \
+  --scenarios benchmark/telco_scenarios.json
+make benchmark-agent-score
+```
+
+`grade_agent_trace` checks analysis, exact tool order and arguments, response
+claims, PII absence, and final database effects. The agent scorer reports pass@1,
+pass@k, pass^k, assertion pass rate, and each ASR provider's propagation loss from
+the gold-transcript result.
+
+Put zero-tolerance privacy and groundedness checks under each scenario's
+`expected.critical` object. After both scorecards exist, `make benchmark-route`
+creates a draft whole-utterance routing policy. A non-Sahara route is recommended
+only when its paired WER interval wins, its provider failure and p95 latency remain
+inside budget, and all executable critical gates pass. Missing evidence keeps the
+Sahara default.
+
+For the dedicated redaction set, keep labelled inputs in the ignored
+`benchmark/pii_cases.jsonl` file. Each JSONL row contains `text` and
+`expected_spans`, where every span has `type`, `start`, and exclusive `end`.
+`make benchmark-privacy-score` reports exact typed-span precision/recall/F1,
+per-type scores, exact-case failures, and the hard leakage count without copying
+PII text into the result artifact.

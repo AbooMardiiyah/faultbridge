@@ -47,6 +47,7 @@ starts without them.
 - `src/faultbridge/adapters/`: Sahara and future voice-provider boundaries.
 - `migrations/`: versioned PostgreSQL schema.
 - `tests/`: policy, privacy, idempotency, and clustering tests.
+- `eval/`: frozen-manifest ASR scoring and executable agent-state evaluation.
 - `docs/`: architecture and responsible-AI documentation.
 - `src/faultbridge/static/`: authenticated operations dashboard.
 
@@ -74,4 +75,7 @@ They have contract coverage but cannot be exercised against the live service unt
 `SAHARA_API_KEY` is configured.
 
 See [Operations](docs/OPERATIONS.md) for provider selection, deployment, action
-delivery, privacy controls, and health checks.
+delivery, privacy controls, and health checks. The
+[voice benchmark research](docs/VOICE_BENCHMARK_RESEARCH.md) defines the
+industry-grounded evaluation protocol; [`eval/README.md`](eval/README.md) contains
+the reproducible commands.

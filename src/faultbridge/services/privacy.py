@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import re
+from dataclasses import dataclass
 
 _EMAIL = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
 _PHONE = re.compile(r"(?<!\w)(?:\+?234|0)[\s-]?[789]\d(?:[\s-]?\d){8}(?!\w)")
@@ -10,13 +11,42 @@ _ACCOUNT = re.compile(
 )
 _CARD_OR_GOVERNMENT_ID = re.compile(r"(?<!\w)(?:\d[\s-]?){10,16}(?!\w)", re.IGNORECASE)
 
+_PII_PATTERNS = (
+    ("email", _EMAIL, "[EMAIL_REDACTED]"),
+    ("phone", _PHONE, "[PHONE_REDACTED]"),
+    ("account", _ACCOUNT, "[ACCOUNT_REDACTED]"),
+    ("numeric_identifier", _CARD_OR_GOVERNMENT_ID, "[NUMERIC_IDENTIFIER_REDACTED]"),
+)
+
+
+@dataclass(frozen=True, slots=True)
+class PIIMatch:
+    pii_type: str
+    start: int
+    end: int
+    replacement: str
+
+
+def find_pii(text: str) -> tuple[PIIMatch, ...]:
+    """Return deterministic, non-overlapping PII spans in priority order."""
+    selected: list[PIIMatch] = []
+    for pii_type, pattern, replacement in _PII_PATTERNS:
+        for match in pattern.finditer(text):
+            if any(
+                match.start() < item.end and match.end() > item.start
+                for item in selected
+            ):
+                continue
+            selected.append(PIIMatch(pii_type, match.start(), match.end(), replacement))
+    return tuple(sorted(selected, key=lambda item: item.start))
+
 
 def redact_text(text: str) -> str:
     """Remove common contact and subscriber identifiers before persistence."""
-    redacted = _EMAIL.sub("[EMAIL_REDACTED]", text)
-    redacted = _PHONE.sub("[PHONE_REDACTED]", redacted)
-    redacted = _ACCOUNT.sub("[ACCOUNT_REDACTED]", redacted)
-    return _CARD_OR_GOVERNMENT_ID.sub("[NUMERIC_IDENTIFIER_REDACTED]", redacted)
+    redacted = text
+    for match in reversed(find_pii(text)):
+        redacted = redacted[: match.start] + match.replacement + redacted[match.end :]
+    return redacted
 
 
 def pseudonymize_caller(caller_id: str, secret: str) -> str:

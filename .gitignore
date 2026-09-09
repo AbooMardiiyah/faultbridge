@@ -1,5 +1,6 @@
 .env
 .venv/
+.venv-benchmark/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -8,3 +9,5 @@ __pycache__/
 artifacts/
 benchmark/audio/
 benchmark/raw_outputs/
+benchmark/model_cache/
+eval/results/

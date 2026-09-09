@@ -1,6 +1,6 @@
 import unittest
 
-from faultbridge.services.privacy import pseudonymize_caller, redact_text
+from faultbridge.services.privacy import find_pii, pseudonymize_caller, redact_text
 
 
 class PrivacyTests(unittest.TestCase):
@@ -19,6 +19,17 @@ class PrivacyTests(unittest.TestCase):
         self.assertNotIn("1234 567 8901", safe)
         self.assertNotIn("5399-1234-5678-9012", safe)
         self.assertIn("[NUMERIC_IDENTIFIER_REDACTED]", safe)
+
+    def test_returns_typed_spans_for_benchmarking(self) -> None:
+        text = "Send it to ada@example.com or 08031234567"
+
+        matches = find_pii(text)
+
+        self.assertEqual([match.pii_type for match in matches], ["email", "phone"])
+        self.assertEqual(
+            [text[match.start : match.end] for match in matches],
+            ["ada@example.com", "08031234567"],
+        )
 
     def test_pseudonym_is_stable_and_hides_caller(self) -> None:
         secret = "a-secret-with-enough-length"

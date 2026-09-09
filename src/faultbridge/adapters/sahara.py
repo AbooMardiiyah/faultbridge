@@ -81,6 +81,7 @@ class SaharaStreamingSTT:
     bit_rate: int = 16
     num_channels: int = 1
     timeout_seconds: float = 45.0
+    realtime_pacing: bool = False
 
     async def transcribe(self, pcm16_audio: bytes, *, language_pair: str) -> str:
         if not self.api_key:
@@ -122,6 +123,11 @@ class SaharaStreamingSTT:
                             }
                         )
                     )
+                    if self.realtime_pacing:
+                        bytes_per_second = (
+                            self.sample_rate * self.num_channels * self.bit_rate // 8
+                        )
+                        await asyncio.sleep(len(chunk) / bytes_per_second)
                 await socket.send(json.dumps({"message_type": "COMMIT"}))
 
                 async for raw_message in socket:
