@@ -92,8 +92,8 @@
             </div>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Received</th><th>Area and cell</th><th>Language</th><th>Issue</th><th>Outcome</th></tr></thead>
-                <tbody id="calls"><tr><td colspan="5" class="empty-state">No calls recorded yet</td></tr></tbody>
+                <thead><tr><th>Received</th><th>Area and cell</th><th>Language</th><th>Issue</th><th>Outcome</th><th><span class="visually-hidden">Review</span></th></tr></thead>
+                <tbody id="calls"><tr><td colspan="6" class="empty-state">No calls recorded yet</td></tr></tbody>
               </table>
             </div>
           </article>
@@ -114,6 +114,64 @@
         </section>
       </div>
     </main>
+
+    <dialog id="call-inspector" class="call-inspector" aria-labelledby="inspector-title">
+      <div class="inspector-shell">
+        <header class="inspector-header">
+          <div>
+            <p class="eyebrow">Agent decision trace</p>
+            <h2 id="inspector-title">Call evidence</h2>
+            <p id="inspector-call-id" class="case-reference">No call selected</p>
+          </div>
+          <button id="close-inspector" class="close-button" type="button" aria-label="Close call evidence">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.3 5.2 12 10.9l5.7-5.7 1.1 1.1-5.7 5.7 5.7 5.7-1.1 1.1-5.7-5.7-5.7 5.7-1.1-1.1 5.7-5.7-5.7-5.7z"/></svg>
+          </button>
+        </header>
+
+        <div id="inspector-loading" class="inspector-loading" role="status">
+          <span class="loading-mark" aria-hidden="true"></span>
+          <strong>Loading the decision record</strong>
+          <p>Retrieving the auditable tool events for this call.</p>
+        </div>
+
+        <div id="inspector-content" class="inspector-content" hidden>
+          <section class="call-summary" aria-label="Call summary">
+            <div><span>Location</span><strong id="inspector-location">—</strong></div>
+            <div><span>Language</span><strong id="inspector-language">—</strong></div>
+            <div><span>Issue</span><strong id="inspector-issue">—</strong></div>
+            <div><span>Outcome</span><strong id="inspector-outcome">—</strong></div>
+          </section>
+
+          <section class="statement-panel" aria-labelledby="statement-title">
+            <div class="inspector-section-heading">
+              <div><p class="eyebrow">Caller statement</p><h3 id="statement-title">PII-safe transcript</h3></div>
+              <span class="safe-label">Identifiers masked</span>
+            </div>
+            <blockquote id="inspector-transcript">—</blockquote>
+          </section>
+
+          <section class="response-panel" aria-labelledby="response-title">
+            <p class="eyebrow">Agent response</p>
+            <h3 id="response-title">Grounded answer</h3>
+            <p id="inspector-response">—</p>
+          </section>
+
+          <section class="trace-panel" aria-labelledby="trace-title">
+            <div class="inspector-section-heading">
+              <div><p class="eyebrow">Tool timeline</p><h3 id="trace-title">How the decision was made</h3></div>
+              <span id="event-count" class="event-count">0 events</span>
+            </div>
+            <ol id="event-timeline" class="event-timeline"></ol>
+          </section>
+
+          <p id="inspector-error" class="inspector-error" role="alert"></p>
+          <aside class="evidence-note">
+            <span aria-hidden="true">✓</span>
+            <p><strong>Auditable by design</strong> This view translates persisted tool events into an operator-readable record. Unconfirmed complaint clusters remain clearly labelled.</p>
+          </aside>
+        </div>
+      </div>
+    </dialog>
 
     <footer>
       <div class="brand footer-brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>FaultBridge</span></div>

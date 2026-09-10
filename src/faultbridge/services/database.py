@@ -557,8 +557,9 @@ class Database:
         with self.connect() as connection:
             calls = connection.execute(
                 """
-                SELECT call_id, area, cell_id, language_pair, symptom, tier,
-                       outcome, response, created_at, updated_at
+                SELECT call_id, area, cell_id, language_pair, symptom,
+                       safe_transcript, tier, outcome, response, created_at,
+                       updated_at
                 FROM call_sessions ORDER BY created_at DESC LIMIT 25
                 """
             ).fetchall()

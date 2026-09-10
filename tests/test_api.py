@@ -83,6 +83,13 @@ class ApiIntegrationTests(unittest.TestCase):
         self.assertEqual(body["outcome"], "known_fault_handled")
         self.assertNotIn("08031234567", body["safe_transcript"])
         self.assertIn("power failure", body["response"])
+        dashboard = self.client.get(
+            "/internal/dashboard", headers=self.internal_headers
+        ).json()
+        self.assertEqual(
+            dashboard["calls"][0]["safe_transcript"], body["safe_transcript"]
+        )
+        self.assertNotIn("08031234567", dashboard["calls"][0]["safe_transcript"])
 
     def test_caller_can_be_deleted_by_pseudonymous_reference(self) -> None:
         created = self.client.post(
