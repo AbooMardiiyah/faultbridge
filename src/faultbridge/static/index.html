@@ -4,95 +4,120 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
-    <title>FaultBridge Operations</title>
+    <meta name="theme-color" content="#102b26">
+    <title>Network Operations · FaultBridge</title>
     <link rel="stylesheet" href="/assets/dashboard.css">
   </head>
   <body>
-    <header>
-      <div>
-        <p class="eyebrow">FaultBridge / Operations</p>
-        <h1>Customer voices.<br><em>Network evidence.</em></h1>
-      </div>
-      <div class="connection">
-        <span id="health-dot" class="dot"></span>
-        <span id="health-label">Checking system</span>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="FaultBridge caller support">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>FaultBridge</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="/">Caller support</a>
+        <a href="/operations" aria-current="page">Operations</a>
+      </nav>
+      <div class="system-status" role="status">
+        <span id="health-dot" class="status-dot"></span>
+        <span id="health-label">Checking service</span>
       </div>
     </header>
 
-    <main>
-      <section class="access-panel" id="access-panel">
+    <main id="main">
+      <section class="hero">
         <div>
-          <p class="section-number">01</p>
-          <h2>Connect to operations</h2>
-          <p>The internal key stays in this browser tab and authenticates operational data.</p>
+          <p class="eyebrow">Network operations</p>
+          <h1>Every caller becomes<br><em>usable network evidence.</em></h1>
+        </div>
+        <p class="hero-copy">Track grounded call decisions, unresolved complaint clusters, and operator actions from one auditable workspace.</p>
+      </section>
+
+      <section class="access-panel" id="access-panel" aria-labelledby="access-title">
+        <div class="access-copy">
+          <span class="icon-lock" aria-hidden="true"></span>
+          <div>
+            <h2 id="access-title">Open the operations workspace</h2>
+            <p>Your access key is kept only in this browser tab.</p>
+          </div>
         </div>
         <form id="access-form">
-          <label for="api-key">Internal API key</label>
+          <label for="api-key">Internal access key</label>
           <div class="input-row">
             <input id="api-key" type="password" autocomplete="off" required>
-            <button type="submit">Connect</button>
+            <button type="submit">Open workspace</button>
           </div>
-          <p id="access-error" class="error" role="alert"></p>
+          <p id="access-error" class="form-error" role="alert"></p>
         </form>
       </section>
 
       <div id="workspace" hidden>
+        <section class="section-heading workspace-heading">
+          <div>
+            <p class="eyebrow">Current overview</p>
+            <h2>Service intelligence</h2>
+          </div>
+          <div class="heading-actions">
+            <span id="last-updated" role="status">Not refreshed yet</span>
+            <button id="refresh" class="button-secondary" type="button">Refresh data</button>
+          </div>
+        </section>
+
         <section class="metrics" aria-label="Current operational totals">
-          <article><span id="call-count">0</span><p>Recent calls</p></article>
-          <article><span id="ticket-count">0</span><p>Open handoffs</p></article>
-          <article><span id="candidate-count">0</span><p>Candidate faults</p></article>
-          <article><span id="action-count">0</span><p>Queued actions</p></article>
+          <article><span id="call-count">0</span><p>Recent calls</p><small>Processed with consent</small></article>
+          <article><span id="ticket-count">0</span><p>Open handoffs</p><small>Awaiting an operator</small></article>
+          <article><span id="candidate-count">0</span><p>Candidate faults</p><small>Pending NOC verification</small></article>
+          <article><span id="action-count">0</span><p>Queued actions</p><small>Callbacks and credits</small></article>
         </section>
 
-        <section class="flow-panel">
+        <section class="flow-panel" aria-labelledby="flow-title">
           <div class="section-heading">
-            <div><p class="section-number">02</p><h2>Resolution flow</h2></div>
-            <button id="refresh" class="secondary">Refresh</button>
+            <div><p class="eyebrow">Decision path</p><h2 id="flow-title">From voice to verified action</h2></div>
+            <span class="sahara-label">Powered by Sahara</span>
           </div>
-          <div class="flow">
-            <div><b>1</b><span>Voice understood</span><small>Sahara code-switch STT</small></div>
-            <i></i>
-            <div><b>2</b><span>Evidence checked</span><small>NOC + CRM state</small></div>
-            <i></i>
-            <div><b>3</b><span>Action verified</span><small>Resolve or escalate</small></div>
-            <i></i>
-            <div><b>4</b><span>Fault discovered</span><small>Distinct caller signals</small></div>
-          </div>
+          <ol class="flow">
+            <li><b>01</b><div><strong>Understand</strong><span>Code-switched speech transcribed</span></div></li>
+            <li><b>02</b><div><strong>Verify</strong><span>NOC and account state checked</span></div></li>
+            <li><b>03</b><div><strong>Resolve</strong><span>Safe action or handoff selected</span></div></li>
+            <li><b>04</b><div><strong>Discover</strong><span>Complaint signals clustered</span></div></li>
+          </ol>
         </section>
 
-        <section class="grid">
-          <article class="table-panel wide">
+        <section class="workspace-grid">
+          <article class="data-panel calls-panel">
             <div class="section-heading">
-              <div><p class="section-number">03</p><h2>Call decisions</h2></div>
-              <span class="live-tag">Live ledger</span>
+              <div><p class="eyebrow">Decision ledger</p><h2>Latest calls</h2></div>
+              <span class="live-label"><i></i> Current</span>
             </div>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Time</th><th>Area / cell</th><th>Language</th><th>Symptom</th><th>Outcome</th></tr></thead>
-                <tbody id="calls"><tr><td colspan="5" class="empty">No calls recorded</td></tr></tbody>
+                <thead><tr><th>Received</th><th>Area and cell</th><th>Language</th><th>Issue</th><th>Outcome</th></tr></thead>
+                <tbody id="calls"><tr><td colspan="5" class="empty-state">No calls recorded yet</td></tr></tbody>
               </table>
             </div>
           </article>
 
-          <article class="table-panel">
+          <article class="data-panel">
             <div class="section-heading">
-              <div><p class="section-number">04</p><h2>Candidate incidents</h2></div>
+              <div><p class="eyebrow">Early warning</p><h2>Candidate incidents</h2></div>
             </div>
-            <div id="candidates" class="stack"><p class="empty">No candidate incidents</p></div>
+            <div id="candidates" class="record-list"><div class="empty-state">No candidate incidents</div></div>
           </article>
 
-          <article class="table-panel">
+          <article class="data-panel">
             <div class="section-heading">
-              <div><p class="section-number">05</p><h2>Action delivery</h2></div>
+              <div><p class="eyebrow">Delivery queue</p><h2>Operator actions</h2></div>
             </div>
-            <div id="actions" class="stack"><p class="empty">No actions queued</p></div>
+            <div id="actions" class="record-list"><div class="empty-state">No actions queued</div></div>
           </article>
         </section>
       </div>
     </main>
 
     <footer>
-      <span>Consent first</span><span>PII redacted</span><span>Evidence bound</span>
+      <div class="brand footer-brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>FaultBridge</span></div>
+      <p>Consent first · PII redacted · Decisions grounded in operator evidence</p>
     </footer>
     <script src="/assets/dashboard.js" defer></script>
   </body>

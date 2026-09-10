@@ -35,10 +35,13 @@ class ApiIntegrationTests(unittest.TestCase):
         response = self.client.put("/internal/network-incidents/INC-401", json={})
         self.assertEqual(response.status_code, 401)
 
-    def test_dashboard_is_served_without_exposing_operational_data(self) -> None:
-        page = self.client.get("/")
-        self.assertEqual(page.status_code, 200)
-        self.assertIn("FaultBridge Operations", page.text)
+    def test_frontends_are_served_without_exposing_operational_data(self) -> None:
+        caller_page = self.client.get("/")
+        self.assertEqual(caller_page.status_code, 200)
+        self.assertIn("Voice Support · FaultBridge", caller_page.text)
+        operations_page = self.client.get("/operations")
+        self.assertEqual(operations_page.status_code, 200)
+        self.assertIn("Network Operations · FaultBridge", operations_page.text)
         data = self.client.get("/internal/dashboard")
         self.assertEqual(data.status_code, 401)
 

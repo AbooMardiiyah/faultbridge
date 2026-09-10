@@ -180,6 +180,11 @@ async def operational_headers(request, call_next):
 
 
 @app.get("/", include_in_schema=False)
+def caller_page() -> FileResponse:
+    return FileResponse(static_directory / "call.html")
+
+
+@app.get("/operations", include_in_schema=False)
 def dashboard_page() -> FileResponse:
     return FileResponse(static_directory / "index.html")
 

@@ -57,5 +57,6 @@ while retaining anonymous aggregate incidents.
 ## Health and Review
 
 Use `/health/live` for process health and `/health/ready` for database readiness.
-The operations dashboard is available at `/`; its data requests require the
+The caller voice interface is available at `/`. The operations dashboard is
+available at `/operations`; its data requests require the
 internal API key, which remains in browser session storage.

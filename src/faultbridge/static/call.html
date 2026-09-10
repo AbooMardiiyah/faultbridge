@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#102b26">
+    <title>Voice Support · FaultBridge</title>
+    <link rel="stylesheet" href="/assets/call.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="FaultBridge home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>FaultBridge</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="/" aria-current="page">Caller support</a>
+        <a href="/operations">Operations</a>
+      </nav>
+      <div class="system-status" role="status">
+        <span id="health-dot" class="status-dot"></span>
+        <span id="health-label">Checking service</span>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Voice support for Nigerian networks</p>
+          <h1>Tell us what’s wrong.<br><em>We’ll check the network.</em></h1>
+        </div>
+        <p class="hero-copy">Speak naturally in English, Hausa, Igbo, Pidgin, or Yoruba. FaultBridge checks verified service information and guides the next safe action.</p>
+      </section>
+
+      <div class="experience-grid">
+        <section class="call-card" aria-labelledby="call-title">
+          <div class="call-card-header">
+            <div>
+              <p class="eyebrow">Secure voice session</p>
+              <h2 id="call-title">Network support</h2>
+            </div>
+            <span id="call-state" class="state-pill" role="status"><i></i> Ready</span>
+          </div>
+
+          <div class="conversation" id="conversation" aria-live="polite" aria-relevant="additions">
+            <div class="welcome" id="welcome">
+              <div class="voice-visual" id="voice-visual" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <h3 id="status-title">Ready when you are</h3>
+              <p id="status-copy">Press the microphone and describe what is happening with your service.</p>
+            </div>
+          </div>
+
+          <div id="decision-panel" class="decision-panel" hidden>
+            <div class="decision-heading">
+              <div><p class="eyebrow">What FaultBridge did</p><h3 id="outcome-label">Decision complete</h3></div>
+              <button id="play-response" class="audio-button" type="button" hidden aria-label="Play the voice response">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z"/></svg>
+                Play response
+              </button>
+            </div>
+            <ol id="agent-steps" class="agent-steps"></ol>
+          </div>
+
+          <div class="record-zone">
+            <button id="record-button" class="record-button" type="button" aria-describedby="record-help" aria-pressed="false">
+              <span class="record-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 0 0 3.5-3.5V5.5a3.5 3.5 0 1 0-7 0V12a3.5 3.5 0 0 0 3.5 3.5Zm-7-4a1 1 0 0 1 2 0v.5a5 5 0 0 0 10 0v-.5a1 1 0 1 1 2 0v.5a7 7 0 0 1-6 6.92V21h2.5a1 1 0 1 1 0 2h-7a1 1 0 1 1 0-2H11v-2.08A7 7 0 0 1 5 12v-.5Z"/></svg>
+              </span>
+              <span id="record-label">Start speaking</span>
+            </button>
+            <p id="record-help">Your microphone turns off when you press stop.</p>
+            <p id="call-error" class="form-error" role="alert"></p>
+          </div>
+        </section>
+
+        <aside class="details-column">
+          <section class="details-card" aria-labelledby="details-title">
+            <div class="section-heading">
+              <div><p class="eyebrow">Before the call</p><h2 id="details-title">Service details</h2></div>
+              <button id="reset-call" class="text-button" type="button" hidden>Start over</button>
+            </div>
+            <form id="call-form">
+              <label for="language-pair">Language</label>
+              <select id="language-pair" required>
+                <option value="Pidgin-English">Pidgin + English</option>
+                <option value="Hausa-English">Hausa + English</option>
+                <option value="Igbo-English">Igbo + English</option>
+                <option value="Yoruba-English">Yoruba + English</option>
+              </select>
+
+              <div class="form-row">
+                <div><label for="area">Area</label><input id="area" placeholder="e.g. Yaba, Lagos" autocomplete="address-level2" required></div>
+                <div><label for="cell-id">Cell or site ID</label><input id="cell-id" placeholder="e.g. LAG-009" autocomplete="off" required></div>
+              </div>
+
+              <label for="caller-id">Callback number</label>
+              <input id="caller-id" type="tel" placeholder="e.g. 0803 000 0000" autocomplete="tel" required>
+
+              <label class="consent-row" for="consent">
+                <input id="consent" type="checkbox" required>
+                <span><strong>I agree to voice processing</strong><small>Audio is sent to Sahara for transcription. Personal identifiers are masked before analysis and storage.</small></span>
+              </label>
+
+              <details class="demo-access">
+                <summary>Demo access</summary>
+                <label for="internal-key">Internal access key</label>
+                <input id="internal-key" type="password" autocomplete="off" required>
+                <p>Kept only in this browser tab.</p>
+              </details>
+            </form>
+          </section>
+
+          <section class="trust-card" aria-labelledby="trust-title">
+            <p class="eyebrow">Designed for trust</p>
+            <h2 id="trust-title">You stay in control</h2>
+            <ul>
+              <li><span aria-hidden="true">01</span><div><strong>Private by design</strong><p>Phone and account identifiers are masked before reasoning.</p></div></li>
+              <li><span aria-hidden="true">02</span><div><strong>Evidence before answers</strong><p>Outage claims come from verified operator records.</p></div></li>
+              <li><span aria-hidden="true">03</span><div><strong>A human when needed</strong><p>Unresolved or uncertain calls become structured handoffs.</p></div></li>
+            </ul>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <footer>
+      <div class="brand footer-brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>FaultBridge</span></div>
+      <p>Built for the way Nigeria speaks</p>
+    </footer>
+    <script src="/assets/call.js" defer></script>
+  </body>
+</html>

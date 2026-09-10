@@ -33,11 +33,10 @@ make test
 make run
 ```
 
-Then open `http://localhost:8000/docs`.
-
-The operations dashboard is at `http://localhost:8000/`. Live provider endpoints
-remain unavailable until their credentials are present; the rest of the service
-starts without them.
+Then open the caller experience at `http://localhost:8000/`, the authenticated
+operations workspace at `http://localhost:8000/operations`, or the API reference
+at `http://localhost:8000/docs`. Live provider endpoints remain unavailable until
+their credentials are present; the rest of the service starts without them.
 
 ## Repository layout
 
@@ -49,7 +48,7 @@ starts without them.
 - `tests/`: policy, privacy, idempotency, and clustering tests.
 - `eval/`: frozen-manifest ASR scoring and executable agent-state evaluation.
 - `docs/`: architecture and responsible-AI documentation.
-- `src/faultbridge/static/`: authenticated operations dashboard.
+- `src/faultbridge/static/`: responsive caller and operations interfaces.
 
 ## Data status
 
@@ -76,6 +75,8 @@ They have contract coverage but cannot be exercised against the live service unt
 
 See [Operations](docs/OPERATIONS.md) for provider selection, deployment, action
 delivery, privacy controls, and health checks. The
+[experience design guide](docs/EXPERIENCE_DESIGN.md) records the UI rationale and
+manual review checklist. The
 [voice benchmark research](docs/VOICE_BENCHMARK_RESEARCH.md) defines the
 industry-grounded evaluation protocol; [`eval/README.md`](eval/README.md) contains
 the reproducible commands.
