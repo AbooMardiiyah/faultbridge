@@ -20,6 +20,7 @@ from faultbridge_eval.providers import (
     FasterWhisperTranscriber,
     OmniASRCTCTranscriber,
     SaharaBenchmarkTranscriber,
+    SaharaFileTranscriber,
     SBPNTranscriber,
 )
 
@@ -84,6 +85,8 @@ def build_provider(args: argparse.Namespace) -> BenchmarkTranscriber:
                 realtime_pacing=not args.no_realtime_pacing,
             )
         )
+    if args.provider == "sahara-file":
+        return SaharaFileTranscriber(api_key=os.environ.get("SAHARA_API_KEY", ""))
     if args.provider == "assemblyai":
         return AssemblyAIStreamingTranscriber(
             api_key=os.environ.get("ASSEMBLYAI_API_KEY", ""),
@@ -163,6 +166,20 @@ async def run(args: argparse.Namespace) -> None:
     if args.min_request_interval is not None and args.min_request_interval < 0:
         raise ValueError("minimum request interval cannot be negative")
     samples = read_manifest(args.manifest)
+    language_pairs = getattr(args, "language_pairs", None)
+    if language_pairs:
+        requested_pairs = {pair.casefold() for pair in language_pairs}
+        available_pairs = {sample.language_pair.casefold() for sample in samples}
+        missing_pairs = requested_pairs - available_pairs
+        if missing_pairs:
+            raise ValueError(
+                f"unknown benchmark language pairs: {sorted(missing_pairs)}"
+            )
+        samples = [
+            sample
+            for sample in samples
+            if sample.language_pair.casefold() in requested_pairs
+        ]
     provider = build_provider(args)
     output = args.output / f"{provider.name}.jsonl"
     provenance = environment_provenance(args.manifest)
@@ -189,10 +206,12 @@ async def run(args: argparse.Namespace) -> None:
         remaining = remaining[: args.limit]
     maximum_failures = args.max_consecutive_failures
     if maximum_failures is None:
-        maximum_failures = 3 if args.provider in {"sahara", "assemblyai"} else 0
+        maximum_failures = (
+            3 if args.provider in {"sahara", "sahara-file", "assemblyai"} else 0
+        )
     request_interval = args.min_request_interval
     if request_interval is None:
-        request_interval = 2.0 if args.provider == "sahara" else 0.0
+        request_interval = 2.1 if args.provider in {"sahara", "sahara-file"} else 0.0
     consecutive_failures = 0
     previous_request_started: float | None = None
     for index, sample in enumerate(remaining, start=1):
@@ -258,7 +277,14 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--output", type=Path, default=Path("eval/results/raw"))
     command.add_argument(
         "--provider",
-        choices=["sahara", "assemblyai", "faster-whisper", "sbpn", "omniasr"],
+        choices=[
+            "sahara",
+            "sahara-file",
+            "assemblyai",
+            "faster-whisper",
+            "sbpn",
+            "omniasr",
+        ],
         required=True,
     )
     command.add_argument("--assemblyai-model", default="whisper-rt")
@@ -283,6 +309,12 @@ def parser() -> argparse.ArgumentParser:
         dest="sample_ids",
         action="append",
         help="run only this frozen sample ID; repeat to select more than one",
+    )
+    command.add_argument(
+        "--language-pair",
+        dest="language_pairs",
+        action="append",
+        help="run only this manifest language pair; repeat to select more than one",
     )
     command.add_argument(
         "--max-consecutive-failures",

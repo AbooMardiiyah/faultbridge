@@ -77,10 +77,10 @@ benchmark-robustness:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.audio_conditions
 
 benchmark-sahara-batch:
-	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.runner --manifest benchmark/manifest.csv --output eval/results/raw --provider sahara --limit $(ASR_BATCH_SIZE)
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.runner --manifest benchmark/manifest.csv --output eval/results/raw --provider sahara-file --limit $(ASR_BATCH_SIZE)
 
 benchmark-sahara-retry:
-	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.runner --manifest benchmark/manifest.csv --output eval/results/raw --provider sahara --retry-failures --limit $(ASR_BATCH_SIZE)
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.runner --manifest benchmark/manifest.csv --output eval/results/raw --provider sahara-file --retry-failures --limit $(ASR_BATCH_SIZE)
 
 benchmark-score:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.scorer --manifest benchmark/manifest.csv eval/results/raw/*.jsonl

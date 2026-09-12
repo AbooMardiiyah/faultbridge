@@ -8,8 +8,9 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import faultbridge_eval.runner as runner_module
+import httpx
 from faultbridge_eval.manifest import BenchmarkSample
-from faultbridge_eval.providers import TranscriptionResult
+from faultbridge_eval.providers import SaharaFileTranscriber, TranscriptionResult
 from faultbridge_eval.runner import attempt_counts, existing_samples, run_sample
 
 
@@ -169,6 +170,117 @@ class BenchmarkResultSchemaTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(record["hypothesis"], "recognized words")
         self.assertNotIn("transcript", record)
         self.assertEqual(record["provider_request_id"], "request-1")
+
+
+class SaharaFileTranscriberTests(unittest.IsolatedAsyncioTestCase):
+    async def test_uploads_language_and_returns_provenance(self) -> None:
+        captured: dict[str, bytes] = {}
+
+        async def respond(request: httpx.Request) -> httpx.Response:
+            captured["body"] = await request.aread()
+            return httpx.Response(
+                200,
+                headers={"x-ratelimit-remaining": "29"},
+                json={
+                    "data": {
+                        "file_id": "file-1",
+                        "processing_status": "FILE_TRANSCRIBED",
+                        "audio_transcript": "network no dey work",
+                        "processed_audio_duration_in_seconds": 2.5,
+                    }
+                },
+            )
+
+        with tempfile.TemporaryDirectory() as directory:
+            audio = Path(directory) / "sample.wav"
+            audio.write_bytes(b"RIFF-test")
+            provider = SaharaFileTranscriber(
+                api_key="secret", transport=httpx.MockTransport(respond)
+            )
+            result = await provider.transcribe(audio, language_pair="Pidgin-English")
+
+        body = captured["body"]
+        self.assertIn(b'name="use_language_asr_input"', body)
+        self.assertIn(b"pcm", body)
+        self.assertIn(b'name="use_disable_llm_corrections"', body)
+        self.assertIn(b"TRUE", body)
+        self.assertEqual(result.transcript, "network no dey work")
+        self.assertEqual(result.provider_request_id, "file-1")
+        self.assertEqual(result.provider_metadata["http_x_ratelimit_remaining"], "29")
+
+    async def test_polls_an_accepted_job_without_reuploading(self) -> None:
+        methods: list[str] = []
+
+        async def respond(request: httpx.Request) -> httpx.Response:
+            methods.append(request.method)
+            if request.method == "POST":
+                return httpx.Response(
+                    200,
+                    json={
+                        "data": {
+                            "file_id": "queued-1",
+                            "processing_status": "FILE_QUEUED",
+                        }
+                    },
+                )
+            self.assertEqual(str(request.url), "https://status.test/queued-1")
+            return httpx.Response(
+                200,
+                json={
+                    "data": {
+                        "file_id": "queued-1",
+                        "processing_status": "FILE_TRANSCRIBED",
+                        "audio_transcript": "service don return",
+                    }
+                },
+            )
+
+        with tempfile.TemporaryDirectory() as directory:
+            audio = Path(directory) / "sample.wav"
+            audio.write_bytes(b"RIFF-test")
+            provider = SaharaFileTranscriber(
+                api_key="secret",
+                status_endpoint="https://status.test",
+                poll_interval_seconds=0,
+                transport=httpx.MockTransport(respond),
+            )
+            result = await provider.transcribe(audio, language_pair="Hausa-English")
+
+        self.assertEqual(methods, ["POST", "GET"])
+        self.assertEqual(result.transcript, "service don return")
+        self.assertEqual(result.provider_request_id, "queued-1")
+
+    async def test_waits_for_transcript_after_transcribed_status(self) -> None:
+        responses = iter(
+            [
+                {
+                    "file_id": "replicating-1",
+                    "processing_status": "FILE_TRANSCRIBED",
+                    "audio_transcript": "",
+                },
+                {
+                    "file_id": "replicating-1",
+                    "processing_status": "FILE_TRANSCRIBED",
+                    "audio_transcript": "transcript is ready",
+                },
+            ]
+        )
+
+        async def respond(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, json={"data": next(responses)})
+
+        with tempfile.TemporaryDirectory() as directory:
+            audio = Path(directory) / "sample.wav"
+            audio.write_bytes(b"RIFF-test")
+            provider = SaharaFileTranscriber(
+                api_key="secret",
+                poll_interval_seconds=0,
+                transport=httpx.MockTransport(respond),
+            )
+            result = await provider.transcribe(audio, language_pair="Igbo-English")
+
+        self.assertEqual(result.transcript, "transcript is ready")
+        self.assertEqual(result.provider_request_id, "replicating-1")
 
 
 if __name__ == "__main__":

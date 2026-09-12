@@ -11,9 +11,10 @@ from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlencode
 
+import httpx
 import websockets
 
-from faultbridge.adapters.sahara import SaharaStreamingSTT
+from faultbridge.adapters.sahara import SaharaStreamingSTT, language_code
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,6 +89,169 @@ class SaharaBenchmarkTranscriber:
             time.monotonic() - started,
             provider_metadata={"credit_balance_start": self.client.credit_balance},
         )
+
+
+@dataclass(frozen=True, slots=True)
+class SaharaFileTranscriber:
+    """Benchmark Sahara through the documented synchronous file endpoint."""
+
+    api_key: str
+    endpoint: str = "https://infer.voice.intron.io/file/v1/upload/sync"
+    status_endpoint: str = "https://infer.voice.intron.io/file/v1/status"
+    timeout_seconds: float = 125.0
+    poll_interval_seconds: float = 2.0
+    disable_llm_corrections: bool = True
+    transport: httpx.AsyncBaseTransport | None = field(
+        default=None, repr=False, compare=False
+    )
+    name: str = "sahara-file-sync"
+
+    @property
+    def model_identifier(self) -> str:
+        return "sahara-file-stt@provider-default"
+
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "endpoint": self.endpoint,
+            "transport": "synchronous-file-upload",
+            "use_disable_llm_corrections": self.disable_llm_corrections,
+        }
+
+    async def transcribe(
+        self, audio_path: Path, *, language_pair: str
+    ) -> TranscriptionResult:
+        if not self.api_key:
+            raise ValueError("SAHARA_API_KEY is required")
+        started = time.monotonic()
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+        form = {
+            "audio_file_name": audio_path.name,
+            "use_language_asr_input": language_code(language_pair),
+            "use_disable_llm_corrections": (
+                "TRUE" if self.disable_llm_corrections else "FALSE"
+            ),
+        }
+        files = {
+            "audio_file_blob": (
+                audio_path.name,
+                audio_path.read_bytes(),
+                "audio/wav",
+            )
+        }
+        timeout = httpx.Timeout(self.timeout_seconds)
+        async with asyncio.timeout(self.timeout_seconds):
+            async with httpx.AsyncClient(
+                timeout=timeout, transport=self.transport
+            ) as client:
+                response = await client.post(
+                    self.endpoint, headers=headers, data=form, files=files
+                )
+                payload = _response_json(response)
+                data = payload.get("data")
+                if not isinstance(data, dict):
+                    message = payload.get("message") or response.text[:500]
+                    raise TypeError(
+                        f"Sahara file upload failed ({response.status_code}): {message}"
+                    )
+                file_id = str(data.get("file_id") or "") or None
+                if response.status_code >= 400 and not (
+                    response.status_code == 503 and file_id
+                ):
+                    message = payload.get("message") or response.text[:500]
+                    raise RuntimeError(
+                        f"Sahara file upload failed ({response.status_code}): {message}"
+                    )
+                while data.get("processing_status") in {
+                    "FILE_QUEUED",
+                    "FILE_PENDING",
+                    "FILE_PROCESSING",
+                }:
+                    if not file_id:
+                        raise RuntimeError("Sahara queued a file without a file ID")
+                    await asyncio.sleep(self.poll_interval_seconds)
+                    response = await client.get(
+                        f"{self.status_endpoint}/{file_id}", headers=headers
+                    )
+                    payload = _response_json(response)
+                    if response.status_code >= 400:
+                        message = payload.get("message") or response.text[:500]
+                        raise RuntimeError(
+                            "Sahara file status failed "
+                            f"({response.status_code}): {message}"
+                        )
+                    data = payload.get("data")
+                    if not isinstance(data, dict):
+                        raise TypeError("Sahara file status returned no data object")
+                # The status service can expose FILE_TRANSCRIBED shortly before the
+                # transcript field is replicated. Re-read the accepted job instead
+                # of uploading and billing the audio again.
+                for _ in range(3):
+                    if data.get("audio_transcript") or file_id is None:
+                        break
+                    if data.get("processing_status") != "FILE_TRANSCRIBED":
+                        break
+                    await asyncio.sleep(self.poll_interval_seconds)
+                    response = await client.get(
+                        f"{self.status_endpoint}/{file_id}", headers=headers
+                    )
+                    payload = _response_json(response)
+                    if response.status_code >= 400:
+                        message = payload.get("message") or response.text[:500]
+                        raise RuntimeError(
+                            "Sahara file status failed "
+                            f"({response.status_code}): {message}"
+                        )
+                    refreshed = payload.get("data")
+                    if not isinstance(refreshed, dict):
+                        raise TypeError("Sahara file status returned no data object")
+                    data = refreshed
+                if data.get("processing_status") == "FILE_PROCESSING_FAILED":
+                    raise RuntimeError(f"Sahara failed to process file {file_id}")
+        transcript = str(data.get("audio_transcript") or "").strip()
+        if not transcript:
+            status = data.get("processing_status", "unknown")
+            fields = ",".join(sorted(str(key) for key in data))
+            raise RuntimeError(
+                f"Sahara returned no transcript (status={status}, fields={fields})"
+            )
+        metadata = {
+            "processing_status": data.get("processing_status"),
+            "processed_audio_duration_seconds": data.get(
+                "processed_audio_duration_in_seconds"
+            ),
+            "language_code": form["use_language_asr_input"],
+            **_rate_limit_metadata(response.headers),
+        }
+        return TranscriptionResult(
+            transcript=transcript,
+            elapsed_seconds=time.monotonic() - started,
+            provider_request_id=file_id,
+            provider_metadata=metadata,
+        )
+
+
+def _response_json(response: httpx.Response) -> dict[str, Any]:
+    try:
+        payload = response.json()
+    except ValueError as error:
+        raise RuntimeError(
+            f"Sahara returned non-JSON response ({response.status_code})"
+        ) from error
+    if not isinstance(payload, dict):
+        raise TypeError("Sahara returned a non-object JSON response")
+    return payload
+
+
+def _rate_limit_metadata(headers: httpx.Headers) -> dict[str, str]:
+    keys = (
+        "retry-after",
+        "x-ratelimit-limit",
+        "x-ratelimit-remaining",
+        "x-ratelimit-reset",
+    )
+    return {
+        f"http_{key.replace('-', '_')}": headers[key] for key in keys if key in headers
+    }
 
 
 @dataclass(frozen=True, slots=True)

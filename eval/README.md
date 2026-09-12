@@ -53,9 +53,10 @@ The local weights download only when each provider first starts. Use
 CPU is the safe default. Results resume by successful sample ID. The runner refuses
 to mix a changed model, device configuration, or manifest in an existing file;
 `--retry-failures` records a new attempt without deleting the original evidence.
-For paid Sahara ASR, use ten-sample batches. Each result is appended immediately,
-successful samples are skipped on resume, and three consecutive failures stop the
-run:
+For paid Sahara ASR, the Make targets use the documented synchronous file-upload
+endpoint and its required code-switch language parameter. Each result is appended
+immediately, completed sample IDs are skipped on resume, requests start no faster
+than once every 2.1 seconds, and three consecutive failures stop the run:
 
 ```bash
 make benchmark-sahara-batch ASR_BATCH_SIZE=10
@@ -63,9 +64,10 @@ make benchmark-sahara-retry ASR_BATCH_SIZE=10
 ```
 
 The retry command processes untouched samples before previous failures, then
-retries samples with the fewest attempts. Sahara sessions start no faster than
-once every two seconds and log the balance returned at session creation. Other
-providers can be run directly:
+retries samples with the fewest attempts. Accepted jobs are polled by file ID, so
+a queued file is never uploaded and billed again. Results record the explicit
+language code, provider file ID, processing status, and returned rate-limit
+headers. Other providers can be run directly:
 
 ```bash
 PYTHONPATH=src:eval uv run --env-file .env -m faultbridge_eval.runner \
@@ -78,10 +80,10 @@ PYTHONPATH=src:eval .venv-omni/bin/python -m faultbridge_eval.runner \
   --manifest benchmark/manifest.csv --provider omniasr
 ```
 
-Both remote providers receive audio at real-time pace unless
-`--no-realtime-pacing` is supplied. AssemblyAI uses `whisper-rt` because
-Universal-3 Pro Streaming does not currently cover the four Nigerian languages.
-Requests use real-time pacing for a fair streaming latency measurement.
+AssemblyAI and the optional Sahara WebSocket provider receive audio at real-time
+pace unless `--no-realtime-pacing` is supplied. AssemblyAI uses `whisper-rt`
+because Universal-3 Pro Streaming does not currently cover the four Nigerian
+languages. File-upload latency is reported separately from streaming latency.
 
 ## Score
 
