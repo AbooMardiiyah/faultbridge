@@ -187,6 +187,9 @@ class SaharaStreamingTTS:
     async def synthesize(self, text: str, *, language: str, accent: str) -> Any:
         if not self.api_key:
             raise ValueError("Sahara API key is required")
+        language = language.strip()
+        if not language:
+            raise ValueError("Sahara TTS language is required")
         params = urlencode(
             {
                 "voice_language": language,

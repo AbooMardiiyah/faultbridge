@@ -33,10 +33,20 @@ make test
 make run
 ```
 
-Then open the caller experience at `http://localhost:8000/`, the authenticated
-operations workspace at `http://localhost:8000/operations`, or the API reference
-at `http://localhost:8000/docs`. Live provider endpoints remain unavailable until
-their credentials are present; the rest of the service starts without them.
+To run the packaged API, migrations, and PostgreSQL entirely through Docker:
+
+```bash
+make docker-up       # build and wait for the API and database to become healthy
+make docker-status   # show container health and published ports
+make docker-logs     # follow API and database logs
+make docker-down     # stop the complete stack
+```
+
+The web interfaces are served by the API container, so no separate frontend
+process is required. Docker publishes them at `http://localhost:8010/`; `make run`
+uses port `8000`. Start delivery workers only after configuring operator webhooks
+with `make docker-workers`. Live provider endpoints remain unavailable until their
+credentials are present; the rest of the service starts without them.
 
 ## Repository layout
 
@@ -70,8 +80,9 @@ unknown; the agent does not manufacture a fault, balance, or compensation status
 
 `SaharaStreamingSTT` and `SaharaStreamingTTS` implement the official WebSocket
 contracts. `SaharaConversationCall` starts active outbound conversation workflows.
-They have contract coverage but cannot be exercised against the live service until
-`SAHARA_API_KEY` is configured.
+Every streaming request sends an explicit language selection. The browser maps
+Pidgin to `pcm`, Hausa to `ha`, Igbo to `ig`, and Yoruba to `yo`; missing language
+metadata is rejected before a provider call.
 
 See [Operations](docs/OPERATIONS.md) for provider selection, deployment, action
 delivery, privacy controls, and health checks. The

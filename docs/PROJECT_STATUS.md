@@ -1,6 +1,6 @@
 # Project Status
 
-Updated 10 September 2026. This file records durable working context for future
+Updated 12 September 2026. This file records durable working context for future
 sessions; the Git history remains the authoritative implementation record.
 
 ## Completed
@@ -15,23 +15,41 @@ sessions; the Git history remains the authoritative implementation record.
 - Responsive caller and operations interfaces using real protected API endpoints.
 - Operations call inspector for redacted transcripts, grounded answers, and
   operator-readable timelines built from persisted tool events.
+- Docker Compose packaging for the API and PostgreSQL, with Make targets and
+  health checks; both web surfaces and the protected-data boundary are smoke-tested.
+- Frozen AfriSwitch panel with 400 hash-verified clips (100 per language pair) and
+  a 1,600-row deterministic telephone/noise/loss robustness manifest.
 
-## External dependencies
+## Current access
 
-- AfriSwitch access is pending. `HF_TOKEN` is configured locally, but preparation
-  cannot begin until the dataset owner approves the account.
-- AssemblyAI credentials are still needed for the required third-model benchmark.
+- AfriSwitch access is approved and `HF_TOKEN` is configured locally. The frozen
+  400-clip benchmark panel and 1,600-condition robustness panel are prepared.
+- AssemblyAI credentials are optional for a fifth commercial sensitivity run. The
+  four-model core panel does not depend on them.
 - `SAHARA_VOICEBOT_WORKFLOW_ID` is needed only if the demo uses an outbound Sahara
   Conversation Call; the browser microphone flow does not require it.
 - The submission portal access code and final YouTube upload remain user-owned.
 
+Intron will require explicit language selection on every ASR and TTS request from
+14 September at 08:00 WAT. The Sahara adapters and browser caller now send the
+documented STT and TTS language codes explicitly. New mission prizes recognize two
+benchmark datasets and one benchmark report, alongside the Fintech, Telco & Call
+Center category prize, so benchmark rigor remains the highest-priority workstream.
+
 ## Active sequence
 
-1. Test the caller and operations interfaces with live services when hardware is
-   available.
-2. Build the benchmark report renderer and five-minute demo/submission package.
-3. On AfriSwitch approval, freeze the sample manifest, run three providers, score
-   results, generate the three-page report, and derive routing recommendations.
+1. Run one-clip performance pilots for the frozen model panel, then complete each
+   provider run with resumable raw results.
+2. Test the caller and operations interfaces against live providers.
+3. Score results, generate the three-page report, and derive evidence-based
+   routing recommendations.
+4. Complete the telco scenarios, privacy set, five-minute demo, and submission
+   package.
 
-Do not start Docker, PostgreSQL, the API, workers, or a frontend server in the
-background until the user explicitly resumes live testing.
+Hardware use and foreground validation are now authorized. Keep delivery workers
+disabled until real operator webhooks are configured.
+
+After benchmark and live-call validation, add OpenTelemetry traces and metrics for
+the voice turn stages, database tools, and provider calls. An optional Cekura run
+can provide independent black-box conversation evidence if access is available;
+it complements the frozen AfriSwitch, privacy, and executable-state scorecards.

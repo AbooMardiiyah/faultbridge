@@ -123,6 +123,8 @@ class EvaluationScorerTests(unittest.TestCase):
         self.assertEqual(asr["pass_at_1"], 1.0)
         self.assertEqual(asr["pass_at_k"], 1.0)
         self.assertEqual(asr["pass_power_k"], 0.0)
+        self.assertEqual(asr["asr_propagation_loss_pass_at_1"], 0.0)
+        self.assertEqual(asr["voice_capability_retention"], 1.0)
 
 
 if __name__ == "__main__":

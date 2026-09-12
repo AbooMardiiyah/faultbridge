@@ -38,10 +38,21 @@ also generate 5/20 dB noise, 1/5% random loss, burst loss, and mild reverberatio
 The transforms preserve duration, use stable per-clip seeds, and never modify the
 frozen originals.
 
-The application environment is enough for Sahara and AssemblyAI. Use the separate
-benchmark Python for Faster-Whisper. Its weights download only when that provider
-run starts. Results resume by successful sample ID; `--retry-failures` records a
-new attempt without deleting the original evidence.
+The application environment is enough for Sahara and AssemblyAI. Faster-Whisper,
+SBPN, and Meta OmniASR use isolated environments so their research dependencies do
+not enlarge the product container:
+
+```bash
+make benchmark-install
+make benchmark-install-sbpn
+make benchmark-install-omni
+```
+
+The local weights download only when each provider first starts. Use
+`TORCH_BACKEND=cu128` on the two PyTorch install targets only after CUDA is visible;
+CPU is the safe default. Results resume by successful sample ID. The runner refuses
+to mix a changed model, device configuration, or manifest in an existing file;
+`--retry-failures` records a new attempt without deleting the original evidence.
 
 ```bash
 PYTHONPATH=src:eval uv run --env-file .env -m faultbridge_eval.runner \
@@ -50,6 +61,10 @@ PYTHONPATH=src:eval uv run --env-file .env -m faultbridge_eval.runner \
   --manifest benchmark/manifest.csv --provider assemblyai
 PYTHONPATH=src:eval .venv-benchmark/bin/python -m faultbridge_eval.runner \
   --manifest benchmark/manifest.csv --provider faster-whisper
+PYTHONPATH=src:eval .venv-sbpn/bin/python -m faultbridge_eval.runner \
+  --manifest benchmark/manifest.csv --provider sbpn
+PYTHONPATH=src:eval .venv-omni/bin/python -m faultbridge_eval.runner \
+  --manifest benchmark/manifest.csv --provider omniasr
 ```
 
 Both remote providers receive audio at real-time pace unless
@@ -88,8 +103,8 @@ make benchmark-agent-score
 
 `grade_agent_trace` checks analysis, exact tool order and arguments, response
 claims, PII absence, and final database effects. The agent scorer reports pass@1,
-pass@k, pass^k, assertion pass rate, and each ASR provider's propagation loss from
-the gold-transcript result.
+pass@k, pass^k, assertion pass rate, each ASR provider's propagation loss from the
+gold-transcript result, and voice capability retention.
 
 Put zero-tolerance privacy and groundedness checks under each scenario's
 `expected.critical` object. After both scorecards exist, `make benchmark-route`

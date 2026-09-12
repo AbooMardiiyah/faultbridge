@@ -17,9 +17,16 @@ make migrate
 make run
 ```
 
-Run `docker compose up --build` to start the packaged API on port 8010 and the
-database. Override `FAULTBRIDGE_PORT` if needed. Add
-`--profile workers` only after configuring operator webhook URLs and a token.
+Run `make docker-up` to build the packaged API, apply migrations, start PostgreSQL,
+and wait for both containers to become healthy. The caller and operations UIs are
+served by the API container. Override `FAULTBRIDGE_PORT` or
+`FAULTBRIDGE_DB_PORT` if either host port is occupied. Use `make docker-workers`
+only after configuring operator webhook URLs and a token.
+
+As of 14 September 2026 at 08:00 WAT, Intron requires an explicit language on
+every ASR and TTS request. FaultBridge maps the selected language pair to Sahara's
+required `use_language_asr_input` and `voice_language` parameters; requests to the
+voice endpoints must also supply `voice_language` and `voice_accent` explicitly.
 
 ## Provider Selection
 

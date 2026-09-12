@@ -12,9 +12,10 @@ action.
 
 The winning benchmark therefore has two linked tracks:
 
-1. **Code-switched ASR track:** Sahara, AssemblyAI, and Faster-Whisper receive the
-   same audio under the same audio and normalization policy. Results include raw
-   and normalized WER/CER, language-role error, code-switch preservation, critical
+1. **Code-switched ASR track:** Sahara, SBPN Multilingual Base, Meta omniASR CTC
+   300M, Faster-Whisper, and AssemblyAI Whisper Streaming receive the same audio
+   under the same audio and normalization policy. Results include raw and
+   normalized WER/CER, language-role error, code-switch preservation, critical
    entity recall, latency, failure rate, and robustness slices.
 2. **End-to-end agent track:** the gold transcript and every model hypothesis pass
    through the same frozen FaultBridge agent and PostgreSQL scenario. Executable
@@ -48,10 +49,14 @@ speakers, environments, and content instead of testing only clean speech.^6
 VoiceAgentBench scores tool selection, argument structure, multi-tool workflows,
 multi-turn behavior, and adversarial robustness.^7 The text-agent benchmark
 τ-bench checks the final database state and uses repeated-run reliability rather
-than assuming one successful run proves dependable behavior.^8 Recent end-to-end
-voice work goes further: VAmoS jointly grades transcripts, tool calls, returned
-rows, spoken claims, and state changes,^9 while EVA-Bench separates accuracy from
-experience and includes accent/noise perturbations plus repeated-run measures.^10
+than assuming one successful run proves dependable behavior.^8 τ-Voice carries the
+same tasks and deterministic database evaluator into full-duplex calls, then adds
+telephony compression, noise, dropped frames, diverse voices, and controlled
+interruptions. Its comparison with the text baseline motivates reporting how much
+task capability survives the voice channel.^23 Recent end-to-end voice work goes
+further: VAmoS jointly grades transcripts, tool calls, returned rows, spoken
+claims, and state changes,^9 while EVA-Bench separates accuracy from experience
+and includes accent/noise perturbations plus repeated-run measures.^10
 
 Voice quality and timing need their own evidence. ITU-T P.808 defines a
 crowdsourcing approach for subjective speech-quality evaluation,^11 P.863 defines
@@ -160,14 +165,23 @@ Any later correction creates a new benchmark version and reruns every provider.
 
 ### Frozen model panel
 
-The primary comparison is Sahara Streaming STT, AssemblyAI Whisper Streaming
-(`whisper-rt`), and Faster-Whisper `large-v3`. AssemblyAI's current streaming
-Universal-3 Pro supports six European languages, while its Whisper Streaming model
-supports 99+ languages including Hausa and Yoruba; its streaming API relies on
-automatic language detection.^19 Record the provider model identifier returned or
-configured at run time and treat any provider-side model update as a new benchmark
-run. Sahara stays the product default for the Intron submission regardless of the
-comparison result; the benchmark measures where a later routing policy could help.
+The guaranteed comparison is Sahara Streaming STT, the Nigeria-specific SBPN
+Multilingual Base 120M, Meta `omniASR_CTC_300M_v2`, and Faster-Whisper `large-v3`.
+AssemblyAI Whisper Streaming (`whisper-rt`) adds a commercial streaming sensitivity
+comparison when credentials are available. This exceeds the stricter challenge
+page wording of Sahara plus at least three alternatives and contrasts African,
+Nigerian, massively multilingual, and global model families rather than several
+wrappers around the same model.^20 SBPN Base is a 120M-parameter Nigerian model
+covering Yoruba, Hausa, Igbo, Nigerian Pidgin, and Nigerian English.^22
+
+AssemblyAI's Universal streaming family does not list the four Nigerian languages,
+so it is not used on the primary panel. Whisper Streaming lists Hausa and Yoruba
+but not Igbo or Nigerian Pidgin; those unsupported-language results remain in the
+denominator and are identified in the report.^19 Record the provider model
+identifier returned or configured at run time and treat any provider-side model
+update as a new benchmark run. Sahara stays the product default for the Intron
+submission regardless of the comparison result; the benchmark measures where a
+later routing policy could help.
 
 ### Primary lexical scores
 
@@ -240,6 +254,13 @@ tools constant. For model `m`:
 
 `ASR propagation loss(m) = task success(gold) - task success(hypothesis_m)`.
 
+Also report **voice capability retention**:
+
+`retention(m) = task success(hypothesis_m) / task success(gold)`.
+
+This makes the cost of the voice channel easy to communicate while the absolute
+scores and propagation loss prevent a weak gold-text baseline from looking good.
+
 This separates an agent-policy failure from a speech-recognition failure. Report
 both values; a high ASR score cannot excuse a weak agent, and a strong agent can
 demonstrate robustness to harmless transcription errors.
@@ -271,6 +292,17 @@ not successful containment.
 Run stochastic agent scenarios three times. Report pass@1, pass@3, and pass^3:
 whether at least one run succeeds and whether all three succeed. Reliability is
 especially important for compensation, privacy, and outage claims.
+
+### Independent conversation evaluation
+
+If access is available, run the deployed agent through Cekura as a supplementary
+black-box check. Freeze 10–20 scenarios derived from the reviewed telco set and
+retain its transcripts, evaluator rubrics, and failures. Treat this as independent
+evidence for multi-turn quality and regression discovery, not as a replacement for
+the AfriSwitch manifest, deterministic privacy gates, or PostgreSQL state
+assertions. The Pipecat hackathon starter demonstrates this iterate-from-report
+workflow and records pipeline TTFB metrics, but it does not define a comparative
+code-switch dataset benchmark.^21
 
 ### Safety and groundedness
 
@@ -476,3 +508,7 @@ shows where every conclusion stops.
 17. Koenecke et al. “[Racial Disparities in Automated Speech Recognition](https://doi.org/10.1073/pnas.1915768117).” PNAS, 2020.
 18. NIST. “[AI Risk Management Framework: Measure](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/).” Accessed 2026.
 19. AssemblyAI. “[Streaming Speech-to-Text Language Support](https://www.assemblyai.com/docs/faq/language-support-for-real-time-transcription).” Accessed 2026.
+20. Intron. “[Sahara CodeSwitch Africa Challenge](https://www.intron.io/sahara-v2-5/sahara-codeswitch-africa/).” Accessed 2026.
+21. Pipecat. “[YC Voice Agents Hackathon starter](https://github.com/pipecat-ai/yc-voice-agents-hackathon).” 2026.
+22. Ogun. “[SBPN Multilingual Base model card](https://huggingface.co/ogunlao/SBPN_multilingual_base).” 2026.
+23. Ray et al. “[$\tau$-Voice: Benchmarking Full-Duplex Voice Agents on Real-World Domains](https://arxiv.org/abs/2603.13686).” 2026.

@@ -45,6 +45,28 @@ class ApiIntegrationTests(unittest.TestCase):
         data = self.client.get("/internal/dashboard")
         self.assertEqual(data.status_code, 401)
 
+    def test_voice_call_requires_explicit_language_selection(self) -> None:
+        response = self.client.post(
+            "/internal/voice/calls",
+            headers={**self.internal_headers, "Content-Type": "audio/L16"},
+            params={
+                "caller_id": "08030000001",
+                "area": "Yaba, Lagos",
+                "cell_id": "LAG-001",
+                "language_pair": "Pidgin-English",
+                "consent": True,
+                "voice_accent": "pidgin",
+            },
+            content=b"\x00\x00" * 100,
+        )
+        self.assertEqual(response.status_code, 422)
+        missing_fields = {
+            tuple(error["loc"])
+            for error in response.json()["detail"]
+            if error["type"] == "missing"
+        }
+        self.assertIn(("query", "voice_language"), missing_fields)
+
     def test_ingested_incident_grounds_call_response(self) -> None:
         now = datetime.now(UTC)
         ingestion = self.client.put(

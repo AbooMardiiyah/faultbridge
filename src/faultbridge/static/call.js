@@ -47,7 +47,7 @@ const state = {
 };
 
 const voiceProfiles = {
-  "Pidgin-English": { language: "en", accent: "pidgin" },
+  "Pidgin-English": { language: "pcm", accent: "pidgin" },
   "Hausa-English": { language: "ha", accent: "hausa" },
   "Igbo-English": { language: "ig", accent: "igbo" },
   "Yoruba-English": { language: "yo", accent: "yoruba" },

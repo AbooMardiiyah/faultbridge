@@ -51,6 +51,19 @@ class ManifestTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "hash mismatch"):
                 read_manifest(manifest)
 
+    def test_manifest_rejects_duplicate_audio_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = self.write_fixture(Path(directory))
+            with manifest.open(newline="", encoding="utf-8") as stream:
+                rows = list(csv.DictReader(stream))
+            duplicate = {**rows[0], "sample_id": "two"}
+            with manifest.open("a", newline="", encoding="utf-8") as stream:
+                writer = csv.DictWriter(stream, fieldnames=sorted(REQUIRED_COLUMNS))
+                writer.writerow(duplicate)
+
+            with self.assertRaisesRegex(ValueError, "duplicate audio path"):
+                read_manifest(manifest)
+
 
 if __name__ == "__main__":
     unittest.main()

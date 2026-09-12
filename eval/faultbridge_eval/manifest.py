@@ -60,6 +60,7 @@ def read_manifest(path: Path, *, verify_audio: bool = True) -> list[BenchmarkSam
     root = path.parent.resolve()
     samples: list[BenchmarkSample] = []
     seen: set[str] = set()
+    seen_audio_paths: set[Path] = set()
     for row in rows:
         sample_id = row["sample_id"].strip()
         if not sample_id or sample_id in seen:
@@ -68,6 +69,9 @@ def read_manifest(path: Path, *, verify_audio: bool = True) -> list[BenchmarkSam
         audio_path = (root / row["audio_path"]).resolve()
         if not audio_path.is_relative_to(root):
             raise ValueError(f"audio path escapes the manifest directory: {sample_id}")
+        if audio_path in seen_audio_paths:
+            raise ValueError(f"duplicate audio path for {sample_id}: {audio_path}")
+        seen_audio_paths.add(audio_path)
         expected_hash = row["audio_sha256"].lower()
         if not re.fullmatch(r"[0-9a-f]{64}", expected_hash):
             raise ValueError(f"invalid audio_sha256 for {sample_id}")

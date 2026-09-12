@@ -62,6 +62,11 @@ def source_group(filename: str) -> str:
     return "_".join(pieces[:2]) if len(pieces) > 1 else stem
 
 
+def artifact_stem(candidate: Candidate) -> str:
+    """Return a stable name even when AfriSwitch repeats a source filename."""
+    return f"{candidate.index:06d}-{Path(candidate.filename).stem}"
+
+
 def collect_candidates(dataset: Any) -> list[Candidate]:
     rows: list[dict[str, Any]] = []
     for index, row in enumerate(dataset):
@@ -177,10 +182,12 @@ def prepare_language(
     token: str,
     output: Path,
 ) -> list[dict[str, str]]:
+    print(f"{config}: scanning metadata", flush=True)
     metadata_stream = load_stream(config, token)
     selected = stratified_selection(
         collect_candidates(metadata_stream), count, seed=seed, language=config
     )
+    print(f"{config}: selected {len(selected)} rows; materializing audio", flush=True)
     selected_by_index = {candidate.index: candidate for candidate in selected}
     rows: list[dict[str, str]] = []
     audio_root = output / "audio" / config
@@ -188,11 +195,12 @@ def prepare_language(
         candidate = selected_by_index.get(index)
         if candidate is None:
             continue
-        destination = audio_root / f"{Path(candidate.filename).stem}.wav"
+        stem = artifact_stem(candidate)
+        destination = audio_root / f"{stem}.wav"
         write_pcm16_wav(row["audio"], destination)
         rows.append(
             {
-                "sample_id": f"afriswitch-{config}-{Path(candidate.filename).stem}",
+                "sample_id": f"afriswitch-{config}-{stem}",
                 "audio_path": str(destination.relative_to(output)),
                 "audio_sha256": sha256_file(destination),
                 "language_pair": language_pair,
@@ -206,6 +214,8 @@ def prepare_language(
                 "condition": "clean-16khz",
             }
         )
+        if len(rows) % 25 == 0 or len(rows) == count:
+            print(f"{config}: materialized {len(rows)}/{count}", flush=True)
         if len(rows) == count:
             break
     if len(rows) != count:
@@ -237,7 +247,11 @@ def run(args: argparse.Namespace) -> None:
         )
     manifest = args.output / "manifest.csv"
     with manifest.open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.DictWriter(stream, fieldnames=sorted(REQUIRED_COLUMNS))
+        writer = csv.DictWriter(
+            stream,
+            fieldnames=sorted(REQUIRED_COLUMNS),
+            lineterminator="\n",
+        )
         writer.writeheader()
         writer.writerows(rows)
     print(f"Wrote {manifest} with {len(rows)} immutable samples")

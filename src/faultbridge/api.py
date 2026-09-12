@@ -264,8 +264,8 @@ async def start_voice_call(
     cell_id: Annotated[str, Query(min_length=2)],
     language_pair: Annotated[str, Query(min_length=2)],
     consent: bool,
-    voice_language: str = "en",
-    voice_accent: str = "pidgin",
+    voice_language: Annotated[str, Query(min_length=2)],
+    voice_accent: Annotated[str, Query(min_length=2)],
     audio: bytes = Body(media_type="audio/L16", max_length=10 * 1024 * 1024),
 ) -> VoiceTurnResponse:
     result = await voice_pipeline().start_call(
@@ -294,8 +294,8 @@ async def verify_voice_call(
     call_id: str,
     _: InternalAccess,
     language_pair: Annotated[str, Query(min_length=2)],
-    voice_language: str = "en",
-    voice_accent: str = "pidgin",
+    voice_language: Annotated[str, Query(min_length=2)],
+    voice_accent: Annotated[str, Query(min_length=2)],
     audio: bytes = Body(media_type="audio/L16", max_length=10 * 1024 * 1024),
 ) -> VoiceTurnResponse:
     try:

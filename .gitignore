@@ -1,6 +1,8 @@
 .env
 .venv/
 .venv-benchmark/
+.venv-sbpn/
+.venv-omni/
 __pycache__/
 *.py[cod]
 .pytest_cache/

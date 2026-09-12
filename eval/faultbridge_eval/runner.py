@@ -18,16 +18,35 @@ from faultbridge_eval.providers import (
     AssemblyAIStreamingTranscriber,
     BenchmarkTranscriber,
     FasterWhisperTranscriber,
+    OmniASRCTCTranscriber,
     SaharaBenchmarkTranscriber,
+    SBPNTranscriber,
 )
 
 
-def existing_samples(path: Path, provider: str, *, include_failures: bool) -> set[str]:
+def existing_samples(
+    path: Path,
+    provider: str,
+    *,
+    include_failures: bool,
+    model_identifier: str | None = None,
+    parameters: dict[str, Any] | None = None,
+    manifest_sha256: str | None = None,
+) -> set[str]:
     if not path.exists():
         return set()
     completed: set[str] = set()
     for line in path.read_text(encoding="utf-8").splitlines():
         record = json.loads(line)
+        if model_identifier is not None and (
+            record.get("model_identifier") != model_identifier
+            or record.get("parameters") != parameters
+            or record.get("manifest_sha256") != manifest_sha256
+        ):
+            raise ValueError(
+                f"{path} contains results from a different model, configuration, "
+                "or manifest; choose a new output directory"
+            )
         if record.get("provider") == provider and (
             include_failures or record.get("status") == "ok"
         ):
@@ -62,6 +81,13 @@ def build_provider(args: argparse.Namespace) -> BenchmarkTranscriber:
             args.whisper_model,
             device=args.whisper_device,
             compute_type=args.whisper_compute_type,
+        )
+    if args.provider == "sbpn":
+        return SBPNTranscriber(args.sbpn_model, device=args.sbpn_device)
+    if args.provider == "omniasr":
+        return OmniASRCTCTranscriber(
+            args.omni_model,
+            device=None if args.omni_device == "auto" else args.omni_device,
         )
     raise ValueError(f"unsupported provider {args.provider}")
 
@@ -103,11 +129,18 @@ async def run(args: argparse.Namespace) -> None:
     samples = read_manifest(args.manifest)
     provider = build_provider(args)
     output = args.output / f"{provider.name}.jsonl"
+    provenance = environment_provenance(args.manifest)
     completed = existing_samples(
-        output, provider.name, include_failures=not args.retry_failures
+        output,
+        provider.name,
+        include_failures=not args.retry_failures,
+        model_identifier=provider.model_identifier,
+        parameters=provider.parameters(),
+        manifest_sha256=provenance["manifest_sha256"],
     )
     remaining = [sample for sample in samples if sample.sample_id not in completed]
-    provenance = environment_provenance(args.manifest)
+    if args.limit is not None:
+        remaining = remaining[: args.limit]
     for index, sample in enumerate(remaining, start=1):
         record = await run_sample(provider, sample, provenance=provenance)
         append_record(output, record)
@@ -153,7 +186,7 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--output", type=Path, default=Path("eval/results/raw"))
     command.add_argument(
         "--provider",
-        choices=["sahara", "assemblyai", "faster-whisper"],
+        choices=["sahara", "assemblyai", "faster-whisper", "sbpn", "omniasr"],
         required=True,
     )
     command.add_argument("--assemblyai-model", default="whisper-rt")
@@ -166,6 +199,13 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--whisper-model", default="large-v3")
     command.add_argument("--whisper-device", default="cpu")
     command.add_argument("--whisper-compute-type", default="int8")
+    command.add_argument("--sbpn-model", default="ogunlao/SBPN_multilingual_base")
+    command.add_argument("--sbpn-device", choices=["cpu", "cuda"], default="cpu")
+    command.add_argument("--omni-model", default="omniASR_CTC_300M_v2")
+    command.add_argument("--omni-device", default="auto")
+    command.add_argument(
+        "--limit", type=int, help="run only the first N remaining samples for a pilot"
+    )
     return command
 
 

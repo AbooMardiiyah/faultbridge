@@ -1,4 +1,6 @@
-.PHONY: install db-up db-down migrate test lint format run worker purge benchmark-install benchmark-prepare benchmark-robustness benchmark-score benchmark-agent-score benchmark-privacy-score benchmark-route
+.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-sbpn benchmark-install-omni benchmark-prepare benchmark-robustness benchmark-score benchmark-agent-score benchmark-privacy-score benchmark-route
+
+TORCH_BACKEND ?= cpu
 
 install:
 	UV_CACHE_DIR=.uv-cache uv sync
@@ -32,12 +34,41 @@ worker:
 purge:
 	UV_CACHE_DIR=.uv-cache uv run --env-file .env python3 scripts/purge_expired_calls.py
 
-benchmark-install:
-	UV_CACHE_DIR=.uv-cache uv venv .venv-benchmark
+docker-up:
+	docker compose up -d --build --wait api
+
+docker-down:
+	docker compose down
+
+docker-status:
+	docker compose ps
+
+docker-logs:
+	docker compose logs --tail=100 -f api postgres
+
+docker-workers:
+	docker compose --profile workers up -d --build worker
+
+benchmark-install: .venv-benchmark/bin/python
 	UV_CACHE_DIR=.uv-cache uv pip install --python .venv-benchmark/bin/python -r eval/requirements-benchmark.txt
 
+.venv-benchmark/bin/python:
+	UV_CACHE_DIR=.uv-cache uv venv .venv-benchmark
+
+benchmark-install-sbpn: .venv-sbpn/bin/python
+	UV_CACHE_DIR=.uv-cache uv pip install --python .venv-sbpn/bin/python --torch-backend $(TORCH_BACKEND) -r eval/requirements-sbpn.txt
+
+.venv-sbpn/bin/python:
+	UV_CACHE_DIR=.uv-cache uv venv --python 3.11 .venv-sbpn
+
+benchmark-install-omni: .venv-omni/bin/python
+	UV_CACHE_DIR=.uv-cache uv pip install --python .venv-omni/bin/python --torch-backend $(TORCH_BACKEND) -r eval/requirements-omni.txt
+
+.venv-omni/bin/python:
+	UV_CACHE_DIR=.uv-cache uv venv --python 3.11 .venv-omni
+
 benchmark-prepare:
-	PYTHONPATH=src:eval .venv-benchmark/bin/python -m faultbridge_eval.prepare_afriswitch
+	VIRTUAL_ENV=.venv-benchmark PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --active --no-sync --env-file .env -m faultbridge_eval.prepare_afriswitch
 
 benchmark-robustness:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.audio_conditions

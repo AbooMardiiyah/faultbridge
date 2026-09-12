@@ -72,6 +72,9 @@ def run(args: argparse.Namespace) -> None:
     if gold:
         for row in summaries:
             row["asr_propagation_loss_pass_at_1"] = gold["pass_at_1"] - row["pass_at_1"]
+            row["voice_capability_retention"] = (
+                row["pass_at_1"] / gold["pass_at_1"] if gold["pass_at_1"] else None
+            )
     report = {
         "scorer_version": "faultbridge-agent-scorer-v1",
         "variants": summaries,
@@ -80,7 +83,11 @@ def run(args: argparse.Namespace) -> None:
     args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     csv_path = args.output.with_suffix(".csv")
     with csv_path.open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(summaries[0]))
+        writer = csv.DictWriter(
+            stream,
+            fieldnames=list(summaries[0]),
+            lineterminator="\n",
+        )
         writer.writeheader()
         writer.writerows(summaries)
     print(f"Wrote {args.output} and {csv_path}")

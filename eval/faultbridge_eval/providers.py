@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import time
 import wave
 from dataclasses import dataclass
@@ -212,4 +213,109 @@ class FasterWhisperTranscriber:
         transcript = await asyncio.to_thread(run)
         if not transcript:
             raise RuntimeError("Faster-Whisper returned no transcript")
+        return TranscriptionResult(transcript, time.monotonic() - started)
+
+
+def _prediction_text(value: Any) -> str:
+    text = value.text if hasattr(value, "text") else str(value)
+    return text.strip()
+
+
+class SBPNTranscriber:
+    name = "sbpn-base"
+
+    def __init__(
+        self,
+        model_name: str = "ogunlao/SBPN_multilingual_base",
+        *,
+        device: str = "cpu",
+    ) -> None:
+        try:
+            import nemo.collections.asr as nemo_asr
+        except ImportError as error:
+            raise RuntimeError(
+                "install the SBPN benchmark environment first"
+            ) from error
+        self.model_name = model_name
+        self.device = device
+        self._model = nemo_asr.models.EncDecHybridRNNTCTCBPEModel.from_pretrained(
+            model_name=model_name
+        )
+        self._model.to(device)
+        self._model.eval()
+
+    @property
+    def model_identifier(self) -> str:
+        return self.model_name
+
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "device": self.device,
+            "batch_size": 1,
+            "language_identification": "model-generated",
+            "realtime_pacing": False,
+        }
+
+    async def transcribe(
+        self, audio_path: Path, *, language_pair: str
+    ) -> TranscriptionResult:
+        del language_pair
+        started = time.monotonic()
+
+        def run() -> str:
+            outputs = self._model.transcribe([str(audio_path)], batch_size=1)
+            if not outputs:
+                return ""
+            return re.sub(r"<[^>]+>", "", _prediction_text(outputs[0])).strip()
+
+        transcript = await asyncio.to_thread(run)
+        if not transcript:
+            raise RuntimeError("SBPN returned no transcript")
+        return TranscriptionResult(transcript, time.monotonic() - started)
+
+
+class OmniASRCTCTranscriber:
+    name = "meta-omniasr-ctc"
+
+    def __init__(
+        self,
+        model_card: str = "omniASR_CTC_300M_v2",
+        *,
+        device: str | None = None,
+    ) -> None:
+        try:
+            from omnilingual_asr.models.inference.pipeline import ASRInferencePipeline
+        except ImportError as error:
+            raise RuntimeError(
+                "install the OmniASR benchmark environment first"
+            ) from error
+        self.model_card = model_card
+        self.device = device
+        self._pipeline = ASRInferencePipeline(model_card=model_card, device=device)
+
+    @property
+    def model_identifier(self) -> str:
+        return self.model_card
+
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "device": self.device or "auto",
+            "batch_size": 1,
+            "language_conditioning": False,
+            "realtime_pacing": False,
+        }
+
+    async def transcribe(
+        self, audio_path: Path, *, language_pair: str
+    ) -> TranscriptionResult:
+        del language_pair
+        started = time.monotonic()
+
+        def run() -> str:
+            outputs = self._pipeline.transcribe([str(audio_path)], batch_size=1)
+            return _prediction_text(outputs[0]) if outputs else ""
+
+        transcript = await asyncio.to_thread(run)
+        if not transcript:
+            raise RuntimeError("Meta OmniASR returned no transcript")
         return TranscriptionResult(transcript, time.monotonic() - started)

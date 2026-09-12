@@ -189,7 +189,11 @@ def run(args: argparse.Namespace) -> None:
             row["audio_sha256"] = sha256_file(derived)
             rows.append(row)
     with args.output.open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.DictWriter(stream, fieldnames=sorted(REQUIRED_COLUMNS))
+        writer = csv.DictWriter(
+            stream,
+            fieldnames=sorted(REQUIRED_COLUMNS),
+            lineterminator="\n",
+        )
         writer.writeheader()
         writer.writerows(rows)
     print(f"Wrote {args.output} with {len(rows)} clean and robustness rows")
