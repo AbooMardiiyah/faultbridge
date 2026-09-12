@@ -95,8 +95,17 @@ code-switched text prompts and generates every prompt once with each Sahara voic
 
 ```bash
 make benchmark-tts-prepare
-make benchmark-tts-generate
+make benchmark-tts-batch TTS_BATCH_SIZE=10 TTS_GENDERS=female
 ```
+
+Each completed request is appended immediately. Re-running the batch command skips
+both successful and previously failed samples and continues with unattempted work.
+After checking the provider and replenishing credit, retry failures fairly across
+the panel with `make benchmark-tts-retry TTS_BATCH_SIZE=10 TTS_GENDERS=female`.
+Successful audio is never regenerated. Generation also pauses automatically after
+three consecutive provider failures, which limits spend during an outage or credit
+failure. Use `make benchmark-tts-generate` only for an intentionally unbounded full
+run.
 
 Transcribe `benchmark/tts_generated.csv` with three independent model families,
 then calculate the organizer-requested metrics:

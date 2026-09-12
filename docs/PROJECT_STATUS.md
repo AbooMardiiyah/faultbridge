@@ -49,10 +49,11 @@ sessions; the Git history remains the authoritative implementation record.
   matching fairseq2 and PyTorch 2.8 CPU packages. It transcribed 15.30 seconds of
   audio in 6.34 seconds and scored 34.3% WER and 8.7% CER. Its 1.21 GB checkpoint
   is cached locally; these one-sample figures are diagnostic only.
-- The complete 400-clip SBPN run finished. Its 35 empty outputs persisted after
-  the single predeclared retry and remain scored as failures. Preliminary WER is
-  45.1% Hausa, 65.7% Igbo, 39.3% Pidgin, and 82.1% Yoruba; final reporting waits
-  for the complete paired provider panel and confidence-interval review.
+- The complete 400-clip SBPN run and scorer finished. Its 35 empty outputs
+  persisted after one retry and remain in the denominator as failures. Normalized
+  WER is 45.1% Hausa, 65.7% Igbo, 39.3% Pidgin, and 82.1% Yoruba. The committed
+  single-model report includes clustered confidence intervals and limitations;
+  cross-model conclusions wait for the paired provider panel.
 
 ## Current access
 
@@ -76,9 +77,15 @@ summary, and preserves the already validated WAV when only the summary times out
 The original failed pilot and five successful contract pilots remain in the
 ignored `eval/results/tts/pilots/` audit directory.
 
-TTS generator v3 separates time to first audio, time to last audio, and session
+TTS generator v4 separates time to first audio, time to last audio, and session
 close time. Its real-time factor ends at the last audio chunk, so the optional
 commit-acknowledgement timeout cannot inflate synthesis latency.
+
+Sahara generation is paused because the account has about $1 of credit. A stopped
+run left 38 auditable female-voice outcomes: 4 successes, 32 WebSocket protocol
+closures, and 2 provider chunk-size failures. No result was deleted. Credit-safe
+Make targets now cap each invocation, resume unattempted samples, distribute
+retries fairly, and stop automatically after three consecutive provider failures.
 
 ## Active sequence
 

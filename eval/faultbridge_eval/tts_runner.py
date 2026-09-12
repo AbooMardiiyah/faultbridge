@@ -113,6 +113,23 @@ def latest_records(path: Path) -> dict[str, dict[str, Any]]:
     return latest
 
 
+def attempt_counts(path: Path) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    if not path.exists():
+        return counts
+    for line_number, line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        if not line.strip():
+            continue
+        record = json.loads(line)
+        if "sample_id" not in record:
+            raise ValueError(f"{path}:{line_number} has no sample_id")
+        sample_id = str(record["sample_id"])
+        counts[sample_id] = counts.get(sample_id, 0) + 1
+    return counts
+
+
 async def generate(
     prompt: dict[str, str],
     *,
@@ -122,6 +139,7 @@ async def generate(
     api_key: str,
     provenance: dict[str, Any],
     commit_ack_timeout_seconds: float,
+    attempt: int,
 ) -> dict[str, Any]:
     sample_id = f"{prompt['prompt_id']}-{gender}-r{repetition}"
     tts = SaharaStreamingTTS(
@@ -142,6 +160,7 @@ async def generate(
         "accent": prompt["accent"],
         "gender": gender,
         "repetition": repetition,
+        "attempt": attempt,
         "parameters": {
             "output_format": tts.output_format,
             "stream_timeout_seconds": tts.timeout_seconds,
@@ -249,10 +268,15 @@ async def run(args: argparse.Namespace) -> None:
         raise ValueError("SAHARA_API_KEY is required")
     if args.commit_ack_timeout <= 0:
         raise ValueError("commit acknowledgement timeout must be positive")
+    if args.limit is not None and args.limit <= 0:
+        raise ValueError("limit must be positive")
+    if args.max_consecutive_failures <= 0:
+        raise ValueError("maximum consecutive failures must be positive")
     prompts = read_prompts(args.prompts)
     provenance = environment_provenance(args.prompts)
     provenance["prompt_manifest_sha256"] = provenance.pop("manifest_sha256")
     existing = latest_records(args.log)
+    attempts = attempt_counts(args.log)
     all_work = [
         (prompt, gender, repetition)
         for prompt in prompts
@@ -296,9 +320,17 @@ async def run(args: argparse.Namespace) -> None:
         previous = existing.get(sample_id)
         if previous is None or (args.retry_failures and previous.get("status") != "ok"):
             remaining.append((prompt, gender, repetition))
+    if args.retry_failures:
+        remaining.sort(
+            key=lambda item: attempts.get(
+                f"{item[0]['prompt_id']}-{item[1]}-r{item[2]}", 0
+            )
+        )
     if args.limit is not None:
         remaining = remaining[: args.limit]
+    consecutive_failures = 0
     for index, (prompt, gender, repetition) in enumerate(remaining, start=1):
+        sample_id = f"{prompt['prompt_id']}-{gender}-r{repetition}"
         record = await generate(
             prompt,
             gender=gender,
@@ -307,10 +339,23 @@ async def run(args: argparse.Namespace) -> None:
             api_key=api_key,
             provenance=provenance,
             commit_ack_timeout_seconds=args.commit_ack_timeout,
+            attempt=attempts.get(sample_id, 0) + 1,
         )
         append_record(args.log, record)
         existing[str(record["sample_id"])] = record
+        attempts[sample_id] = int(record["attempt"])
         print(f"[{index}/{len(remaining)}] {record['sample_id']}: {record['status']}")
+        if record["status"] == "ok":
+            consecutive_failures = 0
+        else:
+            consecutive_failures += 1
+            if consecutive_failures >= args.max_consecutive_failures:
+                print(
+                    "Paused after "
+                    f"{consecutive_failures} consecutive provider failures; "
+                    "resume after checking service status or credit"
+                )
+                break
     write_audio_manifest(args.output_manifest, list(existing.values()))
     failures = sum(record.get("status") != "ok" for record in existing.values())
     print(
@@ -339,6 +384,12 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--repetitions", type=int, default=1)
     command.add_argument("--commit-ack-timeout", type=float, default=2.0)
     command.add_argument("--limit", type=int)
+    command.add_argument(
+        "--max-consecutive-failures",
+        type=int,
+        default=3,
+        help="pause after this many consecutive failures (default: 3)",
+    )
     command.add_argument(
         "--pilot-per-language",
         action="store_true",

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import io
+import json
+import tempfile
 import unittest
 import wave
 from pathlib import Path
@@ -9,7 +11,7 @@ from faultbridge_eval.manifest import BenchmarkSample
 from faultbridge_eval.metrics import segment_loss_counts
 from faultbridge_eval.tts_audit import target_phrase
 from faultbridge_eval.tts_manifest import TTS_SETTINGS, select_prompts
-from faultbridge_eval.tts_runner import merge_wav_chunks
+from faultbridge_eval.tts_runner import attempt_counts, merge_wav_chunks
 from faultbridge_eval.tts_scorer import (
     score_transcript,
     summarize_generation,
@@ -28,6 +30,20 @@ def wav_bytes(value: int, frames: int = 160) -> bytes:
 
 
 class TTSMetricsTests(unittest.TestCase):
+    def test_attempt_counts_survive_restarts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / "generation.jsonl"
+            log.write_text(
+                "\n".join(
+                    json.dumps({"sample_id": sample_id})
+                    for sample_id in ("one", "two", "one")
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            self.assertEqual(attempt_counts(log), {"one": 2, "two": 1})
+
     def test_audit_target_uses_longest_switched_span(self) -> None:
         tagged = "local [[EN]]network[[/EN]] words [[EN]]service unavailable[[/EN]]"
         self.assertEqual(target_phrase(tagged), "service unavailable")

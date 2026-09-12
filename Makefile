@@ -1,6 +1,8 @@
-.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-sbpn benchmark-install-omni benchmark-prepare benchmark-robustness benchmark-score benchmark-agent-score benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit
+.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-sbpn benchmark-install-omni benchmark-prepare benchmark-robustness benchmark-score benchmark-agent-score benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit
 
 TORCH_BACKEND ?= cpu
+TTS_BATCH_SIZE ?= 10
+TTS_GENDERS ?= female male
 
 install:
 	UV_CACHE_DIR=.uv-cache uv sync
@@ -90,6 +92,12 @@ benchmark-tts-prepare:
 
 benchmark-tts-generate:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.tts_runner
+
+benchmark-tts-batch:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.tts_runner --genders $(TTS_GENDERS) --limit $(TTS_BATCH_SIZE)
+
+benchmark-tts-retry:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.tts_runner --genders $(TTS_GENDERS) --retry-failures --limit $(TTS_BATCH_SIZE)
 
 benchmark-tts-asr-faster-whisper:
 	PYTHONPATH=src:eval .venv-benchmark/bin/python -m faultbridge_eval.runner --manifest benchmark/tts_generated.csv --output eval/results/tts/asr --provider faster-whisper

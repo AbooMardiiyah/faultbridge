@@ -203,8 +203,16 @@ Prepare and generate the panel with:
 
 ```bash
 make benchmark-tts-prepare
-make benchmark-tts-generate
+make benchmark-tts-batch TTS_BATCH_SIZE=10 TTS_GENDERS=female
 ```
+
+The batch command appends each outcome immediately and resumes at the first
+unattempted sample. It pauses after three consecutive provider failures. Once a
+service or credit issue is resolved, use
+`make benchmark-tts-retry TTS_BATCH_SIZE=10 TTS_GENDERS=female`; successful audio
+is skipped, and failed samples with the fewest attempts are retried first. Repeat
+for `TTS_GENDERS=male`. The unbounded `make benchmark-tts-generate` command is
+reserved for a deliberately funded full run.
 
 Then transcribe `benchmark/tts_generated.csv` with all three independent ASR
 judges and score their JSONL outputs:
