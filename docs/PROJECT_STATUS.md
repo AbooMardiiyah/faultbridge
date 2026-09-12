@@ -81,11 +81,13 @@ TTS generator v5 separates time to first audio, time to last audio, and session
 close time. Its real-time factor ends at the last audio chunk, so the optional
 commit-acknowledgement timeout cannot inflate synthesis latency.
 
-Sahara generation is paused because the account has about $1 of credit. A stopped
-run left 38 auditable female-voice outcomes: 4 successes, 32 WebSocket protocol
-closures, and 2 provider chunk-size failures. No result was deleted. Credit-safe
-Make targets now cap each invocation, resume unattempted samples, distribute
-retries fairly, and stop automatically after three consecutive provider failures.
+The original stopped Sahara run left 38 auditable female-voice outcomes: 4
+successes, 32 WebSocket protocol closures, and 2 provider chunk-size failures. No
+result was deleted. After the account top-up and runner audit, one targeted retry
+of a former chunk-size failure succeeded, leaving 5 successful and 33 failed
+latest outcomes. Credit-safe Make targets cap each invocation, resume unattempted
+samples, distribute retries fairly, and stop automatically after three consecutive
+provider failures.
 The preflight audit found that the old splitter could create seven text chunks over
 Sahara's 100-character maximum; a complete-partition splitter now keeps all 100
 frozen prompts within 10–100 characters. WebSocket compression is disabled to

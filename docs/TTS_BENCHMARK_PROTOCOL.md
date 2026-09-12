@@ -219,7 +219,7 @@ and 10–100 characters per streaming text chunk. It does not publish a connecti
 rate for this WebSocket endpoint. FaultBridge therefore runs sequentially and
 starts sessions no faster than once every two seconds, matching the stricter
 30-request-per-minute synchronous TTS rate. Every result records the starting
-credit balance returned by `SESSION_CREATED` so credit use can be audited.
+credit balance returned by `SESSION_CREATED` so credit use can be audited.[^10]
 
 Then transcribe `benchmark/tts_generated.csv` with all three independent ASR
 judges and score their JSONL outputs:
@@ -247,3 +247,4 @@ No estimated, mocked, or manually improved number may appear in a results table.
 [^7]: Méndez Kline and Zellou. “[The Perception of Code-Switched vs. Monolingual Sentences in TTS Voices](https://doi.org/10.3389/fcomp.2025.1565604).” Frontiers in Computer Science, 2025.
 [^8]: Chinen et al. “[ViSQOL v3: An Open Source Production Ready Objective Speech and Audio Metric](https://research.google/pubs/visqol-v3-an-open-source-production-ready-objective-speech-and-audio-metric/).” 2020.
 [^9]: Shi et al. “[VERSA: A Versatile Evaluation Toolkit for Speech, Audio, and Music](https://github.com/wavlab-speech/versa).” 2025.
+[^10]: Intron Voice. “[TTS Streaming](https://docs.voice.intron.io/docs/tts/tts-streaming).” Accessed 12 September 2026.
