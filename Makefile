@@ -62,7 +62,7 @@ benchmark-install-sbpn: .venv-sbpn/bin/python
 	UV_CACHE_DIR=.uv-cache uv venv --python 3.11 .venv-sbpn
 
 benchmark-install-omni: .venv-omni/bin/python
-	UV_CACHE_DIR=.uv-cache uv pip install --python .venv-omni/bin/python --torch-backend $(TORCH_BACKEND) -r eval/requirements-omni.txt
+	UV_CACHE_DIR=.uv-cache uv pip install --python .venv-omni/bin/python --torch-backend $(TORCH_BACKEND) --extra-index-url https://fair.pkg.atmeta.com/fairseq2/whl/pt2.8.0/$(TORCH_BACKEND) --index-strategy unsafe-best-match -r eval/requirements-omni.txt
 
 .venv-omni/bin/python:
 	UV_CACHE_DIR=.uv-cache uv venv --python 3.11 .venv-omni

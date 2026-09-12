@@ -45,6 +45,10 @@ sessions; the Git history remains the authoritative implementation record.
   substitutions and 4 deletions over 35 reference words), 12.1% CER, and 100%
   switch-context recall. The one-sample result is a contract diagnostic, not a
   model-level accuracy conclusion.
+- Meta `omniASR_CTC_300M_v2` passed a one-clip CPU pilot after installing its
+  matching fairseq2 and PyTorch 2.8 CPU packages. It transcribed 15.30 seconds of
+  audio in 6.34 seconds and scored 34.3% WER and 8.7% CER. Its 1.21 GB checkpoint
+  is cached locally; these one-sample figures are diagnostic only.
 
 ## Current access
 

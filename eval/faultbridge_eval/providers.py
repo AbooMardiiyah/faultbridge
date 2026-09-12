@@ -6,6 +6,7 @@ import re
 import time
 import wave
 from dataclasses import dataclass
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlencode
@@ -32,6 +33,16 @@ class BenchmarkTranscriber(Protocol):
     async def transcribe(
         self, audio_path: Path, *, language_pair: str
     ) -> TranscriptionResult: ...
+
+
+def _runtime_versions(*packages: str) -> dict[str, str]:
+    versions: dict[str, str] = {}
+    for package in packages:
+        try:
+            versions[package] = version(package)
+        except PackageNotFoundError:
+            versions[package] = "unknown"
+    return versions
 
 
 def read_pcm16_wav(path: Path) -> tuple[bytes, int]:
@@ -198,6 +209,7 @@ class FasterWhisperTranscriber:
             "compute_type": self.compute_type,
             "vad_filter": True,
             "realtime_pacing": False,
+            "runtime_versions": _runtime_versions("faster-whisper", "ctranslate2"),
         }
 
     async def transcribe(
@@ -219,6 +231,20 @@ class FasterWhisperTranscriber:
 def _prediction_text(value: Any) -> str:
     text = value.text if hasattr(value, "text") else str(value)
     return text.strip()
+
+
+def _preload_bundled_sndfile() -> None:
+    """Make SoundFile's bundled libsndfile visible to fairseq2 on Linux."""
+    try:
+        from ctypes import CDLL, RTLD_GLOBAL
+
+        import soundfile
+    except ImportError:
+        return
+    library_root = Path(soundfile.__file__).parent / "_soundfile_data"
+    candidates = sorted(library_root.glob("libsndfile*.so"))
+    if candidates:
+        CDLL(str(candidates[0].resolve()), mode=RTLD_GLOBAL)
 
 
 class SBPNTranscriber:
@@ -266,6 +292,7 @@ class SBPNTranscriber:
             "language_identification": "model-generated",
             "rnnt_loss_override": "pytorch (inference only)",
             "realtime_pacing": False,
+            "runtime_versions": _runtime_versions("nemo-toolkit", "torch"),
         }
 
     async def transcribe(
@@ -295,6 +322,7 @@ class OmniASRCTCTranscriber:
         *,
         device: str | None = None,
     ) -> None:
+        _preload_bundled_sndfile()
         try:
             from omnilingual_asr.models.inference.pipeline import ASRInferencePipeline
         except ImportError as error:
@@ -313,8 +341,16 @@ class OmniASRCTCTranscriber:
         return {
             "device": self.device or "auto",
             "batch_size": 1,
-            "language_conditioning": False,
+            "language_conditioning": "ignored by CTC architecture",
             "realtime_pacing": False,
+            "runtime_versions": _runtime_versions(
+                "omnilingual-asr",
+                "fairseq2",
+                "fairseq2n",
+                "torch",
+                "torchaudio",
+                "soundfile",
+            ),
         }
 
     async def transcribe(
