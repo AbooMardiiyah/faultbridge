@@ -109,10 +109,11 @@ unintelligible speech, non-speech sounds, and hallucination.[^5]
 ## Independent ASR-Judge Protocol
 
 The primary judges are SBPN Multilingual Base, Meta
-`omniASR_CTC_300M_v2`, and Faster-Whisper `large-v3`. They represent Nigerian,
+`omniASR_CTC_300M_v2`, and Faster-Whisper `large-v3-turbo`. They represent Nigerian,
 massively multilingual, and broad multilingual model families. Each receives the
-same generated WAV manifest and the documented code-switch language value. Report
-each judge separately before any consensus. The consensus column uses median WER
+same generated WAV manifest; language selection is supplied only when the model
+interface supports it, and that configuration is recorded. Report each judge
+separately before any consensus. The consensus column uses median WER
 and majority flags, never the most favorable judge.
 
 Sahara ASR may appear as a sensitivity row, but it cannot be the sole judge of

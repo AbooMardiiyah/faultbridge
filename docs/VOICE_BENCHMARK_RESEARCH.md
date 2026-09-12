@@ -171,13 +171,22 @@ Any later correction creates a new benchmark version and reruns every provider.
 ### Frozen model panel
 
 The guaranteed comparison is Sahara Streaming STT, the Nigeria-specific SBPN
-Multilingual Base 120M, Meta `omniASR_CTC_300M_v2`, and Faster-Whisper `large-v3`.
+Multilingual Base 120M, Meta `omniASR_CTC_300M_v2`, and Faster-Whisper
+`large-v3-turbo`.
 AssemblyAI Whisper Streaming (`whisper-rt`) adds a commercial streaming sensitivity
 comparison when credentials are available. This exceeds the stricter challenge
 page wording of Sahara plus at least three alternatives and contrasts African,
 Nigerian, massively multilingual, and global model families rather than several
 wrappers around the same model.^20 SBPN Base is a 120M-parameter Nigerian model
 covering Yoruba, Hausa, Igbo, Nigerian Pidgin, and Nigerian English.^22
+
+The original plan named Whisper `large-v3`. One unscored diagnostic clip completed
+in 36.58 seconds on the 8 GiB benchmark machine before the final panel changed to
+`large-v3-turbo`. OpenAI describes Turbo as an 809M-parameter pruned and fine-tuned
+large-v3 variant with four decoder layers instead of 32, with a speed gain and
+minor quality tradeoff.^24 This makes the complete frozen run feasible on CPU. The
+pilot stays in the audit directory, while the reportable run must use the exact
+`large-v3-turbo` identifier for every sample.
 
 AssemblyAI's Universal streaming family does not list the four Nigerian languages,
 so it is not used on the primary panel. Whisper Streaming lists Hausa and Yoruba
@@ -193,6 +202,11 @@ later routing policy could help.
 Report corpus-level micro WER as:
 
 `WER = (substitutions + deletions + insertions) / reference words`.
+
+The executable scorer uses dynamic-programming Levenshtein alignment. Its edit
+counts and WER are regression-tested against JiWER 4 on a real code-switched
+AfriSwitch reference/hypothesis pair; this independent check prevents a custom
+alignment bug from silently changing the headline metric.
 
 Also report macro WER across utterances so a few long clips cannot conceal poor
 short-call performance. CER provides a useful complement for agglutinative words,
@@ -517,3 +531,4 @@ shows where every conclusion stops.
 21. Pipecat. “[YC Voice Agents Hackathon starter](https://github.com/pipecat-ai/yc-voice-agents-hackathon).” 2026.
 22. Ogun. “[SBPN Multilingual Base model card](https://huggingface.co/ogunlao/SBPN_multilingual_base).” 2026.
 23. Ray et al. “[$\tau$-Voice: Benchmarking Full-Duplex Voice Agents on Real-World Domains](https://arxiv.org/abs/2603.13686).” 2026.
+24. OpenAI. “[Whisper Large-v3-Turbo Model Card](https://huggingface.co/openai/whisper-large-v3-turbo).” Accessed 2026.

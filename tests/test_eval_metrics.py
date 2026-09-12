@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 
+import jiwer
 from faultbridge_eval.metrics import (
     ErrorCounts,
     bootstrap_interval,
@@ -20,6 +21,28 @@ class EvaluationMetricTests(unittest.TestCase):
 
         self.assertEqual(counts, ErrorCounts(1, 0, 1, 2))
         self.assertEqual(counts.error_rate, 1.0)
+
+    def test_word_errors_match_jiwer_on_code_switched_sample(self) -> None:
+        reference = (
+            "Annabi Muhammadu sallalahu alyahi wasallam, so da ana daukan "
+            "hukunci idan an shigar da kara sanda ya kamata, kuma like da "
+            "sauri da mutane ba su fara daukan hukunci a kan da hannun su ba"
+        )
+        hypothesis = (
+            "annabi muhammadu sallallahu so da ana daukar hukunci idan an "
+            "shigar da kara sanda ya kamata kuma like da sauri da mutane "
+            "basu fara daukar hukunci a kansu da hannunsu ba"
+        )
+        ours = word_errors(reference, hypothesis, normalized=True)
+        independent = jiwer.process_words(
+            normalize_text(reference), normalize_text(hypothesis)
+        )
+
+        self.assertEqual(ours.substitutions, independent.substitutions)
+        self.assertEqual(ours.deletions, independent.deletions)
+        self.assertEqual(ours.insertions, independent.insertions)
+        self.assertEqual(ours.reference_units, 35)
+        self.assertAlmostEqual(ours.error_rate, independent.wer)
 
     def test_frozen_normalization_handles_case_unicode_and_punctuation(self) -> None:
         self.assertEqual(normalize_text("  ÈKÓ, Network!  "), "èkó network")

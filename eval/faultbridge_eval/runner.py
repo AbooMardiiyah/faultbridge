@@ -7,7 +7,6 @@ import json
 import os
 import platform
 import subprocess
-from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -123,7 +122,14 @@ async def run_sample(
             "elapsed_seconds": None,
             "first_partial_seconds": None,
         }
-    return {**base, "status": "ok", **asdict(result), "hypothesis": result.transcript}
+    return {
+        **base,
+        "status": "ok",
+        "hypothesis": result.transcript,
+        "elapsed_seconds": result.elapsed_seconds,
+        "first_partial_seconds": result.first_partial_seconds,
+        "provider_request_id": result.provider_request_id,
+    }
 
 
 async def run(args: argparse.Namespace) -> None:
@@ -197,7 +203,7 @@ def parser() -> argparse.ArgumentParser:
         action="store_true",
         help="append one retry for failed samples; successful samples still resume",
     )
-    command.add_argument("--whisper-model", default="large-v3")
+    command.add_argument("--whisper-model", default="large-v3-turbo")
     command.add_argument("--whisper-device", default="cpu")
     command.add_argument("--whisper-compute-type", default="int8")
     command.add_argument("--sbpn-model", default="ogunlao/SBPN_multilingual_base")

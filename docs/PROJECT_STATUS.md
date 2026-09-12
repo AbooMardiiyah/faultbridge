@@ -28,6 +28,23 @@ sessions; the Git history remains the authoritative implementation record.
 - One natural Hausa-English Sahara STT pilot succeeded after a transient provider
   failure: normalized WER 28.6%, CER 7.4%, and 5.31 seconds of post-audio latency.
   The sample size is one and must not appear as a model-level conclusion.
+- One unscored Faster-Whisper `large-v3` diagnostic completed in 36.58 seconds on
+  the 8 GiB machine before the final global baseline changed to OpenAI
+  `large-v3-turbo` (809M parameters, four decoder layers). Every reportable sample
+  must use the Turbo identifier, and the report must disclose the amendment.
+- Two natural Hausa-English Faster-Whisper Turbo CPU pilots completed in 14.70 and
+  25.09 seconds. Their combined normalized WER was 96.0%, CER 53.3%, and
+  switch-context recall 0%; the second output largely translated or paraphrased
+  the input into English. The two-sample pilot is diagnostic evidence only.
+- SBPN's published NeMo checkpoint requests the optional `graph_rnnt` training
+  loss. The adapter restores it with NeMo's built-in PyTorch RNNT loss because
+  loss computation is disabled for transcription. The override leaves the model
+  weights and decoding configuration unchanged and is recorded in each result.
+- A one-clip SBPN CPU pilot restored the 460 MB checkpoint and transcribed in
+  1.05 seconds after model loading. It scored 28.6% normalized WER (6
+  substitutions and 4 deletions over 35 reference words), 12.1% CER, and 100%
+  switch-context recall. The one-sample result is a contract diagnostic, not a
+  model-level accuracy conclusion.
 
 ## Current access
 

@@ -166,7 +166,7 @@ class FasterWhisperTranscriber:
 
     def __init__(
         self,
-        model_name: str = "large-v3",
+        model_name: str = "large-v3-turbo",
         *,
         device: str = "cpu",
         compute_type: str = "int8",
@@ -238,8 +238,19 @@ class SBPNTranscriber:
             ) from error
         self.model_name = model_name
         self.device = device
+        config = nemo_asr.models.EncDecHybridRNNTCTCBPEModel.from_pretrained(
+            model_name=model_name,
+            return_config=True,
+        )
+        # The published checkpoint requests k2's graph_rnnt training loss. Loss
+        # computation is disabled for inference, but NeMo still constructs it
+        # while restoring the model. Use its built-in loss to avoid requiring k2;
+        # this does not alter the checkpoint weights or decoding configuration.
+        config.loss.loss_name = "pytorch"
+        config.loss.loss_kwargs = {}
         self._model = nemo_asr.models.EncDecHybridRNNTCTCBPEModel.from_pretrained(
-            model_name=model_name
+            model_name=model_name,
+            override_config_path=config,
         )
         self._model.to(device)
         self._model.eval()
@@ -253,6 +264,7 @@ class SBPNTranscriber:
             "device": self.device,
             "batch_size": 1,
             "language_identification": "model-generated",
+            "rnnt_loss_override": "pytorch (inference only)",
             "realtime_pacing": False,
         }
 
