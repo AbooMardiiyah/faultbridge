@@ -77,7 +77,7 @@ summary, and preserves the already validated WAV when only the summary times out
 The original failed pilot and five successful contract pilots remain in the
 ignored `eval/results/tts/pilots/` audit directory.
 
-TTS generator v4 separates time to first audio, time to last audio, and session
+TTS generator v5 separates time to first audio, time to last audio, and session
 close time. Its real-time factor ends at the last audio chunk, so the optional
 commit-acknowledgement timeout cannot inflate synthesis latency.
 
@@ -86,6 +86,13 @@ run left 38 auditable female-voice outcomes: 4 successes, 32 WebSocket protocol
 closures, and 2 provider chunk-size failures. No result was deleted. Credit-safe
 Make targets now cap each invocation, resume unattempted samples, distribute
 retries fairly, and stop automatically after three consecutive provider failures.
+The preflight audit found that the old splitter could create seven text chunks over
+Sahara's 100-character maximum; a complete-partition splitter now keeps all 100
+frozen prompts within 10–100 characters. WebSocket compression is disabled to
+avoid the intermittent reserved-bit protocol closures observed in the stopped
+run. Streaming documentation publishes session and chunk limits but no connection
+rate, so paid runners remain sequential with a conservative two-second minimum
+between session starts and record the balance returned at session creation.
 
 ## Active sequence
 

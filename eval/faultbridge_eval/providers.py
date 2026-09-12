@@ -5,7 +5,7 @@ import json
 import re
 import time
 import wave
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, Protocol
@@ -22,6 +22,7 @@ class TranscriptionResult:
     elapsed_seconds: float
     first_partial_seconds: float | None = None
     provider_request_id: str | None = None
+    provider_metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class BenchmarkTranscriber(Protocol):
@@ -65,6 +66,7 @@ class SaharaBenchmarkTranscriber:
     def parameters(self) -> dict[str, Any]:
         return {
             "endpoint": self.client.endpoint,
+            "websocket_compression": "disabled",
             "sample_rate": self.client.sample_rate,
             "bit_rate": self.client.bit_rate,
             "num_channels": self.client.num_channels,
@@ -81,7 +83,11 @@ class SaharaBenchmarkTranscriber:
             )
         started = time.monotonic()
         transcript = await self.client.transcribe(audio, language_pair=language_pair)
-        return TranscriptionResult(transcript, time.monotonic() - started)
+        return TranscriptionResult(
+            transcript,
+            time.monotonic() - started,
+            provider_metadata={"credit_balance_start": self.client.credit_balance},
+        )
 
 
 @dataclass(frozen=True, slots=True)

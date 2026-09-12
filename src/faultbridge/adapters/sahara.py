@@ -4,7 +4,7 @@ import asyncio
 import base64
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urlencode
 
@@ -71,7 +71,7 @@ def pcm16_chunks(
     return chunks
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class SaharaStreamingSTT:
     """Client for Sahara's PCM16 WebSocket transcription endpoint."""
 
@@ -82,10 +82,12 @@ class SaharaStreamingSTT:
     num_channels: int = 1
     timeout_seconds: float = 45.0
     realtime_pacing: bool = False
+    credit_balance: float | int | str | None = field(default=None, init=False)
 
     async def transcribe(self, pcm16_audio: bytes, *, language_pair: str) -> str:
         if not self.api_key:
             raise ValueError("Sahara API key is required")
+        self.credit_balance = None
         params = urlencode(
             {
                 "sample_rate": self.sample_rate,
@@ -101,8 +103,10 @@ class SaharaStreamingSTT:
             async with websockets.connect(
                 url,
                 additional_headers=headers,
+                compression=None,
                 open_timeout=self.timeout_seconds,
                 max_size=2**20,
+                max_queue=128,
             ) as socket:
                 ready = json.loads(await socket.recv())
                 self._raise_for_error(ready)
@@ -110,6 +114,9 @@ class SaharaStreamingSTT:
                     raise SaharaError(
                         f"expected SESSION_CREATED, received {ready.get('message_type')}"
                     )
+                balance = ready.get("credit_balance")
+                if isinstance(balance, (float, int, str)):
+                    self.credit_balance = balance
 
                 for ack_id, chunk in enumerate(pcm16_chunks(pcm16_audio), start=1):
                     await socket.send(
@@ -145,7 +152,15 @@ class SaharaStreamingSTT:
     def _raise_for_error(message: dict) -> None:
         message_type = message.get("message_type")
         if message_type in TERMINAL_ERRORS:
-            detail = message.get("message") or message.get("status") or "unknown error"
+            metadata = {
+                key: value for key, value in message.items() if key != "message_type"
+            }
+            detail = (
+                message.get("message")
+                or message.get("status")
+                or json.dumps(metadata, sort_keys=True)
+                or "unknown error"
+            )
             raise SaharaError(f"{message_type}: {detail}")
 
 
@@ -157,23 +172,36 @@ def text_chunks(text: str, *, maximum_size: int = 100) -> list[str]:
     if maximum_size < 10 or maximum_size > 100:
         raise ValueError("maximum chunk size must be between 10 and 100")
 
-    chunks: list[str] = []
-    remaining = normalized
-    while len(remaining) > maximum_size:
-        split_at = remaining.rfind(" ", 10, maximum_size + 1)
-        if split_at < 10:
-            split_at = maximum_size
-        chunks.append(remaining[:split_at].strip())
-        remaining = remaining[split_at:].strip()
-    if remaining:
-        if len(remaining) < 10 and chunks:
-            chunks[-1] = f"{chunks[-1]} {remaining}"
-        else:
-            chunks.append(remaining)
-    return chunks
+    words = normalized.split(" ")
+    if any(len(word) > maximum_size for word in words):
+        raise ValueError(
+            f"Sahara TTS text contains a word longer than {maximum_size} characters"
+        )
+
+    # Find a complete partition so a short tail cannot be merged into a chunk
+    # beyond the provider's maximum. Prefer fewer and then fuller chunks.
+    partitions: list[list[str] | None] = [None] * (len(words) + 1)
+    partitions[-1] = []
+    for start in range(len(words) - 1, -1, -1):
+        candidates: list[list[str]] = []
+        length = 0
+        for end in range(start, len(words)):
+            length += len(words[end]) + (1 if end > start else 0)
+            if length > maximum_size:
+                break
+            suffix = partitions[end + 1]
+            if length >= 10 and suffix is not None:
+                candidates.append([" ".join(words[start : end + 1]), *suffix])
+        if candidates:
+            partitions[start] = min(
+                candidates, key=lambda chunks: (len(chunks), -len(chunks[0]))
+            )
+    if partitions[0] is None:
+        raise ValueError("Sahara TTS text cannot be split into 10–100 character chunks")
+    return partitions[0]
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class SaharaStreamingTTS:
     """Client for Sahara's documented streaming TTS WebSocket contract."""
 
@@ -184,13 +212,22 @@ class SaharaStreamingTTS:
     timeout_seconds: float = 60.0
     poll_interval_seconds: float = 0.2
     commit_timeout_seconds: float = 10.0
+    credit_balance: float | int | str | None = field(default=None, init=False)
 
     async def synthesize(self, text: str, *, language: str, accent: str) -> Any:
         if not self.api_key:
             raise ValueError("Sahara API key is required")
+        self.credit_balance = None
         language = language.strip()
+        accent = accent.strip()
         if not language:
             raise ValueError("Sahara TTS language is required")
+        if not accent:
+            raise ValueError("Sahara TTS accent is required")
+        if self.gender not in {"female", "male"}:
+            raise ValueError("Sahara TTS gender must be female or male")
+        if self.output_format not in {"wav", "opus"}:
+            raise ValueError("Sahara TTS output format must be wav or opus")
         params = urlencode(
             {
                 "voice_language": language,
@@ -204,6 +241,7 @@ class SaharaStreamingTTS:
             async with websockets.connect(
                 f"{self.endpoint}?{params}",
                 additional_headers=headers,
+                compression=None,
                 open_timeout=self.timeout_seconds,
                 max_size=8 * 2**20,
             ) as socket:
@@ -211,8 +249,12 @@ class SaharaStreamingTTS:
                 SaharaStreamingSTT._raise_for_error(ready)
                 if ready.get("message_type") != "SESSION_CREATED":
                     raise SaharaError("Sahara TTS did not create a session")
+                balance = ready.get("credit_balance")
+                if isinstance(balance, (float, int, str)):
+                    self.credit_balance = balance
 
-                for chunk_id, chunk in enumerate(text_chunks(text), start=1):
+                chunks = text_chunks(text)
+                for chunk_id, chunk in enumerate(chunks, start=1):
                     await socket.send(
                         json.dumps(
                             {
@@ -226,8 +268,13 @@ class SaharaStreamingTTS:
                     SaharaStreamingSTT._raise_for_error(acknowledgement)
                     if acknowledgement.get("message_type") != "TEXT_CHUNK_ACK":
                         raise SaharaError("Sahara TTS did not acknowledge text")
+                    acknowledged_id = acknowledgement.get("chunk_id")
+                    if acknowledged_id is not None and acknowledged_id != chunk_id:
+                        raise SaharaError(
+                            "Sahara TTS acknowledged an unexpected text chunk"
+                        )
 
-                for chunk_id in range(1, len(text_chunks(text)) + 1):
+                for chunk_id in range(1, len(chunks) + 1):
                     while True:
                         await socket.send(
                             json.dumps(
@@ -239,13 +286,28 @@ class SaharaStreamingTTS:
                         )
                         message = json.loads(await socket.recv())
                         SaharaStreamingSTT._raise_for_error(message)
+                        response_chunk_id = message.get("chunk_id")
+                        if (
+                            response_chunk_id is not None
+                            and response_chunk_id != chunk_id
+                        ):
+                            raise SaharaError(
+                                "Sahara TTS returned an unexpected audio chunk"
+                            )
                         processing_status = message.get(
                             "processing_status"
                         ) or message.get("processing_staus")
                         if processing_status == "READY" and message.get(
                             "audio_base_64"
                         ):
-                            yield base64.b64decode(message["audio_base_64"])
+                            try:
+                                yield base64.b64decode(
+                                    message["audio_base_64"], validate=True
+                                )
+                            except (ValueError, TypeError) as error:
+                                raise SaharaError(
+                                    "Sahara TTS returned invalid base64 audio"
+                                ) from error
                             break
                         if processing_status not in {"PROCESSING", "PENDING"}:
                             raise SaharaError(

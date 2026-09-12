@@ -7,6 +7,7 @@ import json
 import os
 import platform
 import subprocess
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -57,6 +58,20 @@ def append_record(path: Path, record: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as stream:
         stream.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
+
+
+def attempt_counts(path: Path, provider: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    if not path.exists():
+        return counts
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        record = json.loads(line)
+        if record.get("provider") == provider:
+            sample_id = str(record["sample_id"])
+            counts[sample_id] = counts.get(sample_id, 0) + 1
+    return counts
 
 
 def build_provider(args: argparse.Namespace) -> BenchmarkTranscriber:
@@ -113,6 +128,8 @@ async def run_sample(
             sample.audio_path, language_pair=sample.language_pair
         )
     except Exception as error:  # noqa: BLE001 - provider failure is a scored outcome
+        client = getattr(provider, "client", None)
+        credit_balance = getattr(client, "credit_balance", None)
         return {
             **base,
             "status": "failed",
@@ -121,6 +138,11 @@ async def run_sample(
             "error_message": str(error),
             "elapsed_seconds": None,
             "first_partial_seconds": None,
+            **(
+                {"credit_balance_start": credit_balance}
+                if credit_balance is not None
+                else {}
+            ),
         }
     return {
         **base,
@@ -129,10 +151,17 @@ async def run_sample(
         "elapsed_seconds": result.elapsed_seconds,
         "first_partial_seconds": result.first_partial_seconds,
         "provider_request_id": result.provider_request_id,
+        **result.provider_metadata,
     }
 
 
 async def run(args: argparse.Namespace) -> None:
+    if args.limit is not None and args.limit <= 0:
+        raise ValueError("limit must be positive")
+    if args.max_consecutive_failures is not None and args.max_consecutive_failures < 0:
+        raise ValueError("maximum consecutive failures cannot be negative")
+    if args.min_request_interval is not None and args.min_request_interval < 0:
+        raise ValueError("minimum request interval cannot be negative")
     samples = read_manifest(args.manifest)
     provider = build_provider(args)
     output = args.output / f"{provider.name}.jsonl"
@@ -145,16 +174,52 @@ async def run(args: argparse.Namespace) -> None:
         parameters=provider.parameters(),
         manifest_sha256=provenance["manifest_sha256"],
     )
+    attempts = attempt_counts(output, provider.name)
+    if args.sample_ids:
+        requested = set(args.sample_ids)
+        available = {sample.sample_id for sample in samples}
+        missing = requested - available
+        if missing:
+            raise ValueError(f"unknown benchmark sample IDs: {sorted(missing)}")
+        samples = [sample for sample in samples if sample.sample_id in requested]
     remaining = [sample for sample in samples if sample.sample_id not in completed]
+    if args.retry_failures:
+        remaining.sort(key=lambda sample: attempts.get(sample.sample_id, 0))
     if args.limit is not None:
         remaining = remaining[: args.limit]
+    maximum_failures = args.max_consecutive_failures
+    if maximum_failures is None:
+        maximum_failures = 3 if args.provider in {"sahara", "assemblyai"} else 0
+    request_interval = args.min_request_interval
+    if request_interval is None:
+        request_interval = 2.0 if args.provider == "sahara" else 0.0
+    consecutive_failures = 0
+    previous_request_started: float | None = None
     for index, sample in enumerate(remaining, start=1):
+        if previous_request_started is not None:
+            elapsed_since_start = time.monotonic() - previous_request_started
+            if elapsed_since_start < request_interval:
+                await asyncio.sleep(request_interval - elapsed_since_start)
+        previous_request_started = time.monotonic()
         record = await run_sample(provider, sample, provenance=provenance)
+        record["attempt"] = attempts.get(sample.sample_id, 0) + 1
         append_record(output, record)
+        attempts[sample.sample_id] = int(record["attempt"])
         print(
             f"[{index}/{len(remaining)}] {provider.name} {sample.sample_id}: "
             f"{record['status']}"
         )
+        if record["status"] == "ok":
+            consecutive_failures = 0
+        else:
+            consecutive_failures += 1
+            if maximum_failures and consecutive_failures >= maximum_failures:
+                print(
+                    "Paused after "
+                    f"{consecutive_failures} consecutive provider failures; "
+                    "resume after checking service status or credit"
+                )
+                break
 
 
 def _file_hash(path: Path) -> str | None:
@@ -212,6 +277,22 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--omni-device", default="auto")
     command.add_argument(
         "--limit", type=int, help="run only the first N remaining samples for a pilot"
+    )
+    command.add_argument(
+        "--sample-id",
+        dest="sample_ids",
+        action="append",
+        help="run only this frozen sample ID; repeat to select more than one",
+    )
+    command.add_argument(
+        "--max-consecutive-failures",
+        type=int,
+        help="pause after N failures; defaults to 3 for remote providers, 0 otherwise",
+    )
+    command.add_argument(
+        "--min-request-interval",
+        type=float,
+        help="minimum seconds between starts; defaults to 2 for Sahara, 0 otherwise",
     )
     return command
 

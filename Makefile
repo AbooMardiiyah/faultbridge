@@ -1,6 +1,7 @@
-.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-sbpn benchmark-install-omni benchmark-prepare benchmark-robustness benchmark-score benchmark-agent-score benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit
+.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-sbpn benchmark-install-omni benchmark-prepare benchmark-robustness benchmark-sahara-batch benchmark-sahara-retry benchmark-score benchmark-agent-score benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit
 
 TORCH_BACKEND ?= cpu
+ASR_BATCH_SIZE ?= 10
 TTS_BATCH_SIZE ?= 10
 TTS_GENDERS ?= female male
 
@@ -74,6 +75,12 @@ benchmark-prepare:
 
 benchmark-robustness:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.audio_conditions
+
+benchmark-sahara-batch:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.runner --manifest benchmark/manifest.csv --output eval/results/raw --provider sahara --limit $(ASR_BATCH_SIZE)
+
+benchmark-sahara-retry:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.runner --manifest benchmark/manifest.csv --output eval/results/raw --provider sahara --retry-failures --limit $(ASR_BATCH_SIZE)
 
 benchmark-score:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.scorer --manifest benchmark/manifest.csv eval/results/raw/*.jsonl

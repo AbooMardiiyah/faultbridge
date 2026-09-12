@@ -53,10 +53,21 @@ The local weights download only when each provider first starts. Use
 CPU is the safe default. Results resume by successful sample ID. The runner refuses
 to mix a changed model, device configuration, or manifest in an existing file;
 `--retry-failures` records a new attempt without deleting the original evidence.
+For paid Sahara ASR, use ten-sample batches. Each result is appended immediately,
+successful samples are skipped on resume, and three consecutive failures stop the
+run:
 
 ```bash
-PYTHONPATH=src:eval uv run --env-file .env -m faultbridge_eval.runner \
-  --manifest benchmark/manifest.csv --provider sahara
+make benchmark-sahara-batch ASR_BATCH_SIZE=10
+make benchmark-sahara-retry ASR_BATCH_SIZE=10
+```
+
+The retry command processes untouched samples before previous failures, then
+retries samples with the fewest attempts. Sahara sessions start no faster than
+once every two seconds and log the balance returned at session creation. Other
+providers can be run directly:
+
+```bash
 PYTHONPATH=src:eval uv run --env-file .env -m faultbridge_eval.runner \
   --manifest benchmark/manifest.csv --provider assemblyai
 PYTHONPATH=src:eval .venv-benchmark/bin/python -m faultbridge_eval.runner \
@@ -105,7 +116,11 @@ the panel with `make benchmark-tts-retry TTS_BATCH_SIZE=10 TTS_GENDERS=female`.
 Successful audio is never regenerated. Generation also pauses automatically after
 three consecutive provider failures, which limits spend during an outage or credit
 failure. Use `make benchmark-tts-generate` only for an intentionally unbounded full
-run.
+run. Sessions start no faster than once every two seconds; Intron does not publish
+a separate per-minute limit for the streaming WebSocket endpoint. The runner also
+records the balance reported in each `SESSION_CREATED` response. For a targeted
+contract check, pass `--prompt-id ID --genders female --retry-failures --limit 1`
+directly to `faultbridge_eval.tts_runner`.
 
 Transcribe `benchmark/tts_generated.csv` with three independent model families,
 then calculate the organizer-requested metrics:

@@ -19,7 +19,11 @@ from faultbridge_eval.manifest import REQUIRED_COLUMNS, sha256_file
 from faultbridge_eval.runner import append_record, environment_provenance
 from faultbridge_eval.tts_manifest import FIELDS
 
-GENERATOR_VERSION = "faultbridge-tts-generator-v4"
+GENERATOR_VERSION = "faultbridge-tts-generator-v5"
+RESUMABLE_GENERATOR_VERSIONS = {
+    "faultbridge-tts-generator-v4",
+    GENERATOR_VERSION,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -163,6 +167,7 @@ async def generate(
         "attempt": attempt,
         "parameters": {
             "output_format": tts.output_format,
+            "websocket_compression": "disabled",
             "stream_timeout_seconds": tts.timeout_seconds,
             "commit_ack_timeout_seconds": tts.commit_timeout_seconds,
         },
@@ -195,6 +200,7 @@ async def generate(
         return {
             **base,
             "status": "failed",
+            "credit_balance_start": tts.credit_balance,
             "error_type": type(error).__name__,
             "error_message": str(error),
             "first_audio_seconds": first_audio_seconds,
@@ -206,6 +212,7 @@ async def generate(
     return {
         **base,
         "status": "ok",
+        "credit_balance_start": tts.credit_balance,
         "audio_path": str(destination),
         "audio_sha256": sha256_file(destination),
         "duration_seconds": measurement.duration_seconds,
@@ -272,6 +279,8 @@ async def run(args: argparse.Namespace) -> None:
         raise ValueError("limit must be positive")
     if args.max_consecutive_failures <= 0:
         raise ValueError("maximum consecutive failures must be positive")
+    if args.min_request_interval < 0:
+        raise ValueError("minimum request interval cannot be negative")
     prompts = read_prompts(args.prompts)
     provenance = environment_provenance(args.prompts)
     provenance["prompt_manifest_sha256"] = provenance.pop("manifest_sha256")
@@ -284,7 +293,18 @@ async def run(args: argparse.Namespace) -> None:
         for repetition in range(1, args.repetitions + 1)
     ]
     active_prompts = prompts
+    if args.prompt_ids:
+        requested = set(args.prompt_ids)
+        available = {prompt["prompt_id"] for prompt in prompts}
+        missing = requested - available
+        if missing:
+            raise ValueError(f"unknown TTS prompt IDs: {sorted(missing)}")
+        active_prompts = [
+            prompt for prompt in prompts if prompt["prompt_id"] in requested
+        ]
     if args.pilot_per_language:
+        if args.prompt_ids:
+            raise ValueError("prompt IDs and pilot-per-language cannot be combined")
         first_by_language: dict[str, dict[str, str]] = {}
         for prompt in prompts:
             first_by_language.setdefault(prompt["language_pair"], prompt)
@@ -306,7 +326,7 @@ async def run(args: argparse.Namespace) -> None:
         )
     for sample_id, record in existing.items():
         if (
-            record.get("generator_version") != GENERATOR_VERSION
+            record.get("generator_version") not in RESUMABLE_GENERATOR_VERSIONS
             or record.get("prompt_manifest_sha256")
             != provenance["prompt_manifest_sha256"]
         ):
@@ -329,7 +349,13 @@ async def run(args: argparse.Namespace) -> None:
     if args.limit is not None:
         remaining = remaining[: args.limit]
     consecutive_failures = 0
+    previous_request_started: float | None = None
     for index, (prompt, gender, repetition) in enumerate(remaining, start=1):
+        if previous_request_started is not None:
+            elapsed_since_start = time.monotonic() - previous_request_started
+            if elapsed_since_start < args.min_request_interval:
+                await asyncio.sleep(args.min_request_interval - elapsed_since_start)
+        previous_request_started = time.monotonic()
         sample_id = f"{prompt['prompt_id']}-{gender}-r{repetition}"
         record = await generate(
             prompt,
@@ -384,6 +410,18 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--repetitions", type=int, default=1)
     command.add_argument("--commit-ack-timeout", type=float, default=2.0)
     command.add_argument("--limit", type=int)
+    command.add_argument(
+        "--prompt-id",
+        dest="prompt_ids",
+        action="append",
+        help="run only this frozen prompt ID; repeat to select more than one",
+    )
+    command.add_argument(
+        "--min-request-interval",
+        type=float,
+        default=2.0,
+        help="minimum seconds between WebSocket session starts (default: 2)",
+    )
     command.add_argument(
         "--max-consecutive-failures",
         type=int,

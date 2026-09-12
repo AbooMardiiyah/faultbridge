@@ -4,10 +4,13 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 
+import faultbridge_eval.runner as runner_module
 from faultbridge_eval.manifest import BenchmarkSample
 from faultbridge_eval.providers import TranscriptionResult
-from faultbridge_eval.runner import existing_samples, run_sample
+from faultbridge_eval.runner import attempt_counts, existing_samples, run_sample
 
 
 class _Provider:
@@ -68,8 +71,83 @@ class BenchmarkResumeTests(unittest.TestCase):
                     manifest_sha256="abc",
                 )
 
+    def test_attempt_counts_include_failed_retries(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "provider.jsonl"
+            path.write_text(
+                "\n".join(
+                    json.dumps({"sample_id": sample, "provider": provider})
+                    for sample, provider in (
+                        ("one", "provider"),
+                        ("two", "other"),
+                        ("one", "provider"),
+                    )
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            self.assertEqual(attempt_counts(path, "provider"), {"one": 2})
+
 
 class BenchmarkResultSchemaTests(unittest.IsolatedAsyncioTestCase):
+    async def test_remote_runner_stops_after_failure_threshold(self) -> None:
+        samples = [
+            BenchmarkSample(
+                sample_id=f"sample-{index}",
+                audio_path=Path(f"sample-{index}.wav"),
+                audio_sha256=str(index) * 64,
+                language_pair="Hausa-English",
+                reference="reference words",
+                reference_tagged="reference [[EN]]words[[/EN]]",
+                duration_seconds=2.0,
+                cmi=50.0,
+                switch_points=1,
+                source_group=f"source-{index}",
+                source_kind="natural",
+                condition="clean-16khz",
+            )
+            for index in range(1, 6)
+        ]
+        failure = {
+            "provider": "provider",
+            "status": "failed",
+            "hypothesis": "",
+            "error_type": "RuntimeError",
+            "error_message": "capacity unavailable",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            args = SimpleNamespace(
+                manifest=Path(directory) / "manifest.csv",
+                output=Path(directory) / "results",
+                provider="sahara",
+                retry_failures=False,
+                limit=None,
+                sample_ids=None,
+                max_consecutive_failures=2,
+                min_request_interval=0,
+            )
+            with (
+                patch.object(runner_module, "read_manifest", return_value=samples),
+                patch.object(runner_module, "build_provider", return_value=_Provider()),
+                patch.object(
+                    runner_module,
+                    "environment_provenance",
+                    return_value={"manifest_sha256": "manifest"},
+                ),
+                patch.object(
+                    runner_module,
+                    "run_sample",
+                    new=AsyncMock(return_value=failure.copy()),
+                ) as run_sample_mock,
+            ):
+                await runner_module.run(args)
+
+            records = (args.output / "provider.jsonl").read_text().splitlines()
+
+        self.assertEqual(run_sample_mock.await_count, 2)
+        self.assertEqual(len(records), 2)
+
     async def test_result_has_one_unambiguous_hypothesis_field(self) -> None:
         sample = BenchmarkSample(
             sample_id="one",

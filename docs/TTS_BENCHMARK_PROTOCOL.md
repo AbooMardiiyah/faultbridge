@@ -214,6 +214,13 @@ is skipped, and failed samples with the fewest attempts are retried first. Repea
 for `TTS_GENDERS=male`. The unbounded `make benchmark-tts-generate` command is
 reserved for a deliberately funded full run.
 
+Intron documents a 300-second WebSocket session lifetime, a 60-second idle limit,
+and 10–100 characters per streaming text chunk. It does not publish a connection
+rate for this WebSocket endpoint. FaultBridge therefore runs sequentially and
+starts sessions no faster than once every two seconds, matching the stricter
+30-request-per-minute synchronous TTS rate. Every result records the starting
+credit balance returned by `SESSION_CREATED` so credit use can be audited.
+
 Then transcribe `benchmark/tts_generated.csv` with all three independent ASR
 judges and score their JSONL outputs:
 

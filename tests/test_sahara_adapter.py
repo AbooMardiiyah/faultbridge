@@ -6,6 +6,7 @@ from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
 from faultbridge.adapters.sahara import (
+    SaharaError,
     SaharaStreamingSTT,
     SaharaStreamingTTS,
     language_code,
@@ -50,6 +51,15 @@ class MissingCommitSocket(FakeSocket):
 
 
 class SaharaAdapterTests(unittest.TestCase):
+    def test_terminal_error_preserves_documented_limit(self) -> None:
+        with self.assertRaisesRegex(SaharaError, '"chunk_size_max": "100"'):
+            SaharaStreamingSTT._raise_for_error(
+                {
+                    "message_type": "CHUNK_SIZE_TOO_LARGE",
+                    "chunk_size_max": "100",
+                }
+            )
+
     def test_maps_all_submission_language_pairs(self) -> None:
         self.assertEqual(language_code("Hausa-English"), "ha")
         self.assertEqual(language_code("Igbo-English"), "ig")
@@ -85,11 +95,22 @@ class SaharaAdapterTests(unittest.TestCase):
         self.assertTrue(all(10 <= len(chunk) <= 100 for chunk in chunks))
         self.assertEqual(" ".join(chunks), text)
 
+    def test_tts_chunks_rebalance_a_short_tail_without_exceeding_limit(self) -> None:
+        text = (
+            "Wai su yan hip hop dinnan kullum sai sababbin abubuwa ne? Ai kasan "
+            "hip hop, asalin hip hop, ai hio hop wato"
+        )
+
+        chunks = text_chunks(text)
+
+        self.assertTrue(all(10 <= len(chunk) <= 100 for chunk in chunks))
+        self.assertEqual(" ".join(chunks), text)
+
 
 class SaharaLanguageContractTests(unittest.IsolatedAsyncioTestCase):
     async def test_stt_connection_always_selects_input_language(self) -> None:
         socket = FakeSocket(
-            received=[{"message_type": "SESSION_CREATED"}],
+            received=[{"message_type": "SESSION_CREATED", "credit_balance": 8.5}],
             streamed=[
                 {
                     "message_type": "COMMITTED_TRANSCRIPT",
@@ -100,19 +121,23 @@ class SaharaLanguageContractTests(unittest.IsolatedAsyncioTestCase):
         with patch(
             "faultbridge.adapters.sahara.websockets.connect", return_value=socket
         ) as connect:
-            transcript = await SaharaStreamingSTT(api_key="test-key").transcribe(
+            client = SaharaStreamingSTT(api_key="test-key")
+            transcript = await client.transcribe(
                 b"\x00\x00" * 512,
                 language_pair="Pidgin-English",
             )
         query = parse_qs(urlparse(connect.call_args.args[0]).query)
         self.assertEqual(query["use_language_asr_input"], ["pcm"])
+        self.assertIsNone(connect.call_args.kwargs["compression"])
+        self.assertEqual(connect.call_args.kwargs["max_queue"], 128)
         self.assertEqual(transcript, "network no dey work")
+        self.assertEqual(client.credit_balance, 8.5)
 
     async def test_tts_connection_always_selects_language_and_accent(self) -> None:
         audio = b"valid-wav-bytes"
         socket = FakeSocket(
             received=[
-                {"message_type": "SESSION_CREATED"},
+                {"message_type": "SESSION_CREATED", "credit_balance": 9.75},
                 {"message_type": "TEXT_CHUNK_ACK"},
                 {
                     "message_type": "AUDIO_CHUNK",
@@ -125,9 +150,10 @@ class SaharaLanguageContractTests(unittest.IsolatedAsyncioTestCase):
         with patch(
             "faultbridge.adapters.sahara.websockets.connect", return_value=socket
         ) as connect:
+            tts = SaharaStreamingTTS(api_key="test-key")
             chunks = [
                 chunk
-                async for chunk in SaharaStreamingTTS(api_key="test-key").synthesize(
+                async for chunk in tts.synthesize(
                     "We found the verified network fault.",
                     language="pcm",
                     accent="pidgin",
@@ -136,7 +162,9 @@ class SaharaLanguageContractTests(unittest.IsolatedAsyncioTestCase):
         query = parse_qs(urlparse(connect.call_args.args[0]).query)
         self.assertEqual(query["voice_language"], ["pcm"])
         self.assertEqual(query["voice_accent"], ["pidgin"])
+        self.assertIsNone(connect.call_args.kwargs["compression"])
         self.assertEqual(chunks, [audio])
+        self.assertEqual(tts.credit_balance, 9.75)
 
     async def test_tts_rejects_an_empty_language(self) -> None:
         generator = SaharaStreamingTTS(api_key="test-key").synthesize(
@@ -146,6 +174,33 @@ class SaharaLanguageContractTests(unittest.IsolatedAsyncioTestCase):
         )
         with self.assertRaisesRegex(ValueError, "language is required"):
             await anext(generator)
+
+    async def test_tts_rejects_an_empty_accent_before_connecting(self) -> None:
+        generator = SaharaStreamingTTS(api_key="test-key").synthesize(
+            "We found the verified network fault.",
+            language="pcm",
+            accent=" ",
+        )
+        with self.assertRaisesRegex(ValueError, "accent is required"):
+            await anext(generator)
+
+    async def test_tts_rejects_mismatched_chunk_acknowledgement(self) -> None:
+        socket = FakeSocket(
+            received=[
+                {"message_type": "SESSION_CREATED"},
+                {"message_type": "TEXT_CHUNK_ACK", "chunk_id": 2},
+            ]
+        )
+        with patch(
+            "faultbridge.adapters.sahara.websockets.connect", return_value=socket
+        ):
+            generator = SaharaStreamingTTS(api_key="test-key").synthesize(
+                "We found the verified network fault.",
+                language="pcm",
+                accent="pidgin",
+            )
+            with self.assertRaisesRegex(SaharaError, "unexpected text chunk"):
+                await anext(generator)
 
     async def test_tts_keeps_ready_audio_when_commit_summary_is_missing(self) -> None:
         audio = b"valid-wav-bytes"
