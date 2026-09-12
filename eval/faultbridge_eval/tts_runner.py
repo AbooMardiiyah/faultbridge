@@ -19,7 +19,7 @@ from faultbridge_eval.manifest import REQUIRED_COLUMNS, sha256_file
 from faultbridge_eval.runner import append_record, environment_provenance
 from faultbridge_eval.tts_manifest import FIELDS
 
-GENERATOR_VERSION = "faultbridge-tts-generator-v1"
+GENERATOR_VERSION = "faultbridge-tts-generator-v2"
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,6 +123,7 @@ async def generate(
     provenance: dict[str, Any],
 ) -> dict[str, Any]:
     sample_id = f"{prompt['prompt_id']}-{gender}-r{repetition}"
+    tts = SaharaStreamingTTS(api_key=api_key, gender=gender)
     base: dict[str, Any] = {
         "generator_version": GENERATOR_VERSION,
         "provider": "sahara-tts",
@@ -136,6 +137,11 @@ async def generate(
         "accent": prompt["accent"],
         "gender": gender,
         "repetition": repetition,
+        "parameters": {
+            "output_format": tts.output_format,
+            "stream_timeout_seconds": tts.timeout_seconds,
+            "commit_ack_timeout_seconds": tts.commit_timeout_seconds,
+        },
         "reference": prompt["text"],
         "reference_tagged": prompt["text_tagged"],
         "cmi": float(prompt["cmi"]),
@@ -148,7 +154,6 @@ async def generate(
     first_audio_seconds: float | None = None
     chunks: list[bytes] = []
     try:
-        tts = SaharaStreamingTTS(api_key=api_key, gender=gender)
         async for chunk in tts.synthesize(
             prompt["text"], language=prompt["language"], accent=prompt["accent"]
         ):
@@ -235,15 +240,27 @@ async def run(args: argparse.Namespace) -> None:
     provenance = environment_provenance(args.prompts)
     provenance["prompt_manifest_sha256"] = provenance.pop("manifest_sha256")
     existing = latest_records(args.log)
-    work = [
+    all_work = [
         (prompt, gender, repetition)
         for prompt in prompts
+        for gender in ("female", "male")
+        for repetition in range(1, args.repetitions + 1)
+    ]
+    active_prompts = prompts
+    if args.pilot_per_language:
+        first_by_language: dict[str, dict[str, str]] = {}
+        for prompt in prompts:
+            first_by_language.setdefault(prompt["language_pair"], prompt)
+        active_prompts = list(first_by_language.values())
+    work = [
+        (prompt, gender, repetition)
+        for prompt in active_prompts
         for gender in args.genders
         for repetition in range(1, args.repetitions + 1)
     ]
     expected_ids = {
         f"{prompt['prompt_id']}-{gender}-r{repetition}"
-        for prompt, gender, repetition in work
+        for prompt, gender, repetition in all_work
     }
     unexpected = set(existing) - expected_ids
     if unexpected:
@@ -307,6 +324,11 @@ def parser() -> argparse.ArgumentParser:
     )
     command.add_argument("--repetitions", type=int, default=1)
     command.add_argument("--limit", type=int)
+    command.add_argument(
+        "--pilot-per-language",
+        action="store_true",
+        help="select the first frozen prompt in each language for contract checks",
+    )
     command.add_argument("--retry-failures", action="store_true")
     return command
 

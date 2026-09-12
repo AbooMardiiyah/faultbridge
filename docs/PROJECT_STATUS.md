@@ -21,6 +21,13 @@ sessions; the Git history remains the authoritative implementation record.
   a 1,600-row deterministic telephone/noise/loss robustness manifest.
 - Frozen 100-prompt code-switched TTS panel and an executable Sahara generation,
   independent-ASR fidelity, latency, waveform, and consensus scoring pipeline.
+- Live Sahara pilots passed for female Hausa, Igbo, Pidgin, and Yoruba voices and
+  one male Hausa voice. All five outputs were valid, hash-verified WAV files with
+  no clipping; the four female prompts averaged 9.18 seconds to first audio. These
+  are contract diagnostics, not final benchmark results.
+- One natural Hausa-English Sahara STT pilot succeeded after a transient provider
+  failure: normalized WER 28.6%, CER 7.4%, and 5.31 seconds of post-audio latency.
+  The sample size is one and must not appear as a model-level conclusion.
 
 ## Current access
 
@@ -37,6 +44,12 @@ Intron will require explicit language selection on every ASR and TTS request fro
 documented STT and TTS language codes explicitly. New mission prizes recognize two
 benchmark datasets and one benchmark report, alongside the Fintech, Telco & Call
 Center category prize, so benchmark rigor remains the highest-priority workstream.
+
+The live TTS server returned complete `READY` audio but omitted the documented
+`COMMITTED_AUDIO` summary. The adapter now sends `COMMIT`, waits 10 seconds for the
+summary, and preserves the already validated WAV when only the summary times out.
+The original failed pilot and five successful contract pilots remain in the
+ignored `eval/results/tts/pilots/` audit directory.
 
 ## Active sequence
 

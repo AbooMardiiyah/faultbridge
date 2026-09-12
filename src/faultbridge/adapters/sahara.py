@@ -28,9 +28,9 @@ TERMINAL_ERRORS = {
     "CHUNK_SIZE_TOO_SMALL",
     "CHUNK_SIZE_TOO_LARGE",
     "INSUFFICIENT_AUDIO_ACTIVITY",
+    "INSUFFICIENT_TEXT_ACTIVITY",
     "SESSION_TIME_LIMIT_EXCEEDED",
     "CHUNK_ID_MISMATCH_WITH_TOTAL",
-    "INSUFFICIENT_TEXT_ACTIVITY",
 }
 
 
@@ -183,6 +183,7 @@ class SaharaStreamingTTS:
     output_format: str = "wav"
     timeout_seconds: float = 60.0
     poll_interval_seconds: float = 0.2
+    commit_timeout_seconds: float = 10.0
 
     async def synthesize(self, text: str, *, language: str, accent: str) -> Any:
         if not self.api_key:
@@ -253,7 +254,14 @@ class SaharaStreamingTTS:
                         await asyncio.sleep(self.poll_interval_seconds)
 
                 await socket.send(json.dumps({"message_type": "COMMIT"}))
-                committed = json.loads(await socket.recv())
+                try:
+                    async with asyncio.timeout(self.commit_timeout_seconds):
+                        committed = json.loads(await socket.recv())
+                except TimeoutError:
+                    # FETCH_AUDIO_CHUNK with READY already guarantees complete audio.
+                    # The commit response only supplies the persisted-session summary;
+                    # current live sessions can omit it, so do not discard valid audio.
+                    return
                 SaharaStreamingSTT._raise_for_error(committed)
                 if committed.get("message_type") != "COMMITTED_AUDIO":
                     raise SaharaError("Sahara TTS did not commit the audio session")

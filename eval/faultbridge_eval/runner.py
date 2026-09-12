@@ -119,6 +119,7 @@ async def run_sample(
             "status": "failed",
             "hypothesis": "",
             "error_type": type(error).__name__,
+            "error_message": str(error),
             "elapsed_seconds": None,
             "first_partial_seconds": None,
         }

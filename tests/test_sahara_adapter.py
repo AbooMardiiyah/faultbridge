@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import json
 import unittest
@@ -38,6 +39,14 @@ class FakeSocket:
         if not self.streamed:
             raise StopAsyncIteration
         return json.dumps(self.streamed.pop(0))
+
+
+class MissingCommitSocket(FakeSocket):
+    async def recv(self) -> str:
+        if self.received:
+            return await super().recv()
+        await asyncio.Future()
+        raise AssertionError("unreachable")
 
 
 class SaharaAdapterTests(unittest.TestCase):
@@ -137,6 +146,35 @@ class SaharaLanguageContractTests(unittest.IsolatedAsyncioTestCase):
         )
         with self.assertRaisesRegex(ValueError, "language is required"):
             await anext(generator)
+
+    async def test_tts_keeps_ready_audio_when_commit_summary_is_missing(self) -> None:
+        audio = b"valid-wav-bytes"
+        socket = MissingCommitSocket(
+            received=[
+                {"message_type": "SESSION_CREATED"},
+                {"message_type": "TEXT_CHUNK_ACK"},
+                {
+                    "message_type": "AUDIO_CHUNK",
+                    "processing_status": "READY",
+                    "audio_base_64": base64.b64encode(audio).decode("ascii"),
+                },
+            ]
+        )
+        with patch(
+            "faultbridge.adapters.sahara.websockets.connect", return_value=socket
+        ):
+            chunks = [
+                chunk
+                async for chunk in SaharaStreamingTTS(
+                    api_key="test-key", commit_timeout_seconds=0.01
+                ).synthesize(
+                    "We found the verified network fault.",
+                    language="pcm",
+                    accent="pidgin",
+                )
+            ]
+
+        self.assertEqual(chunks, [audio])
 
 
 if __name__ == "__main__":
