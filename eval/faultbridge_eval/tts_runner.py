@@ -19,7 +19,7 @@ from faultbridge_eval.manifest import REQUIRED_COLUMNS, sha256_file
 from faultbridge_eval.runner import append_record, environment_provenance
 from faultbridge_eval.tts_manifest import FIELDS
 
-GENERATOR_VERSION = "faultbridge-tts-generator-v3"
+GENERATOR_VERSION = "faultbridge-tts-generator-v4"
 
 
 @dataclass(frozen=True, slots=True)
@@ -121,9 +121,14 @@ async def generate(
     audio_root: Path,
     api_key: str,
     provenance: dict[str, Any],
+    commit_ack_timeout_seconds: float,
 ) -> dict[str, Any]:
     sample_id = f"{prompt['prompt_id']}-{gender}-r{repetition}"
-    tts = SaharaStreamingTTS(api_key=api_key, gender=gender)
+    tts = SaharaStreamingTTS(
+        api_key=api_key,
+        gender=gender,
+        commit_timeout_seconds=commit_ack_timeout_seconds,
+    )
     base: dict[str, Any] = {
         "generator_version": GENERATOR_VERSION,
         "provider": "sahara-tts",
@@ -242,6 +247,8 @@ async def run(args: argparse.Namespace) -> None:
     api_key = os.environ.get("SAHARA_API_KEY", "")
     if not api_key:
         raise ValueError("SAHARA_API_KEY is required")
+    if args.commit_ack_timeout <= 0:
+        raise ValueError("commit acknowledgement timeout must be positive")
     prompts = read_prompts(args.prompts)
     provenance = environment_provenance(args.prompts)
     provenance["prompt_manifest_sha256"] = provenance.pop("manifest_sha256")
@@ -299,6 +306,7 @@ async def run(args: argparse.Namespace) -> None:
             audio_root=args.audio_root.resolve(),
             api_key=api_key,
             provenance=provenance,
+            commit_ack_timeout_seconds=args.commit_ack_timeout,
         )
         append_record(args.log, record)
         existing[str(record["sample_id"])] = record
@@ -329,6 +337,7 @@ def parser() -> argparse.ArgumentParser:
         "--genders", nargs="+", choices=["female", "male"], default=["female", "male"]
     )
     command.add_argument("--repetitions", type=int, default=1)
+    command.add_argument("--commit-ack-timeout", type=float, default=2.0)
     command.add_argument("--limit", type=int)
     command.add_argument(
         "--pilot-per-language",

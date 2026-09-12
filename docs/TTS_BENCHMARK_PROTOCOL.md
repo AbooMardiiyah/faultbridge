@@ -66,10 +66,11 @@ concatenating PCM frames; binary WAV files are never joined blindly.
 
 The live streaming endpoint can return a complete `READY` WAV chunk without later
 returning its persisted-session `COMMITTED_AUDIO` summary. The adapter always
-sends `COMMIT`, waits up to 10 seconds for that summary, and retains the already
-complete audio if the summary is absent. The generation log records this timeout
-policy. A missing summary is a provider observability limitation; it is not counted
-as missing speech when the fetched WAV validates and its hash is retained.
+sends `COMMIT`; the benchmark waits two seconds for that summary and retains the
+already complete audio if the summary is absent. The application default remains
+10 seconds. The generation log records the exact timeout. A missing summary is a
+provider observability limitation; it is not counted as missing speech when the
+fetched WAV validates and its hash is retained.
 
 ## Metric Definitions
 
