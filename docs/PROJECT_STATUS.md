@@ -19,6 +19,8 @@ sessions; the Git history remains the authoritative implementation record.
   health checks; both web surfaces and the protected-data boundary are smoke-tested.
 - Frozen AfriSwitch panel with 400 hash-verified clips (100 per language pair) and
   a 1,600-row deterministic telephone/noise/loss robustness manifest.
+- Frozen 100-prompt code-switched TTS panel and an executable Sahara generation,
+  independent-ASR fidelity, latency, waveform, and consensus scoring pipeline.
 
 ## Current access
 
@@ -38,12 +40,14 @@ Center category prize, so benchmark rigor remains the highest-priority workstrea
 
 ## Active sequence
 
-1. Run one-clip performance pilots for the frozen model panel, then complete each
-   provider run with resumable raw results.
-2. Test the caller and operations interfaces against live providers.
-3. Score results, generate the three-page report, and derive evidence-based
-   routing recommendations.
-4. Complete the telco scenarios, privacy set, five-minute demo, and submission
+1. Run one-clip ASR performance pilots, then complete the frozen provider panel
+   with resumable raw results.
+2. Generate and independently transcribe the female/male Sahara TTS panel; conduct
+   the predeclared bilingual-listener audit.
+3. Test the caller and operations interfaces against live providers.
+4. Score ASR, TTS, and agent results, generate the report, and derive
+   evidence-based routing recommendations.
+5. Complete the telco scenarios, privacy set, five-minute demo, and submission
    package.
 
 Hardware use and foreground validation are now authorized. Keep delivery workers

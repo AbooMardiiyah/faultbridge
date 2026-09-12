@@ -69,6 +69,32 @@ class RoleErrorCounts:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class SegmentLossCounts:
+    lost_segments: int = 0
+    total_segments: int = 0
+    embedded_english_lost: int = 0
+    embedded_english_total: int = 0
+    matrix_lost: int = 0
+    matrix_total: int = 0
+
+    @property
+    def loss_rate(self) -> float:
+        if not self.total_segments:
+            return 0.0
+        return self.lost_segments / self.total_segments
+
+    def __add__(self, other: SegmentLossCounts) -> SegmentLossCounts:
+        return SegmentLossCounts(
+            self.lost_segments + other.lost_segments,
+            self.total_segments + other.total_segments,
+            self.embedded_english_lost + other.embedded_english_lost,
+            self.embedded_english_total + other.embedded_english_total,
+            self.matrix_lost + other.matrix_lost,
+            self.matrix_total + other.matrix_total,
+        )
+
+
 def canonical_text(text: str) -> str:
     return " ".join(unicodedata.normalize("NFKC", text).split())
 
@@ -229,6 +255,43 @@ def language_role_errors(tagged_reference: str, hypothesis: str) -> dict[str, fl
     }
     rates["language_role_gap"] = abs(rates["embedded_english"] - rates["matrix"])
     return rates
+
+
+def segment_loss_counts(tagged_reference: str, hypothesis: str) -> SegmentLossCounts:
+    """Count contiguous language spans with no correctly recovered word.
+
+    This is FaultBridge's predeclared operational definition of TTS segment loss.
+    It is deliberately stricter than token deletion rate and is reported by
+    language role so a missing switched span cannot disappear inside a pooled WER.
+    """
+    reference, roles = parse_tagged_reference(tagged_reference)
+    if not reference:
+        return SegmentLossCounts()
+    hypothesis_tokens = normalize_text(hypothesis).split()
+    matched = {
+        step.reference_index
+        for step in _alignment(reference, hypothesis_tokens)
+        if step.operation == "equal" and step.reference_index is not None
+    }
+    segments: list[tuple[str, set[int]]] = []
+    for index, role in enumerate(roles):
+        if not segments or segments[-1][0] != role:
+            segments.append((role, {index}))
+        else:
+            segments[-1][1].add(index)
+
+    embedded = [indexes for role, indexes in segments if role == "embedded_english"]
+    matrix = [indexes for role, indexes in segments if role == "matrix"]
+    embedded_lost = sum(not (indexes & matched) for indexes in embedded)
+    matrix_lost = sum(not (indexes & matched) for indexes in matrix)
+    return SegmentLossCounts(
+        lost_segments=embedded_lost + matrix_lost,
+        total_segments=len(segments),
+        embedded_english_lost=embedded_lost,
+        embedded_english_total=len(embedded),
+        matrix_lost=matrix_lost,
+        matrix_total=len(matrix),
+    )
 
 
 def switch_context_recall(tagged_reference: str, hypothesis: str) -> float:

@@ -89,5 +89,7 @@ delivery, privacy controls, and health checks. The
 [experience design guide](docs/EXPERIENCE_DESIGN.md) records the UI rationale and
 manual review checklist. The
 [voice benchmark research](docs/VOICE_BENCHMARK_RESEARCH.md) defines the
-industry-grounded evaluation protocol; [`eval/README.md`](eval/README.md) contains
-the reproducible commands.
+industry-grounded evaluation protocol. The dedicated
+[TTS benchmark protocol](docs/TTS_BENCHMARK_PROTOCOL.md) defines hallucination,
+transcript loss, segment loss, accuracy, and the native-listener audit;
+[`eval/README.md`](eval/README.md) contains the reproducible commands.

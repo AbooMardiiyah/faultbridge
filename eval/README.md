@@ -87,6 +87,39 @@ Failed transcriptions remain in the denominator as empty hypotheses. Incomplete
 provider panels are rejected unless `--allow-incomplete` is explicitly used for
 development.
 
+## Code-switched TTS evaluation
+
+The separate [TTS protocol](../docs/TTS_BENCHMARK_PROTOCOL.md) freezes 100 genuine
+code-switched text prompts, generates female and male Sahara voices, and preserves
+every request failure and audio hash:
+
+```bash
+make benchmark-tts-prepare
+make benchmark-tts-generate
+```
+
+Transcribe `benchmark/tts_generated.csv` with three independent model families,
+then calculate the organizer-requested metrics:
+
+```bash
+make benchmark-tts-asr-faster-whisper
+make benchmark-tts-asr-sbpn
+make benchmark-tts-asr-omni
+make benchmark-tts-score
+make benchmark-tts-audit
+```
+
+The scorer reports judge-specific WER/CER, insertion-based hallucination,
+deletion-based transcript loss, complete tagged-language segment loss, exact
+utterance accuracy, judge consensus, generation failure, latency, clipping, and
+silence. Sahara ASR cannot be the sole judge of Sahara TTS. Automatic flags must
+be confirmed on the predeclared bilingual-listener audit subset before they are
+described as verified failures.
+`benchmark-tts-audit` oversamples majority-flagged failures within each
+language/voice cell, fills the remainder deterministically, and writes a separate
+controller key and randomized listener rating sheet. Do not expose the reference
+or target phrase to a listener before their typed identification response.
+
 ## Executable agent evaluation
 
 Write the 48 reviewed telco scenarios against `scenario.schema.json`. Set a

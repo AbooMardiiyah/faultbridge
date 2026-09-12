@@ -1,4 +1,4 @@
-.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-sbpn benchmark-install-omni benchmark-prepare benchmark-robustness benchmark-score benchmark-agent-score benchmark-privacy-score benchmark-route
+.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-sbpn benchmark-install-omni benchmark-prepare benchmark-robustness benchmark-score benchmark-agent-score benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit
 
 TORCH_BACKEND ?= cpu
 
@@ -84,3 +84,24 @@ benchmark-privacy-score:
 
 benchmark-route:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.routing_recommender
+
+benchmark-tts-prepare:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.tts_manifest
+
+benchmark-tts-generate:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.tts_runner
+
+benchmark-tts-asr-faster-whisper:
+	PYTHONPATH=src:eval .venv-benchmark/bin/python -m faultbridge_eval.runner --manifest benchmark/tts_generated.csv --output eval/results/tts/asr --provider faster-whisper
+
+benchmark-tts-asr-sbpn:
+	PYTHONPATH=src:eval .venv-sbpn/bin/python -m faultbridge_eval.runner --manifest benchmark/tts_generated.csv --output eval/results/tts/asr --provider sbpn
+
+benchmark-tts-asr-omni:
+	PYTHONPATH=src:eval .venv-omni/bin/python -m faultbridge_eval.runner --manifest benchmark/tts_generated.csv --output eval/results/tts/asr --provider omniasr
+
+benchmark-tts-score:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.tts_scorer --generation eval/results/tts/generation.jsonl --asr-results eval/results/tts/asr/*.jsonl
+
+benchmark-tts-audit:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.tts_audit

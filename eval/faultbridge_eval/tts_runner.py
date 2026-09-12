@@ -1,0 +1,315 @@
+from __future__ import annotations
+
+import argparse
+import asyncio
+import csv
+import io
+import json
+import os
+import struct
+import time
+import wave
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+from faultbridge.adapters.sahara import SaharaStreamingTTS
+from faultbridge_eval.manifest import REQUIRED_COLUMNS, sha256_file
+from faultbridge_eval.runner import append_record, environment_provenance
+from faultbridge_eval.tts_manifest import FIELDS
+
+GENERATOR_VERSION = "faultbridge-tts-generator-v1"
+
+
+@dataclass(frozen=True, slots=True)
+class WavMeasurement:
+    audio: bytes
+    duration_seconds: float
+    sample_rate: int
+    channels: int
+    sample_width: int
+    clipping_ratio: float | None
+    silence_ratio: float | None
+
+
+def read_prompts(path: Path) -> list[dict[str, str]]:
+    with path.open(newline="", encoding="utf-8") as stream:
+        reader = csv.DictReader(stream)
+        missing = set(FIELDS) - set(reader.fieldnames or [])
+        if missing:
+            raise ValueError(f"TTS prompt manifest is missing {sorted(missing)}")
+        prompts = list(reader)
+    identifiers = [row["prompt_id"] for row in prompts]
+    if not identifiers or len(identifiers) != len(set(identifiers)):
+        raise ValueError("TTS prompt IDs must be non-empty and unique")
+    return prompts
+
+
+def merge_wav_chunks(chunks: list[bytes]) -> WavMeasurement:
+    if not chunks:
+        raise ValueError("TTS returned no audio chunks")
+    parameters: tuple[int, int, int, str] | None = None
+    frames: list[bytes] = []
+    for index, chunk in enumerate(chunks, start=1):
+        try:
+            with wave.open(io.BytesIO(chunk), "rb") as source:
+                current = (
+                    source.getnchannels(),
+                    source.getsampwidth(),
+                    source.getframerate(),
+                    source.getcomptype(),
+                )
+                if parameters is None:
+                    parameters = current
+                elif current != parameters:
+                    raise ValueError("TTS WAV chunks use incompatible audio parameters")
+                frames.append(source.readframes(source.getnframes()))
+        except (EOFError, wave.Error) as error:
+            raise ValueError(f"TTS audio chunk {index} is not a valid WAV") from error
+    assert parameters is not None
+    channels, sample_width, sample_rate, compression = parameters
+    if compression != "NONE":
+        raise ValueError(f"unsupported TTS WAV compression {compression}")
+    pcm = b"".join(frames)
+    output = io.BytesIO()
+    with wave.open(output, "wb") as destination:
+        destination.setnchannels(channels)
+        destination.setsampwidth(sample_width)
+        destination.setframerate(sample_rate)
+        destination.writeframes(pcm)
+
+    clipping_ratio = silence_ratio = None
+    if sample_width == 2 and len(pcm) % 2 == 0:
+        values = [value[0] for value in struct.iter_unpack("<h", pcm)]
+        if values:
+            clipping_ratio = sum(abs(value) >= 32760 for value in values) / len(values)
+            silence_ratio = sum(abs(value) <= 327 for value in values) / len(values)
+    frame_count = len(pcm) / (channels * sample_width)
+    return WavMeasurement(
+        audio=output.getvalue(),
+        duration_seconds=frame_count / sample_rate,
+        sample_rate=sample_rate,
+        channels=channels,
+        sample_width=sample_width,
+        clipping_ratio=clipping_ratio,
+        silence_ratio=silence_ratio,
+    )
+
+
+def latest_records(path: Path) -> dict[str, dict[str, Any]]:
+    latest: dict[str, dict[str, Any]] = {}
+    if not path.exists():
+        return latest
+    for line_number, line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        if not line.strip():
+            continue
+        record = json.loads(line)
+        if "sample_id" not in record:
+            raise ValueError(f"{path}:{line_number} has no sample_id")
+        latest[str(record["sample_id"])] = record
+    return latest
+
+
+async def generate(
+    prompt: dict[str, str],
+    *,
+    gender: str,
+    repetition: int,
+    audio_root: Path,
+    api_key: str,
+    provenance: dict[str, Any],
+) -> dict[str, Any]:
+    sample_id = f"{prompt['prompt_id']}-{gender}-r{repetition}"
+    base: dict[str, Any] = {
+        "generator_version": GENERATOR_VERSION,
+        "provider": "sahara-tts",
+        "model_identifier": "sahara-streaming-tts",
+        "sample_id": sample_id,
+        "prompt_id": prompt["prompt_id"],
+        "source_sample_id": prompt["source_sample_id"],
+        "source_audio_sha256": prompt["source_audio_sha256"],
+        "language_pair": prompt["language_pair"],
+        "language": prompt["language"],
+        "accent": prompt["accent"],
+        "gender": gender,
+        "repetition": repetition,
+        "reference": prompt["text"],
+        "reference_tagged": prompt["text_tagged"],
+        "cmi": float(prompt["cmi"]),
+        "switch_points": int(prompt["switch_points"]),
+        "source_group": prompt["source_group"],
+        "recorded_at": datetime.now(UTC).isoformat(),
+        **provenance,
+    }
+    started = time.perf_counter()
+    first_audio_seconds: float | None = None
+    chunks: list[bytes] = []
+    try:
+        tts = SaharaStreamingTTS(api_key=api_key, gender=gender)
+        async for chunk in tts.synthesize(
+            prompt["text"], language=prompt["language"], accent=prompt["accent"]
+        ):
+            if first_audio_seconds is None:
+                first_audio_seconds = time.perf_counter() - started
+            chunks.append(chunk)
+        measurement = merge_wav_chunks(chunks)
+        destination = audio_root / gender / f"{sample_id}.wav"
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(measurement.audio)
+    except Exception as error:  # noqa: BLE001 - failures are benchmark outcomes
+        return {
+            **base,
+            "status": "failed",
+            "error_type": type(error).__name__,
+            "error_message": str(error),
+            "first_audio_seconds": first_audio_seconds,
+            "total_latency_seconds": time.perf_counter() - started,
+        }
+    elapsed = time.perf_counter() - started
+    return {
+        **base,
+        "status": "ok",
+        "audio_path": str(destination),
+        "audio_sha256": sha256_file(destination),
+        "duration_seconds": measurement.duration_seconds,
+        "sample_rate": measurement.sample_rate,
+        "channels": measurement.channels,
+        "sample_width": measurement.sample_width,
+        "clipping_ratio": measurement.clipping_ratio,
+        "silence_ratio": measurement.silence_ratio,
+        "first_audio_seconds": first_audio_seconds,
+        "total_latency_seconds": elapsed,
+        "realtime_factor": elapsed / measurement.duration_seconds,
+    }
+
+
+def write_audio_manifest(path: Path, records: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    rows = []
+    for record in records:
+        if record.get("status") != "ok":
+            continue
+        audio_path = Path(str(record["audio_path"])).resolve()
+        if not audio_path.is_file():
+            raise ValueError(f"generated TTS audio is missing: {audio_path}")
+        if sha256_file(audio_path) != record["audio_sha256"]:
+            raise ValueError(f"generated TTS audio hash changed: {audio_path}")
+        try:
+            relative_audio = audio_path.relative_to(path.parent.resolve())
+        except ValueError as error:
+            raise ValueError(
+                "TTS audio must be below the output manifest directory"
+            ) from error
+        rows.append(
+            {
+                "sample_id": record["sample_id"],
+                "audio_path": str(relative_audio),
+                "audio_sha256": record["audio_sha256"],
+                "language_pair": record["language_pair"],
+                "reference": record["reference"],
+                "reference_tagged": record["reference_tagged"],
+                "duration_seconds": record["duration_seconds"],
+                "cmi": record["cmi"],
+                "switch_points": record["switch_points"],
+                "source_group": record["source_group"],
+                "source_kind": "sahara-tts",
+                "condition": f"sahara-{record['gender']}",
+            }
+        )
+    with path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(
+            stream, fieldnames=sorted(REQUIRED_COLUMNS), lineterminator="\n"
+        )
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+async def run(args: argparse.Namespace) -> None:
+    api_key = os.environ.get("SAHARA_API_KEY", "")
+    if not api_key:
+        raise ValueError("SAHARA_API_KEY is required")
+    prompts = read_prompts(args.prompts)
+    provenance = environment_provenance(args.prompts)
+    provenance["prompt_manifest_sha256"] = provenance.pop("manifest_sha256")
+    existing = latest_records(args.log)
+    work = [
+        (prompt, gender, repetition)
+        for prompt in prompts
+        for gender in args.genders
+        for repetition in range(1, args.repetitions + 1)
+    ]
+    expected_ids = {
+        f"{prompt['prompt_id']}-{gender}-r{repetition}"
+        for prompt, gender, repetition in work
+    }
+    unexpected = set(existing) - expected_ids
+    if unexpected:
+        raise ValueError(
+            f"generation log contains {len(unexpected)} samples outside this panel"
+        )
+    for sample_id, record in existing.items():
+        if (
+            record.get("generator_version") != GENERATOR_VERSION
+            or record.get("prompt_manifest_sha256")
+            != provenance["prompt_manifest_sha256"]
+        ):
+            raise ValueError(
+                f"generation log configuration changed at {sample_id}; "
+                "choose a new log path"
+            )
+    remaining = []
+    for prompt, gender, repetition in work:
+        sample_id = f"{prompt['prompt_id']}-{gender}-r{repetition}"
+        previous = existing.get(sample_id)
+        if previous is None or (args.retry_failures and previous.get("status") != "ok"):
+            remaining.append((prompt, gender, repetition))
+    if args.limit is not None:
+        remaining = remaining[: args.limit]
+    for index, (prompt, gender, repetition) in enumerate(remaining, start=1):
+        record = await generate(
+            prompt,
+            gender=gender,
+            repetition=repetition,
+            audio_root=args.audio_root.resolve(),
+            api_key=api_key,
+            provenance=provenance,
+        )
+        append_record(args.log, record)
+        existing[str(record["sample_id"])] = record
+        print(f"[{index}/{len(remaining)}] {record['sample_id']}: {record['status']}")
+    write_audio_manifest(args.output_manifest, list(existing.values()))
+    failures = sum(record.get("status") != "ok" for record in existing.values())
+    print(
+        f"Wrote {args.output_manifest} from {len(existing)} attempts "
+        f"({failures} failed)"
+    )
+
+
+def parser() -> argparse.ArgumentParser:
+    command = argparse.ArgumentParser(
+        description="Generate the frozen Sahara TTS panel"
+    )
+    command.add_argument(
+        "--prompts", type=Path, default=Path("benchmark/tts_prompts.csv")
+    )
+    command.add_argument("--audio-root", type=Path, default=Path("benchmark/tts_audio"))
+    command.add_argument(
+        "--output-manifest", type=Path, default=Path("benchmark/tts_generated.csv")
+    )
+    command.add_argument(
+        "--log", type=Path, default=Path("eval/results/tts/generation.jsonl")
+    )
+    command.add_argument(
+        "--genders", nargs="+", choices=["female", "male"], default=["female", "male"]
+    )
+    command.add_argument("--repetitions", type=int, default=1)
+    command.add_argument("--limit", type=int)
+    command.add_argument("--retry-failures", action="store_true")
+    return command
+
+
+if __name__ == "__main__":
+    asyncio.run(run(parser().parse_args()))

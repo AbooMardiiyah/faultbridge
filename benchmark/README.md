@@ -19,12 +19,20 @@ source group, provenance, and condition for every sample. Its SHA-256 is
 loss variants for every clip, producing 1,600 rows. Its SHA-256 is
 `a12c826e1f372422d25543791cec7fdd4fa8ccdceb1e27c6694843524c948f01`.
 
+`tts_prompts.csv` freezes 100 code-switched text prompts derived from this panel,
+25 per language pair, for female and male Sahara TTS evaluation. It contains no
+generated audio. Its SHA-256 is
+`882d814fff276e27abb0623312f9f0e38c7c335eba68205ea4fb3be7e93216c0`.
+Generated WAV files live under ignored `benchmark/tts_audio/`; the generation log
+retains their hashes, timing, parameters, and failures.
+
 Rebuild and verify the panel with:
 
 ```bash
 make benchmark-install
 make benchmark-prepare
 make benchmark-robustness
+make benchmark-tts-prepare
 PYTHONPATH=src:eval .venv-benchmark/bin/python -c \
   "from pathlib import Path; from faultbridge_eval.manifest import read_manifest; print(len(read_manifest(Path('benchmark/manifest.csv'))))"
 ```

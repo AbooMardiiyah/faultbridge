@@ -10,14 +10,19 @@ can be more damaging than several harmless function-word errors, and a fluent
 transcript can still cause an unsupported outage claim or an unauthorized account
 action.
 
-The winning benchmark therefore has two linked tracks:
+The winning benchmark therefore has three linked tracks:
 
 1. **Code-switched ASR track:** Sahara, SBPN Multilingual Base, Meta omniASR CTC
-   300M, Faster-Whisper, and AssemblyAI Whisper Streaming receive the same audio
+   300M, and Faster-Whisper receive the same audio
    under the same audio and normalization policy. Results include raw and
    normalized WER/CER, language-role error, code-switch preservation, critical
    entity recall, latency, failure rate, and robustness slices.
-2. **End-to-end agent track:** the gold transcript and every model hypothesis pass
+2. **Code-switched TTS track:** Sahara synthesizes a frozen 100-prompt panel with
+   both documented voices. Three independent ASR judges and bilingual listeners
+   measure WER, hallucination, transcript loss, segment loss, exact accuracy,
+   naturalness, pronunciation, switch appropriateness, and latency. The complete
+   protocol is in `docs/TTS_BENCHMARK_PROTOCOL.md`.
+3. **End-to-end agent track:** the gold transcript and every model hypothesis pass
    through the same frozen FaultBridge agent and PostgreSQL scenario. Executable
    assertions grade the selected tier, tool sequence, arguments, database state,
    spoken claims, privacy behavior, and final outcome.
@@ -461,7 +466,7 @@ compressed around judge decisions.
 **Page 1 — Data and method**
 
 - four language pairs, sample counts, minutes, source, license, and stratification;
-- three ASR models and exact versions;
+- four core ASR models, the Sahara TTS configuration, and exact versions;
 - frozen normalization and audio conditions;
 - diagram of audio → ASR → identical agent → PostgreSQL assertions;
 - WER/CER and downstream-task definitions.
