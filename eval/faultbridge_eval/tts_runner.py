@@ -19,7 +19,7 @@ from faultbridge_eval.manifest import REQUIRED_COLUMNS, sha256_file
 from faultbridge_eval.runner import append_record, environment_provenance
 from faultbridge_eval.tts_manifest import FIELDS
 
-GENERATOR_VERSION = "faultbridge-tts-generator-v2"
+GENERATOR_VERSION = "faultbridge-tts-generator-v3"
 
 
 @dataclass(frozen=True, slots=True)
@@ -152,13 +152,16 @@ async def generate(
     }
     started = time.perf_counter()
     first_audio_seconds: float | None = None
+    audio_completion_seconds: float | None = None
     chunks: list[bytes] = []
     try:
         async for chunk in tts.synthesize(
             prompt["text"], language=prompt["language"], accent=prompt["accent"]
         ):
+            received_seconds = time.perf_counter() - started
             if first_audio_seconds is None:
-                first_audio_seconds = time.perf_counter() - started
+                first_audio_seconds = received_seconds
+            audio_completion_seconds = received_seconds
             chunks.append(chunk)
         measurement = merge_wav_chunks(chunks)
         destination = audio_root / gender / f"{sample_id}.wav"
@@ -171,9 +174,11 @@ async def generate(
             "error_type": type(error).__name__,
             "error_message": str(error),
             "first_audio_seconds": first_audio_seconds,
-            "total_latency_seconds": time.perf_counter() - started,
+            "audio_completion_seconds": audio_completion_seconds,
+            "session_close_seconds": time.perf_counter() - started,
         }
     elapsed = time.perf_counter() - started
+    assert audio_completion_seconds is not None
     return {
         **base,
         "status": "ok",
@@ -186,8 +191,9 @@ async def generate(
         "clipping_ratio": measurement.clipping_ratio,
         "silence_ratio": measurement.silence_ratio,
         "first_audio_seconds": first_audio_seconds,
-        "total_latency_seconds": elapsed,
-        "realtime_factor": elapsed / measurement.duration_seconds,
+        "audio_completion_seconds": audio_completion_seconds,
+        "session_close_seconds": elapsed,
+        "realtime_factor": audio_completion_seconds / measurement.duration_seconds,
     }
 
 

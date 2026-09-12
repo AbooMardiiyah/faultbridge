@@ -132,6 +132,16 @@ def summarize_generation(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     if successful
                     else None
                 ),
+                "audio_completion_p50_seconds": (
+                    median(float(row["audio_completion_seconds"]) for row in successful)
+                    if successful
+                    else None
+                ),
+                "session_close_p50_seconds": (
+                    median(float(row["session_close_seconds"]) for row in successful)
+                    if successful
+                    else None
+                ),
                 "realtime_factor_p50": (
                     median(float(row["realtime_factor"]) for row in successful)
                     if successful

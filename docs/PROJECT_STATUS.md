@@ -49,6 +49,10 @@ sessions; the Git history remains the authoritative implementation record.
   matching fairseq2 and PyTorch 2.8 CPU packages. It transcribed 15.30 seconds of
   audio in 6.34 seconds and scored 34.3% WER and 8.7% CER. Its 1.21 GB checkpoint
   is cached locally; these one-sample figures are diagnostic only.
+- The complete 400-clip SBPN run finished. Its 35 empty outputs persisted after
+  the single predeclared retry and remain scored as failures. Preliminary WER is
+  45.1% Hausa, 65.7% Igbo, 39.3% Pidgin, and 82.1% Yoruba; final reporting waits
+  for the complete paired provider panel and confidence-interval review.
 
 ## Current access
 
@@ -71,6 +75,10 @@ The live TTS server returned complete `READY` audio but omitted the documented
 summary, and preserves the already validated WAV when only the summary times out.
 The original failed pilot and five successful contract pilots remain in the
 ignored `eval/results/tts/pilots/` audit directory.
+
+TTS generator v3 separates time to first audio, time to last audio, and session
+close time. Its real-time factor ends at the last audio chunk, so the optional
+commit-acknowledgement timeout cannot inflate synthesis latency.
 
 ## Active sequence
 

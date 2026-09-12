@@ -10,7 +10,11 @@ from faultbridge_eval.metrics import segment_loss_counts
 from faultbridge_eval.tts_audit import target_phrase
 from faultbridge_eval.tts_manifest import TTS_SETTINGS, select_prompts
 from faultbridge_eval.tts_runner import merge_wav_chunks
-from faultbridge_eval.tts_scorer import score_transcript, summarize_transcripts
+from faultbridge_eval.tts_scorer import (
+    score_transcript,
+    summarize_generation,
+    summarize_transcripts,
+)
 
 
 def wav_bytes(value: int, frames: int = 160) -> bytes:
@@ -75,6 +79,27 @@ class TTSMetricsTests(unittest.TestCase):
         self.assertGreater(summary["hallucination_rate"], 0)
         self.assertGreater(summary["transcript_loss_rate"], 0)
         self.assertEqual(summary["exact_utterance_accuracy"], 0)
+
+    def test_generation_summary_separates_audio_and_session_latency(self) -> None:
+        summary = summarize_generation(
+            [
+                {
+                    "language_pair": "Pidgin-English",
+                    "gender": "female",
+                    "status": "ok",
+                    "first_audio_seconds": 2.0,
+                    "audio_completion_seconds": 3.0,
+                    "session_close_seconds": 13.0,
+                    "realtime_factor": 0.5,
+                    "clipping_ratio": 0.0,
+                    "silence_ratio": 0.1,
+                }
+            ]
+        )[0]
+
+        self.assertEqual(summary["first_audio_p50_seconds"], 2.0)
+        self.assertEqual(summary["audio_completion_p50_seconds"], 3.0)
+        self.assertEqual(summary["session_close_p50_seconds"], 13.0)
 
 
 class TTSPromptSelectionTests(unittest.TestCase):

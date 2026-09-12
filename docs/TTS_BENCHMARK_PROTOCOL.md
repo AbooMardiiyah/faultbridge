@@ -58,10 +58,11 @@ outputs. The API parameters are fixed as follows:
 
 These language codes match Intron's code-switched STT list, and the TTS values
 match Intron's supported-language and accent table.[^3] The runner records exact
-text, parameters, request time, time to first audio, total latency, WAV properties,
-audio SHA-256, code commit, dependency-lock hash, and failures. It merges multiple
-provider WAV chunks by decoding and concatenating PCM frames; binary WAV files are
-never joined blindly.
+text, parameters, request time, time to first audio, time to last audio, session
+close time, WAV properties, audio SHA-256, code commit, dependency-lock hash, and
+failures. The real-time factor uses time to last audio, excluding the later commit
+acknowledgement wait. It merges multiple provider WAV chunks by decoding and
+concatenating PCM frames; binary WAV files are never joined blindly.
 
 The live streaming endpoint can return a complete `READY` WAV chunk without later
 returning its persisted-session `COMMITTED_AUDIO` summary. The adapter always
