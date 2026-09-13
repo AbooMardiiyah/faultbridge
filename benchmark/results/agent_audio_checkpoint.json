@@ -18,7 +18,6 @@
     "raw_log_sha256": "286241b9c6ddf3155a74c5a0bc2489d1fd6fc38cb3f6ed6acdfc6cfb371c81a3"
   },
   "remaining": [
-    "full 48-scenario external-model run",
     "evidence-based routing recommendation",
     "human TTS listener audit",
     "Railway deployment and live-call validation",
@@ -62,7 +61,20 @@
   },
   "private_evidence_archive": {
     "path": "artifacts/agent-benchmark-evidence-20260913.tar.gz",
-    "bytes": 6130058,
-    "sha256": "7d7a177ea679f6f35eee6311e4a479619ff21d8d9724083f923964838adab459"
+    "bytes": 6185474,
+    "sha256": "51a4ecbde908f08845a676c53b81d1ab21b88dd853f6e98027052b91f46bf2cf"
+  },
+  "full_agent": {
+    "provider": "together",
+    "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "scenarios": 48,
+    "transcript_variants": 2,
+    "repetitions": 3,
+    "runs": 288,
+    "strict_passes": 288,
+    "critical_failures": 0,
+    "raw_runs_sha256": "55820449aaec95a10cab8c0ecfb740b6dd61cb979bdd74e87f973a0e0cac1530",
+    "summary_json_sha256": "fcf85c378bad8e36b49d3a82e57255d892b6a1f76dad55bb0a3d8a5dd4321720",
+    "summary_csv_sha256": "0ea495e70428b47604809eab6df15d1f95387899874c1f5552fe473b3d702e8b"
   }
 }

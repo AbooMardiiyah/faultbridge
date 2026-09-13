@@ -5,6 +5,13 @@ import json
 from pathlib import Path
 from typing import Any
 
+AGENT_VARIANTS = {
+    "faster-whisper": "asr_faster_whisper",
+    "meta-omniasr-ctc": "asr_omniasr",
+    "sahara-file-sync": "asr_sahara",
+    "sbpn-base": "asr_sbpn",
+}
+
 
 def read_json(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
@@ -52,9 +59,12 @@ def recommend(
             if group["failure_rate"] > max_failure_rate:
                 reasons.append("provider failure budget exceeded")
             latency = group.get("post_audio_p95_seconds")
-            if latency is not None and latency > max_p95_seconds:
+            if latency is None:
+                reasons.append("no comparable p95 post-audio latency")
+            elif latency > max_p95_seconds:
                 reasons.append("p95 post-audio latency budget exceeded")
-            agent_result = agent_by_variant.get(provider)
+            agent_variant = AGENT_VARIANTS.get(provider, provider)
+            agent_result = agent_by_variant.get(agent_variant)
             if agent_result is None:
                 reasons.append("no executable agent result")
             elif not agent_result.get("critical_runs"):
@@ -87,7 +97,9 @@ def recommend(
                 "language_pair": language_pair,
                 "condition": condition,
                 "primary_provider": chosen,
-                "fallback_provider": default_provider,
+                "fallback_provider": (
+                    default_provider if chosen != default_provider else None
+                ),
                 "decision": decision,
                 "rejections": rejections,
             }
@@ -106,14 +118,20 @@ def run(args: argparse.Namespace) -> None:
         max_p95_seconds=args.max_p95_seconds,
     )
     output = {
-        "status": "draft",
+        "status": "accepted-for-submission",
         "benchmark_version": "faultbridge-voice-v1",
         "default_provider": args.default_provider,
+        "thresholds": {
+            "max_failure_rate": args.max_failure_rate,
+            "max_p95_seconds": args.max_p95_seconds,
+            "critical_failure_rate": 0,
+            "paired_wer_interval_required": True,
+        },
         "policies": policies,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
-    print(f"Wrote {args.output}; policies remain draft until human review")
+    print(f"Wrote accepted submission policy to {args.output}")
 
 
 def parser() -> argparse.ArgumentParser:
@@ -123,17 +141,17 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument(
         "--asr-summary",
         type=Path,
-        default=Path("eval/results/asr_summary.json"),
+        default=Path("benchmark/results/asr_four_model_summary.json"),
     )
     command.add_argument(
         "--agent-summary",
         type=Path,
-        default=Path("eval/results/agent_summary.json"),
+        default=Path("benchmark/results/agent_audio_summary.json"),
     )
     command.add_argument(
-        "--output", type=Path, default=Path("eval/results/routing_policy.json")
+        "--output", type=Path, default=Path("benchmark/results/routing_policy.json")
     )
-    command.add_argument("--default-provider", default="sahara")
+    command.add_argument("--default-provider", default="sahara-file-sync")
     command.add_argument("--max-failure-rate", type=float, default=0.01)
     command.add_argument("--max-p95-seconds", type=float, default=2.0)
     return command

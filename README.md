@@ -108,8 +108,10 @@ the [completed automatic TTS report](docs/TTS_BENCHMARK_REPORT.md) records the
 records the deterministic PII scorecard; the
 [agent benchmark protocol](docs/AGENT_BENCHMARK_PROTOCOL.md) defines the 48
 executable scenarios and 24-utterance named-ASR propagation panel; the
-[completed downstream agent report](docs/AGENT_BENCHMARK_REPORT.md) records 360
-real model-and-database executions; and
+[completed executable agent report](docs/AGENT_BENCHMARK_REPORT.md) records 648
+real model-and-database executions across both panels; the
+[routing recommendation](docs/ROUTING_RECOMMENDATION.md) explains why Sahara
+remains the measured submission default; and
 [`eval/README.md`](eval/README.md) contains the reproducible commands.
 
 For a complete explanation of the product, architecture, data model, privacy

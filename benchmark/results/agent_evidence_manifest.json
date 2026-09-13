@@ -1,6 +1,26 @@
 {
-  "evidence_version": "faultbridge-agent-evidence-v1",
+  "evidence_version": "faultbridge-agent-evidence-v2",
   "files": [
+    {
+      "path": "benchmark/telco_scenarios.json",
+      "bytes": 94113,
+      "sha256": "9f3f0cdc554c5dc961ae6d8b14338ec0568827065a67b39c72d18be050987aad"
+    },
+    {
+      "path": "eval/results/agent_runs.jsonl",
+      "bytes": 896891,
+      "sha256": "55820449aaec95a10cab8c0ecfb740b6dd61cb979bdd74e87f973a0e0cac1530"
+    },
+    {
+      "path": "benchmark/results/agent_summary.json",
+      "bytes": 5653,
+      "sha256": "fcf85c378bad8e36b49d3a82e57255d892b6a1f76dad55bb0a3d8a5dd4321720"
+    },
+    {
+      "path": "benchmark/results/agent_summary.csv",
+      "bytes": 1332,
+      "sha256": "0ea495e70428b47604809eab6df15d1f95387899874c1f5552fe473b3d702e8b"
+    },
     {
       "path": "benchmark/agent_audio_prompts.csv",
       "bytes": 11299,
@@ -63,8 +83,8 @@
     },
     {
       "path": "docs/AGENT_BENCHMARK_REPORT.md",
-      "bytes": 3162,
-      "sha256": "95d6b47734a23653760dd3a46d8bb3c6a8f693effaffafb76baf4b188c44b916"
+      "bytes": 4141,
+      "sha256": "02766c239d4acd1a10238130f93ce99951d46947acc7abd65be667a39f050bad"
     }
   ],
   "generated_audio": {
@@ -76,19 +96,42 @@
     ],
     "languages": 4
   },
-  "agent_runs": {
-    "path": "eval/results/agent_audio/runs.jsonl",
-    "runs": 360,
-    "scenarios": 24,
-    "transcript_variants": 5,
-    "repetitions": 3,
-    "sha256": "9ed17a2e149461090b7d97536f8c94e6405a3c81cb7589bfa247677261ae0eb0"
-  },
-  "score": {
-    "scorer_version": "faultbridge-agent-scorer-v1",
-    "results_sha256": "9ed17a2e149461090b7d97536f8c94e6405a3c81cb7589bfa247677261ae0eb0",
-    "code_commit": "2ba482dcc80bdb3df6814fb683f331fc274e51ca",
-    "agent_provider": "together",
-    "agent_model": "meta-llama/Llama-3.3-70B-Instruct-Turbo"
-  }
+  "agent_runs": [
+    {
+      "name": "full-capability",
+      "path": "eval/results/agent_runs.jsonl",
+      "runs": 288,
+      "scenarios": 48,
+      "transcript_variants": 2,
+      "repetitions": 3,
+      "sha256": "55820449aaec95a10cab8c0ecfb740b6dd61cb979bdd74e87f973a0e0cac1530"
+    },
+    {
+      "name": "named-asr",
+      "path": "eval/results/agent_audio/runs.jsonl",
+      "runs": 360,
+      "scenarios": 24,
+      "transcript_variants": 5,
+      "repetitions": 3,
+      "sha256": "9ed17a2e149461090b7d97536f8c94e6405a3c81cb7589bfa247677261ae0eb0"
+    }
+  ],
+  "scores": [
+    {
+      "name": "full-capability",
+      "scorer_version": "faultbridge-agent-scorer-v1",
+      "results_sha256": "55820449aaec95a10cab8c0ecfb740b6dd61cb979bdd74e87f973a0e0cac1530",
+      "code_commit": "7d786e0bff701e1d9a6100fa0e1818b242b368a1",
+      "agent_provider": "together",
+      "agent_model": "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+    },
+    {
+      "name": "named-asr",
+      "scorer_version": "faultbridge-agent-scorer-v1",
+      "results_sha256": "9ed17a2e149461090b7d97536f8c94e6405a3c81cb7589bfa247677261ae0eb0",
+      "code_commit": "2ba482dcc80bdb3df6814fb683f331fc274e51ca",
+      "agent_provider": "together",
+      "agent_model": "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+    }
+  ]
 }

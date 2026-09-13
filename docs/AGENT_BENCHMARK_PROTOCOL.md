@@ -64,6 +64,10 @@ make benchmark-agent-run
 make benchmark-agent-score
 ```
 
+The completed Together Llama 3.3 70B run passed all 288 executions across gold
+and controlled-stress inputs. Exact aggregate results and latency percentiles are
+in `docs/AGENT_BENCHMARK_REPORT.md`.
+
 Build the named-ASR panel in resumable batches. Generation uses 24 paid TTS
 requests and the Sahara pass uses 24 paid ASR requests; local models add no API
 cost:

@@ -52,18 +52,19 @@ bytes) with SHA-256
 
 ## Downstream agent evidence
 
-The public `agent_audio_summary.json` and `.csv` contain the 360-run named-ASR
-scorecard. The private archive contains the 24 generated WAVs, generation log,
-four ASR result files, attached scenarios, and raw executable traces. Extract it
+The public `agent_summary.json` and `.csv` contain the 288-run capability
+scorecard; `agent_audio_summary.json` and `.csv` contain the 360-run named-ASR
+scorecard. The private archive contains both raw trace sets, the 24 generated
+WAVs, generation log, four ASR result files, and attached scenarios. Extract it
 at the repository root and run:
 
 ```bash
 make benchmark-verify-agent-evidence
 ```
 
-The command verifies every saved file and WAV hash, reruns the agent scorer, and
-byte-compares both regenerated aggregates. The archive is
-`artifacts/agent-benchmark-evidence-20260913.tar.gz` (6,130,058 bytes), SHA-256
-`7d7a177ea679f6f35eee6311e4a479619ff21d8d9724083f923964838adab459`.
+The command verifies every saved file and WAV hash, reruns both agent scorecards,
+and byte-compares all four regenerated aggregates. The archive filename is
+`artifacts/agent-benchmark-evidence-20260913.tar.gz`; its final size and SHA-256
+are recorded in `agent_audio_checkpoint.json`.
 Its structure is recorded in `agent_evidence_manifest.json`; completion metadata
 is recorded in `agent_audio_checkpoint.json`.

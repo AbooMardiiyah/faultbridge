@@ -49,19 +49,25 @@ def main() -> None:
         elif sha256_file(path) != row["audio_sha256"]:
             failures.append(f"audio hash mismatch: {path}")
 
-    run_path = Path(evidence["agent_runs"]["path"])
-    run_count = sum(
-        1 for line in run_path.read_text(encoding="utf-8").splitlines() if line
-    )
-    expected_runs = int(evidence["agent_runs"]["runs"])
-    if run_count != expected_runs:
-        failures.append(f"agent run count: expected {expected_runs}, found {run_count}")
+    verified_runs = 0
+    for run_set in evidence["agent_runs"]:
+        run_path = Path(run_set["path"])
+        run_count = sum(
+            1 for line in run_path.read_text(encoding="utf-8").splitlines() if line
+        )
+        expected_runs = int(run_set["runs"])
+        if run_count != expected_runs:
+            failures.append(
+                f"{run_set['name']} run count: expected {expected_runs}, "
+                f"found {run_count}"
+            )
+        verified_runs += run_count
 
     if failures:
         raise SystemExit("Evidence verification failed:\n" + "\n".join(failures))
     print(
         f"Verified {len(evidence['files'])} evidence files, "
-        f"{len(rows)} WAVs, and {run_count} agent runs"
+        f"{len(rows)} WAVs, and {verified_runs} agent runs"
     )
 
 

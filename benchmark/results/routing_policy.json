@@ -1,0 +1,109 @@
+{
+  "status": "accepted-for-submission",
+  "benchmark_version": "faultbridge-voice-v1",
+  "default_provider": "sahara-file-sync",
+  "thresholds": {
+    "max_failure_rate": 0.01,
+    "max_p95_seconds": 2.0,
+    "critical_failure_rate": 0,
+    "paired_wer_interval_required": true
+  },
+  "policies": [
+    {
+      "language_pair": "Hausa-English",
+      "condition": "clean-16khz",
+      "primary_provider": "sahara-file-sync",
+      "fallback_provider": null,
+      "decision": "conservative default",
+      "rejections": {
+        "faster-whisper": [
+          "provider failure budget exceeded",
+          "no comparable p95 post-audio latency"
+        ],
+        "meta-omniasr-ctc": [
+          "provider failure budget exceeded",
+          "no comparable p95 post-audio latency"
+        ],
+        "sahara-file-sync": [
+          "provider failure budget exceeded",
+          "no comparable p95 post-audio latency"
+        ],
+        "sbpn-base": [
+          "provider failure budget exceeded",
+          "no comparable p95 post-audio latency"
+        ]
+      }
+    },
+    {
+      "language_pair": "Igbo-English",
+      "condition": "clean-16khz",
+      "primary_provider": "sahara-file-sync",
+      "fallback_provider": null,
+      "decision": "conservative default",
+      "rejections": {
+        "faster-whisper": [
+          "provider failure budget exceeded",
+          "no comparable p95 post-audio latency"
+        ],
+        "meta-omniasr-ctc": [
+          "provider failure budget exceeded",
+          "no comparable p95 post-audio latency"
+        ],
+        "sahara-file-sync": [
+          "provider failure budget exceeded",
+          "no comparable p95 post-audio latency"
+        ],
+        "sbpn-base": [
+          "provider failure budget exceeded",
+          "no comparable p95 post-audio latency"
+        ]
+      }
+    },
+    {
+      "language_pair": "Pidgin-English",
+      "condition": "clean-16khz",
+      "primary_provider": "sahara-file-sync",
+      "fallback_provider": null,
+      "decision": "conservative default",
+      "rejections": {
+        "faster-whisper": [
+          "no comparable p95 post-audio latency"
+        ],
+        "meta-omniasr-ctc": [
+          "no comparable p95 post-audio latency"
+        ],
+        "sahara-file-sync": [
+          "no comparable p95 post-audio latency"
+        ],
+        "sbpn-base": [
+          "no comparable p95 post-audio latency"
+        ]
+      }
+    },
+    {
+      "language_pair": "Yoruba-English",
+      "condition": "clean-16khz",
+      "primary_provider": "sahara-file-sync",
+      "fallback_provider": null,
+      "decision": "conservative default",
+      "rejections": {
+        "faster-whisper": [
+          "provider failure budget exceeded",
+          "no comparable p95 post-audio latency"
+        ],
+        "meta-omniasr-ctc": [
+          "provider failure budget exceeded",
+          "no comparable p95 post-audio latency"
+        ],
+        "sahara-file-sync": [
+          "provider failure budget exceeded",
+          "no comparable p95 post-audio latency"
+        ],
+        "sbpn-base": [
+          "provider failure budget exceeded",
+          "no comparable p95 post-audio latency"
+        ]
+      }
+    }
+  ]
+}

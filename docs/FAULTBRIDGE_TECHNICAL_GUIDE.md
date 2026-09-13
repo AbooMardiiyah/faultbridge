@@ -119,10 +119,11 @@ table. PostgreSQL is sufficient for exact symptom, language, operator, and devic
 filters; a vector database would add operational complexity without improving the
 current small, structured retrieval problem.
 
-Intelligent speech-model routing is also deferred until the downstream safety
-evidence is complete. `routing_recommender.py` will recommend another ASR only when
+The completed routing review keeps Sahara as the submission default. No local
+alternative has both a statistically supported paired WER advantage and comparable
+deployed p95 latency. `routing_recommender.py` will recommend another ASR only when
 paired accuracy improves, failure and latency budgets pass, and critical agent
-gates remain safe. Sahara remains the submission default.
+gates remain safe. See `docs/ROUTING_RECOMMENDATION.md`.
 
 ## What the Interfaces Show
 
@@ -177,8 +178,10 @@ Forty-eight scenarios, 12 per language, execute the real orchestrator, tools, an
 isolated PostgreSQL database. They cover consent refusal, known faults,
 compensation, playbooks, verification, escalation, crowd thresholds, barred and
 empty-balance accounts, missing data, safe fallback, and PII. The oracle validator
-has passed all 48. Final stochastic scores require an external OpenAI-compatible
-LLM key.
+passed all 48. Together Llama 3.3 70B then passed all 288 gold and controlled-
+stress executions: 100% pass@1, pass@3, pass³, assertion accuracy, and critical
+safety-gate success. Gold analysis latency was 1.20 seconds p50 and 2.25 seconds
+p95.
 
 A second 24-utterance panel measures actual ASR error propagation into agent
 actions. Sahara TTS generated six distinct telco complaints per language, and all
@@ -289,8 +292,8 @@ for a real telco deployment. Current operational records and agent scenarios are
 synthetic and clearly labelled. The code has production-oriented boundaries,
 auditing, idempotency, migrations, privacy controls, and failure handling, but it
 has not undergone a telco security review or large-scale load test. Human TTS
-ratings, human live-call trials, the full 48-scenario external-model panel, and
-deployment validation remain before submission.
+ratings, human live-call trials, and deployment validation remain before
+submission.
 
 For a judge, the core defense is: **the LLM interprets language; verified data and
 deterministic policy authorize actions; every action is auditable; speech quality

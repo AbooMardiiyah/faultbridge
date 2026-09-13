@@ -1,0 +1,11 @@
+scope,language_pair,variant,scenarios,runs,pass_at_1,pass_at_k,pass_power_k,assertion_pass_rate,critical_runs,critical_failure_rate,agent_model_latency_p50_seconds,agent_model_latency_p95_seconds,asr_propagation_loss_pass_at_1,voice_capability_retention
+overall,,controlled_asr_error,48,144,1.0,1.0,1.0,1.0,144,0.0,1.24039898099727,2.0559524844415136,0.0,1.0
+overall,,gold,48,144,1.0,1.0,1.0,1.0,144,0.0,1.2024858899967512,2.250213476907811,0.0,1.0
+language,Hausa-English,controlled_asr_error,12,36,1.0,1.0,1.0,1.0,36,0.0,1.294380455496139,2.280547856742487,0.0,1.0
+language,Hausa-English,gold,12,36,1.0,1.0,1.0,1.0,36,0.0,1.286171452004055,2.6578441417477734,0.0,1.0
+language,Igbo-English,controlled_asr_error,12,36,1.0,1.0,1.0,1.0,36,0.0,1.335933633003151,2.0786237872525817,0.0,1.0
+language,Igbo-English,gold,12,36,1.0,1.0,1.0,1.0,36,0.0,1.2936505490069976,2.548758737753815,0.0,1.0
+language,Pidgin-English,controlled_asr_error,12,36,1.0,1.0,1.0,1.0,36,0.0,1.233587857997918,1.8135664692417777,0.0,1.0
+language,Pidgin-English,gold,12,36,1.0,1.0,1.0,1.0,36,0.0,1.2740961210001842,2.036095932991884,0.0,1.0
+language,Yoruba-English,controlled_asr_error,12,36,1.0,1.0,1.0,1.0,36,0.0,1.1995183684994117,1.9354960580058105,0.0,1.0
+language,Yoruba-English,gold,12,36,1.0,1.0,1.0,1.0,36,0.0,1.0354023954932927,1.6043067849968793,0.0,1.0

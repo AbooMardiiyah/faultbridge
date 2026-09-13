@@ -1,6 +1,22 @@
-# FaultBridge Downstream Voice-Agent Benchmark
+# FaultBridge Executable Voice-Agent Benchmark
 
-## Result
+## Full Capability Panel
+
+The primary agent panel completed 288/288 strict passes over 48 scenarios, two
+input variants, and three repetitions. Gold transcripts and controlled ASR-stress
+texts both achieved 100% pass@1, pass@3, pass³, assertion accuracy, and voice
+capability retention, with 0% critical safety failures. Together Llama 3.3 70B
+structured-analysis latency was 1.20 seconds p50 and 2.25 seconds p95 for gold,
+and 1.24 seconds p50 and 2.06 seconds p95 for stressed text.
+
+The 48 scenarios contain 12 capabilities per language pair: consent refusal,
+known faults with and without compensation, guided diagnosis, confirmed
+resolution, first escalation, crowd-signal thresholds, barred and empty-balance
+accounts, missing account state, safe fallback, and PII handling. The controlled
+variant removes diacritics, punctuation, and selected speech cues. It is a stable
+stress transform, not the output of a named ASR.
+
+## Named-ASR Downstream Result
 
 FaultBridge completed 360 executable runs over 24 synthetic telco scenarios:
 four language pairs, five transcript variants, and three repetitions. Each run
@@ -59,8 +75,8 @@ the primary ASR comparison. The audio uses one synthetic female voice and should
 not be generalized to male voices, natural speakers, telephone networks, or new
 fault domains.
 
-Raw audio, hypotheses, traces, hashes, model versions, code commit, and dependency
+Raw audio, hypotheses, traces, hashes, model versions, code commits, and dependency
 lock are preserved in the private evidence archive. After extracting it at the
 repository root, `make benchmark-verify-agent-evidence` verifies every file and
-WAV hash, reruns `faultbridge-agent-scorer-v1`, and byte-compares the regenerated
-public JSON and CSV.
+WAV hash, reruns `faultbridge-agent-scorer-v1` over both panels, and byte-compares
+the four regenerated public JSON and CSV files.

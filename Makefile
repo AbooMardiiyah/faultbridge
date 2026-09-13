@@ -154,6 +154,9 @@ benchmark-agent-audio-score:
 
 benchmark-verify-agent-evidence:
 	UV_CACHE_DIR=.uv-cache uv run python3 scripts/verify_agent_evidence.py
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.agent_scorer eval/results/agent_runs.jsonl --output /tmp/faultbridge-agent-full-reproduced.json
+	cmp benchmark/results/agent_summary.json /tmp/faultbridge-agent-full-reproduced.json
+	cmp benchmark/results/agent_summary.csv /tmp/faultbridge-agent-full-reproduced.csv
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.agent_scorer eval/results/agent_audio/runs.jsonl --output /tmp/faultbridge-agent-reproduced.json
 	cmp benchmark/results/agent_audio_summary.json /tmp/faultbridge-agent-reproduced.json
 	cmp benchmark/results/agent_audio_summary.csv /tmp/faultbridge-agent-reproduced.csv

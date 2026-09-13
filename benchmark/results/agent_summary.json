@@ -1,0 +1,186 @@
+{
+  "scorer_version": "faultbridge-agent-scorer-v1",
+  "results_sha256": "55820449aaec95a10cab8c0ecfb740b6dd61cb979bdd74e87f973a0e0cac1530",
+  "provenance": {
+    "benchmark_version": [
+      "faultbridge-agent-v1"
+    ],
+    "manifest_sha256": [
+      "9f3f0cdc554c5dc961ae6d8b14338ec0568827065a67b39c72d18be050987aad"
+    ],
+    "code_commit": [
+      "7d786e0bff701e1d9a6100fa0e1818b242b368a1"
+    ],
+    "lock_sha256": [
+      "74269ae05fe5c30d13c872f8b1d0d046a07a037095b7a5f42e448b70487384e7"
+    ],
+    "agent_provider": [
+      "together"
+    ],
+    "agent_model": [
+      "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+    ]
+  },
+  "variants": [
+    {
+      "variant": "controlled_asr_error",
+      "scenarios": 48,
+      "runs": 144,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_power_k": 1.0,
+      "assertion_pass_rate": 1.0,
+      "critical_runs": 144,
+      "critical_failure_rate": 0.0,
+      "agent_model_latency_p50_seconds": 1.24039898099727,
+      "agent_model_latency_p95_seconds": 2.0559524844415136,
+      "asr_propagation_loss_pass_at_1": 0.0,
+      "voice_capability_retention": 1.0
+    },
+    {
+      "variant": "gold",
+      "scenarios": 48,
+      "runs": 144,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_power_k": 1.0,
+      "assertion_pass_rate": 1.0,
+      "critical_runs": 144,
+      "critical_failure_rate": 0.0,
+      "agent_model_latency_p50_seconds": 1.2024858899967512,
+      "agent_model_latency_p95_seconds": 2.250213476907811,
+      "asr_propagation_loss_pass_at_1": 0.0,
+      "voice_capability_retention": 1.0
+    }
+  ],
+  "by_language": [
+    {
+      "variant": "controlled_asr_error",
+      "scenarios": 12,
+      "runs": 36,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_power_k": 1.0,
+      "assertion_pass_rate": 1.0,
+      "critical_runs": 36,
+      "critical_failure_rate": 0.0,
+      "agent_model_latency_p50_seconds": 1.294380455496139,
+      "agent_model_latency_p95_seconds": 2.280547856742487,
+      "language_pair": "Hausa-English",
+      "asr_propagation_loss_pass_at_1": 0.0,
+      "voice_capability_retention": 1.0
+    },
+    {
+      "variant": "gold",
+      "scenarios": 12,
+      "runs": 36,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_power_k": 1.0,
+      "assertion_pass_rate": 1.0,
+      "critical_runs": 36,
+      "critical_failure_rate": 0.0,
+      "agent_model_latency_p50_seconds": 1.286171452004055,
+      "agent_model_latency_p95_seconds": 2.6578441417477734,
+      "language_pair": "Hausa-English",
+      "asr_propagation_loss_pass_at_1": 0.0,
+      "voice_capability_retention": 1.0
+    },
+    {
+      "variant": "controlled_asr_error",
+      "scenarios": 12,
+      "runs": 36,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_power_k": 1.0,
+      "assertion_pass_rate": 1.0,
+      "critical_runs": 36,
+      "critical_failure_rate": 0.0,
+      "agent_model_latency_p50_seconds": 1.335933633003151,
+      "agent_model_latency_p95_seconds": 2.0786237872525817,
+      "language_pair": "Igbo-English",
+      "asr_propagation_loss_pass_at_1": 0.0,
+      "voice_capability_retention": 1.0
+    },
+    {
+      "variant": "gold",
+      "scenarios": 12,
+      "runs": 36,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_power_k": 1.0,
+      "assertion_pass_rate": 1.0,
+      "critical_runs": 36,
+      "critical_failure_rate": 0.0,
+      "agent_model_latency_p50_seconds": 1.2936505490069976,
+      "agent_model_latency_p95_seconds": 2.548758737753815,
+      "language_pair": "Igbo-English",
+      "asr_propagation_loss_pass_at_1": 0.0,
+      "voice_capability_retention": 1.0
+    },
+    {
+      "variant": "controlled_asr_error",
+      "scenarios": 12,
+      "runs": 36,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_power_k": 1.0,
+      "assertion_pass_rate": 1.0,
+      "critical_runs": 36,
+      "critical_failure_rate": 0.0,
+      "agent_model_latency_p50_seconds": 1.233587857997918,
+      "agent_model_latency_p95_seconds": 1.8135664692417777,
+      "language_pair": "Pidgin-English",
+      "asr_propagation_loss_pass_at_1": 0.0,
+      "voice_capability_retention": 1.0
+    },
+    {
+      "variant": "gold",
+      "scenarios": 12,
+      "runs": 36,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_power_k": 1.0,
+      "assertion_pass_rate": 1.0,
+      "critical_runs": 36,
+      "critical_failure_rate": 0.0,
+      "agent_model_latency_p50_seconds": 1.2740961210001842,
+      "agent_model_latency_p95_seconds": 2.036095932991884,
+      "language_pair": "Pidgin-English",
+      "asr_propagation_loss_pass_at_1": 0.0,
+      "voice_capability_retention": 1.0
+    },
+    {
+      "variant": "controlled_asr_error",
+      "scenarios": 12,
+      "runs": 36,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_power_k": 1.0,
+      "assertion_pass_rate": 1.0,
+      "critical_runs": 36,
+      "critical_failure_rate": 0.0,
+      "agent_model_latency_p50_seconds": 1.1995183684994117,
+      "agent_model_latency_p95_seconds": 1.9354960580058105,
+      "language_pair": "Yoruba-English",
+      "asr_propagation_loss_pass_at_1": 0.0,
+      "voice_capability_retention": 1.0
+    },
+    {
+      "variant": "gold",
+      "scenarios": 12,
+      "runs": 36,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "pass_power_k": 1.0,
+      "assertion_pass_rate": 1.0,
+      "critical_runs": 36,
+      "critical_failure_rate": 0.0,
+      "agent_model_latency_p50_seconds": 1.0354023954932927,
+      "agent_model_latency_p95_seconds": 1.6043067849968793,
+      "language_pair": "Yoruba-English",
+      "asr_propagation_loss_pass_at_1": 0.0,
+      "voice_capability_retention": 1.0
+    }
+  ]
+}
