@@ -53,9 +53,12 @@ def build_model(args: argparse.Namespace) -> OpenAICompatibleAgentModel:
     if args.agent_provider == "openai":
         key = os.environ.get("OPENAI_API_KEY", "")
         base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
-    else:
+    elif args.agent_provider == "groq":
         key = os.environ.get("GROQ_API_KEY", "")
         base_url = os.environ.get("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
+    else:
+        key = os.environ.get("TOGETHER_API_KEY", "")
+        base_url = os.environ.get("TOGETHER_BASE_URL", "https://api.together.ai/v1")
     if not key:
         raise ValueError(f"{args.agent_provider.upper()} API key is required")
     return OpenAICompatibleAgentModel(
@@ -342,9 +345,11 @@ def parser() -> argparse.ArgumentParser:
         "--output", type=Path, default=Path("eval/results/agent_runs.jsonl")
     )
     command.add_argument(
-        "--agent-provider", choices=["openai", "groq"], default="openai"
+        "--agent-provider", choices=["openai", "groq", "together"], default="together"
     )
-    command.add_argument("--agent-model", default="gpt-4.1-mini")
+    command.add_argument(
+        "--agent-model", default="meta-llama/Llama-3.3-70B-Instruct-Turbo"
+    )
     command.add_argument("--timeout-seconds", type=float, default=30.0)
     command.add_argument("--repetitions", type=int, default=3)
     command.add_argument(

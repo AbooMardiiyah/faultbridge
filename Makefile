@@ -4,8 +4,8 @@ TORCH_BACKEND ?= cpu
 ASR_BATCH_SIZE ?= 10
 TTS_BATCH_SIZE ?= 10
 TTS_GENDERS ?= female male
-AGENT_PROVIDER ?= openai
-AGENT_MODEL ?= gpt-4.1-mini
+AGENT_PROVIDER ?= together
+AGENT_MODEL ?= meta-llama/Llama-3.3-70B-Instruct-Turbo
 AGENT_REPETITIONS ?= 3
 AGENT_AUDIO_BATCH_SIZE ?= 6
 

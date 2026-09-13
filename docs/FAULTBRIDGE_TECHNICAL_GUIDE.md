@@ -25,8 +25,9 @@ account balance, compensation, or repair time.
 
 The runtime is model-agnostic at its boundaries. `SpeechToText`, `TextToSpeech`,
 and `AgentModel` protocols define the required methods. Sahara is the submitted
-product provider. Faster-Whisper, SBPN, and OmniASR are benchmark comparators and
-can be replaced without changing the policy engine.
+speech provider. Together-hosted Llama 3.3 70B performs structured complaint
+analysis. Faster-Whisper, SBPN, and OmniASR are benchmark comparators and can be
+replaced without changing the policy engine.
 
 The repository map is:
 

@@ -190,7 +190,7 @@ the evaluation database. Prepare and validate its policy oracles first:
 make benchmark-agent-prepare
 make benchmark-eval-db
 make benchmark-agent-validate
-make benchmark-agent-run AGENT_PROVIDER=openai AGENT_MODEL=gpt-4.1-mini
+make benchmark-agent-run
 make benchmark-agent-score
 ```
 
@@ -213,7 +213,7 @@ make benchmark-agent-audio-asr-faster-whisper
 make benchmark-agent-audio-asr-sbpn
 make benchmark-agent-audio-asr-omni
 make benchmark-agent-audio-attach
-make benchmark-agent-audio-run AGENT_PROVIDER=openai AGENT_MODEL=gpt-4.1-mini
+make benchmark-agent-audio-run
 make benchmark-agent-audio-score
 ```
 

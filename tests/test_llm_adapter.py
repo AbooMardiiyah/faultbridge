@@ -4,6 +4,8 @@ import unittest
 import httpx
 
 from faultbridge.adapters.llm import OpenAICompatibleAgentModel
+from faultbridge.adapters.registry import build_agent_model
+from faultbridge.config import Settings
 
 
 class LlmAdapterTests(unittest.IsolatedAsyncioTestCase):
@@ -11,6 +13,7 @@ class LlmAdapterTests(unittest.IsolatedAsyncioTestCase):
         def handler(request: httpx.Request) -> httpx.Response:
             payload = json.loads(request.content)
             self.assertEqual(payload["temperature"], 0)
+            self.assertEqual(payload["max_tokens"], 128)
             self.assertEqual(request.headers["authorization"], "Bearer test-key")
             return httpx.Response(
                 200,
@@ -72,6 +75,23 @@ class LlmAdapterTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(analysis.symptom, "unknown")
         self.assertEqual(analysis.language_pair, "Hausa-English")
+
+    def test_together_provider_uses_openai_compatible_adapter(self) -> None:
+        model = build_agent_model(
+            Settings(
+                database_url="postgresql://test.invalid/faultbridge",
+                faultbridge_pseudonym_secret="pseudonym-secret-at-least-32-chars",
+                faultbridge_internal_api_key="internal-secret-at-least-32-chars",
+                agent_provider="together",
+                agent_model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
+                together_api_key="together-test-key",
+            )
+        )
+
+        self.assertIsInstance(model, OpenAICompatibleAgentModel)
+        self.assertEqual(model.api_key, "together-test-key")
+        self.assertEqual(model.base_url, "https://api.together.ai/v1")
+        self.assertEqual(model.model, "meta-llama/Llama-3.3-70B-Instruct-Turbo")
 
 
 if __name__ == "__main__":

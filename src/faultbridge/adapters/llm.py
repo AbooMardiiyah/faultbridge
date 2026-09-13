@@ -54,6 +54,7 @@ class OpenAICompatibleAgentModel:
                 json={
                     "model": self.model,
                     "temperature": 0,
+                    "max_tokens": 128,
                     "response_format": {"type": "json_object"},
                     "messages": [
                         {"role": "system", "content": system},

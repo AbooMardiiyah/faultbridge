@@ -46,8 +46,8 @@ sessions; the Git history remains the authoritative implementation record.
 - A 48-scenario executable agent panel is frozen and balanced across all four
   language pairs and 12 resolution/safety capabilities. Its expected tool traces
   and database effects pass against the real isolated PostgreSQL policy stack.
-  The external-model run is ready but has not started because no OpenAI or Groq
-  key is configured.
+  The external-model run is ready for Together-hosted Llama 3.3 70B; its API key
+  still needs to be added to `.env` as `TOGETHER_API_KEY`.
 - The named-ASR downstream panel has 24 distinct synthetic telco utterances, six
   per language. Sahara TTS generated all 24 successfully (161.14 audio seconds),
   and Sahara file ASR transcribed all 24 successfully. The audio, generation log,
@@ -115,7 +115,7 @@ and spaced 2.1 seconds apart for the documented 30-request-per-minute limit.
 1. Run Faster-Whisper, OmniASR, and SBPN over the 24 saved downstream clips.
 2. Attach all four named ASR hypotheses to the agent scenarios and verify the
    frozen evidence hashes.
-3. Run and score the agent scenarios after configuring an OpenAI or Groq key,
+3. Run and score the agent scenarios after configuring the Together key,
    then derive evidence-based routing recommendations.
 4. Conduct the prepared TTS audit with three bilingual listeners per language
    pair and add only qualified human results to the report.

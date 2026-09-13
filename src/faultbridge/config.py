@@ -15,13 +15,15 @@ class Settings(BaseSettings):
     )
     stt_provider: str = "sahara"
     tts_provider: str = "sahara"
-    agent_provider: str = "openai"
-    agent_model: str = "gpt-4.1-mini"
+    agent_provider: str = "together"
+    agent_model: str = "meta-llama/Llama-3.3-70B-Instruct-Turbo"
     agent_timeout_seconds: float = Field(default=30.0, gt=0, le=120)
     openai_api_key: SecretStr | None = None
     openai_base_url: str = "https://api.openai.com/v1"
     groq_api_key: SecretStr | None = None
     groq_base_url: str = "https://api.groq.com/openai/v1"
+    together_api_key: SecretStr | None = None
+    together_base_url: str = "https://api.together.ai/v1"
     assemblyai_api_key: SecretStr | None = None
     huggingface_token: SecretStr | None = None
     twilio_account_sid: str | None = None

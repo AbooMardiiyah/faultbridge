@@ -22,6 +22,10 @@ agentic loop:
 7. verify the outcome, escalate unresolved calls, and cluster distinct complaints;
 8. queue callbacks and compensation for idempotent operator delivery.
 
+The submitted configuration uses Sahara for speech and Together-hosted
+`meta-llama/Llama-3.3-70B-Instruct-Turbo` for structured complaint analysis.
+Together, OpenAI, and Groq share the same provider-neutral agent interface.
+
 Run it with Python 3.11+, Docker, and `uv`:
 
 ```bash

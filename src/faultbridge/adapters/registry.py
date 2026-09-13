@@ -58,6 +58,9 @@ def build_agent_model(settings: Settings) -> AgentModel:
     elif provider == "groq":
         api_key = _secret(settings.groq_api_key, "GROQ_API_KEY")
         base_url = settings.groq_base_url
+    elif provider == "together":
+        api_key = _secret(settings.together_api_key, "TOGETHER_API_KEY")
+        base_url = settings.together_base_url
     else:
         raise ProviderConfigurationError(f"unsupported agent provider {provider!r}")
     return OpenAICompatibleAgentModel(

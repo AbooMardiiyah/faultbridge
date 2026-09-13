@@ -32,7 +32,7 @@ voice endpoints must also supply `voice_language` and `voice_accent` explicitly.
 
 `STT_PROVIDER`, `TTS_PROVIDER`, and `AGENT_PROVIDER` select implementations at
 composition time. The Intron submission uses `sahara`, `sahara`, and either
-`openai` or `groq`. The domain engine, telco tools, and database do not import a
+`together`, `openai`, or `groq`. The domain engine, telco tools, and database do not import a
 speech or language-model provider.
 
 Raw-audio endpoints accept mono, little-endian PCM16 and return one base64 WAV item

@@ -28,13 +28,13 @@ a filesystem volume. Keep PostgreSQL private and reference its internal
    SAHARA_API_KEY=<Sahara key>
    STT_PROVIDER=sahara
    TTS_PROVIDER=sahara
-   AGENT_PROVIDER=openai
-   AGENT_MODEL=gpt-4.1-mini
-   OPENAI_API_KEY=<key>
+   AGENT_PROVIDER=together
+   AGENT_MODEL=meta-llama/Llama-3.3-70B-Instruct-Turbo
+   TOGETHER_API_KEY=<key>
    ```
 
-   Use `GROQ_API_KEY` and `AGENT_PROVIDER=groq` instead when that is the selected
-   agent provider. Add operator webhook variables only when delivery is enabled.
+   OpenAI and Groq remain supported alternatives. Add operator webhook variables
+   only when delivery is enabled.
 6. Set the health-check path to `/health/ready` and leave the injected `PORT`
    unchanged. The container applies idempotent SQL migrations before starting and
    binds Uvicorn to `0.0.0.0:${PORT}`.
