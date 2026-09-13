@@ -103,6 +103,7 @@ def merge_wav_chunks(chunks: list[bytes]) -> WavMeasurement:
 
 
 def latest_records(path: Path) -> dict[str, dict[str, Any]]:
+    """Return one resumable state per sample without losing a prior success."""
     latest: dict[str, dict[str, Any]] = {}
     if not path.exists():
         return latest
@@ -114,7 +115,14 @@ def latest_records(path: Path) -> dict[str, dict[str, Any]]:
         record = json.loads(line)
         if "sample_id" not in record:
             raise ValueError(f"{path}:{line_number} has no sample_id")
-        latest[str(record["sample_id"])] = record
+        sample_id = str(record["sample_id"])
+        previous = latest.get(sample_id)
+        if (
+            record.get("status") == "ok"
+            or not previous
+            or previous.get("status") != "ok"
+        ):
+            latest[sample_id] = record
     return latest
 
 

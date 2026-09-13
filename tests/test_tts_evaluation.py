@@ -13,7 +13,12 @@ from faultbridge_eval.metrics import segment_loss_counts
 from faultbridge_eval.tts_audit import parser as audit_parser
 from faultbridge_eval.tts_audit import portable_audio_path, target_phrase
 from faultbridge_eval.tts_manifest import TTS_SETTINGS, select_prompts
-from faultbridge_eval.tts_runner import attempt_counts, generate, merge_wav_chunks
+from faultbridge_eval.tts_runner import (
+    attempt_counts,
+    generate,
+    latest_records,
+    merge_wav_chunks,
+)
 from faultbridge_eval.tts_scorer import (
     publishable_report,
     score_transcript,
@@ -33,6 +38,24 @@ def wav_bytes(value: int, frames: int = 160) -> bytes:
 
 
 class TTSMetricsTests(unittest.TestCase):
+    def test_later_failed_retry_does_not_replace_successful_audio(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / "generation.jsonl"
+            log.write_text(
+                "".join(
+                    json.dumps(record) + "\n"
+                    for record in (
+                        {"sample_id": "one", "status": "ok", "audio_path": "one.wav"},
+                        {"sample_id": "one", "status": "failed", "error": "network"},
+                    )
+                ),
+                encoding="utf-8",
+            )
+
+            latest = latest_records(log)
+
+        self.assertEqual(latest["one"]["status"], "ok")
+
     def test_attempt_counts_survive_restarts(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             log = Path(directory) / "generation.jsonl"
