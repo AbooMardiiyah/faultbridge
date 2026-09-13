@@ -28,7 +28,8 @@
     "SBPN transcription",
     "named-hypothesis attachment",
     "external LLM agent runs",
-    "agent score aggregation"
+    "agent score aggregation",
+    "technical-guide walkthrough and judge-defense rehearsal"
   ],
   "private_checkpoint": {
     "path": "artifacts/agent-audio-checkpoint-20260913.tar.gz",

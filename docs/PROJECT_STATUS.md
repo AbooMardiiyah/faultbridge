@@ -48,6 +48,11 @@ sessions; the Git history remains the authoritative implementation record.
   and database effects pass against the real isolated PostgreSQL policy stack.
   The external-model run is ready but has not started because no OpenAI or Groq
   key is configured.
+- The named-ASR downstream panel has 24 distinct synthetic telco utterances, six
+  per language. Sahara TTS generated all 24 successfully (161.14 audio seconds),
+  and Sahara file ASR transcribed all 24 successfully. The audio, generation log,
+  ASR hypotheses, and SHA-256 checkpoint are preserved locally; the three local
+  ASR passes and external-agent scoring remain.
 - One natural Hausa-English Sahara STT pilot succeeded after a transient provider
   failure: normalized WER 28.6%, CER 7.4%, and 5.31 seconds of post-audio latency.
   The sample size is one and must not appear as a model-level conclusion.
@@ -107,12 +112,19 @@ and spaced 2.1 seconds apart for the documented 30-request-per-minute limit.
 
 ## Active sequence
 
-1. Conduct the prepared TTS audit with three bilingual listeners per language
-   pair and add the qualified human results to the report.
-2. Test the caller and operations interfaces against live providers.
-3. Run and score the prepared agent scenarios after configuring an OpenAI or Groq
-   key, then derive evidence-based routing recommendations.
-4. Complete the five-minute demo and submission package.
+1. Run Faster-Whisper, OmniASR, and SBPN over the 24 saved downstream clips.
+2. Attach all four named ASR hypotheses to the agent scenarios and verify the
+   frozen evidence hashes.
+3. Run and score the agent scenarios after configuring an OpenAI or Groq key,
+   then derive evidence-based routing recommendations.
+4. Conduct the prepared TTS audit with three bilingual listeners per language
+   pair and add only qualified human results to the report.
+5. Deploy to Railway and test the caller and operations interfaces against live
+   providers.
+6. Produce the three-page PDF, five-minute video, public repository release,
+   Responsible AI note, and optional Hugging Face audio submission.
+7. Walk through `docs/FAULTBRIDGE_TECHNICAL_GUIDE.md` and rehearse the technical
+   defense and likely judge questions with the project owner.
 
 Hardware use and foreground validation are now authorized. Keep delivery workers
 disabled until real operator webhooks are configured.

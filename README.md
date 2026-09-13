@@ -100,3 +100,10 @@ records the deterministic PII scorecard; the
 [agent benchmark protocol](docs/AGENT_BENCHMARK_PROTOCOL.md) defines the 48
 executable scenarios and 24-utterance named-ASR propagation panel; and
 [`eval/README.md`](eval/README.md) contains the reproducible commands.
+
+For a complete explanation of the product, architecture, data model, privacy
+boundary, benchmark tracks, and every reported metric, read the
+[technical explanation guide](docs/FAULTBRIDGE_TECHNICAL_GUIDE.md). The
+[Railway deployment guide](docs/RAILWAY_DEPLOYMENT.md) and
+[submission plan](docs/SUBMISSION_PLAN.md) cover hosting and the final hackathon
+package.
