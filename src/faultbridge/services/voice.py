@@ -4,6 +4,7 @@ from dataclasses import asdict
 
 from faultbridge.adapters.base import (
     AgentModel,
+    ComplaintAnalysis,
     SpeechToText,
     TextToSpeech,
     VoiceTurnResult,
@@ -40,13 +41,21 @@ class VoicePipeline:
         voice_language: str,
         voice_accent: str,
     ) -> VoiceTurnResult:
-        raw_transcript = await self.stt.transcribe(
-            pcm16_audio, language_pair=default_language_pair
-        )
-        transcript = redact_text(raw_transcript)
-        analysis = await self.agent_model.analyze_complaint(
-            transcript, default_language_pair=default_language_pair
-        )
+        if consent:
+            raw_transcript = await self.stt.transcribe(
+                pcm16_audio, language_pair=default_language_pair
+            )
+            transcript = redact_text(raw_transcript)
+            analysis = await self.agent_model.analyze_complaint(
+                transcript, default_language_pair=default_language_pair
+            )
+        else:
+            transcript = ""
+            analysis = ComplaintAnalysis(
+                symptom="unknown",
+                language_pair=default_language_pair,
+                consent=False,
+            )
         session = self.orchestrator.start_call(
             caller_id=caller_id,
             transcript=transcript,

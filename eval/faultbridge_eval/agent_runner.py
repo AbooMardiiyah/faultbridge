@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from faultbridge.adapters.base import ComplaintAnalysis
 from faultbridge.adapters.llm import OpenAICompatibleAgentModel
 from faultbridge.domain.models import CallSession, Outcome, Tier
 from faultbridge.domain.orchestrator import FaultBridgeOrchestrator
@@ -196,10 +197,17 @@ async def run_variant(
     seed_state(database, scenario.get("seed", {}), pseudonym_secret=pseudonym_secret)
     inputs = scenario["input"]
     safe_transcript = redact_text(transcript)
-    analysis = await model.analyze_complaint(
-        safe_transcript,
-        default_language_pair=inputs["language_pair"],
-    )
+    if inputs["consent"]:
+        analysis = await model.analyze_complaint(
+            safe_transcript,
+            default_language_pair=inputs["language_pair"],
+        )
+    else:
+        analysis = ComplaintAnalysis(
+            symptom="unknown",
+            language_pair=inputs["language_pair"],
+            consent=False,
+        )
     orchestrator = FaultBridgeOrchestrator(TelcoTools(database), pseudonym_secret)
     session = orchestrator.start_call(
         caller_id=inputs["caller_id"],
@@ -234,6 +242,7 @@ async def run_variant(
         "benchmark_version": "faultbridge-agent-v1",
         **provenance,
         "scenario_id": scenario["scenario_id"],
+        "language_pair": inputs["language_pair"],
         "variant": variant,
         "repetition": repetition,
         "input_sha256": hashlib.sha256(transcript.encode()).hexdigest(),

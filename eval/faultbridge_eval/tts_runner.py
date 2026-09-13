@@ -182,6 +182,11 @@ async def generate(
         "prompt_id": prompt["prompt_id"],
         "source_sample_id": prompt["source_sample_id"],
         "source_audio_sha256": prompt["source_audio_sha256"],
+        **(
+            {"source_text_sha256": prompt["source_text_sha256"]}
+            if prompt.get("source_text_sha256")
+            else {}
+        ),
         "language_pair": prompt["language_pair"],
         "language": prompt["language"],
         "accent": prompt["accent"],

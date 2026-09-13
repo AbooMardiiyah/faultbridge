@@ -99,6 +99,37 @@ class VoicePipelineIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.call["symptom"], "data_unavailable")
         self.assertEqual(result.call["outcome"], "awaiting_verification")
 
+    async def test_declined_consent_never_reaches_speech_or_model_provider(
+        self,
+    ) -> None:
+        class ForbiddenProvider:
+            def __getattr__(self, name: str):
+                raise AssertionError(f"provider access is forbidden: {name}")
+
+        pipeline = VoicePipeline(
+            stt=ForbiddenProvider(),
+            tts=RecordingTTS(),
+            agent_model=ForbiddenProvider(),
+            orchestrator=FaultBridgeOrchestrator(
+                TelcoTools(self.database), "voice-test-secret-at-least-32-characters"
+            ),
+        )
+
+        result = await pipeline.start_call(
+            pcm16_audio=b"private audio",
+            caller_id="08030000002",
+            area="Yaba",
+            cell_id="LAG-002",
+            default_language_pair="Pidgin-English",
+            consent=False,
+            voice_language="en",
+            voice_accent="pidgin",
+        )
+
+        self.assertEqual(result.transcript, "")
+        self.assertEqual(result.call["symptom"], "unknown")
+        self.assertEqual(result.call["outcome"], "consent_declined")
+
 
 if __name__ == "__main__":
     unittest.main()

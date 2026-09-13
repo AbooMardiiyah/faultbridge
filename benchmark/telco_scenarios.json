@@ -16,7 +16,7 @@
     "expected": {
       "analysis": {
         "language_pair": "Hausa-English",
-        "symptom": "no_service",
+        "symptom": "unknown",
         "consent": false
       },
       "outcome": "consent_declined",
@@ -835,7 +835,7 @@
     "expected": {
       "analysis": {
         "language_pair": "Igbo-English",
-        "symptom": "no_service",
+        "symptom": "unknown",
         "consent": false
       },
       "outcome": "consent_declined",
@@ -1654,7 +1654,7 @@
     "expected": {
       "analysis": {
         "language_pair": "Pidgin-English",
-        "symptom": "no_service",
+        "symptom": "unknown",
         "consent": false
       },
       "outcome": "consent_declined",
@@ -2473,7 +2473,7 @@
     "expected": {
       "analysis": {
         "language_pair": "Yoruba-English",
-        "symptom": "no_service",
+        "symptom": "unknown",
         "consent": false
       },
       "outcome": "consent_declined",

@@ -1,4 +1,4 @@
-.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-faster-whisper-cuda benchmark-install-sbpn benchmark-install-omni benchmark-install-omni-cuda benchmark-prepare benchmark-robustness benchmark-sahara-batch benchmark-sahara-retry benchmark-faster-whisper-cuda benchmark-omni-cuda benchmark-score benchmark-verify-asr-evidence benchmark-agent-prepare benchmark-eval-db benchmark-agent-validate benchmark-agent-run benchmark-agent-score benchmark-privacy-prepare benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit benchmark-verify-tts-evidence
+.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-faster-whisper-cuda benchmark-install-sbpn benchmark-install-omni benchmark-install-omni-cuda benchmark-prepare benchmark-robustness benchmark-sahara-batch benchmark-sahara-retry benchmark-faster-whisper-cuda benchmark-omni-cuda benchmark-score benchmark-verify-asr-evidence benchmark-agent-prepare benchmark-eval-db benchmark-agent-validate benchmark-agent-run benchmark-agent-score benchmark-agent-audio-prepare benchmark-agent-audio-generate benchmark-agent-audio-retry benchmark-agent-audio-asr-sahara benchmark-agent-audio-asr-faster-whisper benchmark-agent-audio-asr-sbpn benchmark-agent-audio-asr-omni benchmark-agent-audio-attach benchmark-agent-audio-run benchmark-agent-audio-score benchmark-privacy-prepare benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit benchmark-verify-tts-evidence
 
 TORCH_BACKEND ?= cpu
 ASR_BATCH_SIZE ?= 10
@@ -7,6 +7,7 @@ TTS_GENDERS ?= female male
 AGENT_PROVIDER ?= openai
 AGENT_MODEL ?= gpt-4.1-mini
 AGENT_REPETITIONS ?= 3
+AGENT_AUDIO_BATCH_SIZE ?= 6
 
 install:
 	UV_CACHE_DIR=.uv-cache uv sync
@@ -120,6 +121,36 @@ benchmark-agent-run:
 
 benchmark-agent-score:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.agent_scorer eval/results/agent_runs.jsonl --output benchmark/results/agent_summary.json
+
+benchmark-agent-audio-prepare:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.prepare_agent_audio
+
+benchmark-agent-audio-generate:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.tts_runner --prompts benchmark/agent_audio_prompts.csv --audio-root benchmark/agent_audio --output-manifest benchmark/agent_audio_generated.csv --log eval/results/agent_audio/generation.jsonl --transport sync --genders female --limit $(AGENT_AUDIO_BATCH_SIZE)
+
+benchmark-agent-audio-retry:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.tts_runner --prompts benchmark/agent_audio_prompts.csv --audio-root benchmark/agent_audio --output-manifest benchmark/agent_audio_generated.csv --log eval/results/agent_audio/generation.jsonl --transport sync --genders female --retry-failures --limit $(AGENT_AUDIO_BATCH_SIZE)
+
+benchmark-agent-audio-asr-sahara:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.runner --manifest benchmark/agent_audio_generated.csv --output eval/results/agent_audio/asr --provider sahara-file --limit $(AGENT_AUDIO_BATCH_SIZE)
+
+benchmark-agent-audio-asr-faster-whisper:
+	CUDA_SITE_PACKAGES="$$(.venv-benchmark/bin/python -c 'import site; print(site.getsitepackages()[0])')"; LD_LIBRARY_PATH="$${CUDA_SITE_PACKAGES}/nvidia/cublas/lib:$${CUDA_SITE_PACKAGES}/nvidia/cudnn/lib" HF_HUB_OFFLINE=1 PYTHONPATH=src:eval .venv-benchmark/bin/python -m faultbridge_eval.runner --manifest benchmark/agent_audio_generated.csv --output eval/results/agent_audio/asr --provider faster-whisper --whisper-device cuda --whisper-compute-type int8_float16
+
+benchmark-agent-audio-asr-sbpn:
+	PYTHONPATH=src:eval .venv-sbpn/bin/python -m faultbridge_eval.runner --manifest benchmark/agent_audio_generated.csv --output eval/results/agent_audio/asr --provider sbpn
+
+benchmark-agent-audio-asr-omni:
+	HF_HUB_OFFLINE=1 PYTHONPATH=src:eval .venv-omni/bin/python -m faultbridge_eval.runner --manifest benchmark/agent_audio_generated.csv --output eval/results/agent_audio/asr --provider omniasr --omni-device cuda
+
+benchmark-agent-audio-attach:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.attach_agent_hypotheses --panel benchmark/telco_scenarios_audio.json --audio-manifest benchmark/agent_audio_generated.csv eval/results/agent_audio/asr/sahara-file-sync.jsonl eval/results/agent_audio/asr/faster-whisper.jsonl eval/results/agent_audio/asr/sbpn-base.jsonl eval/results/agent_audio/asr/meta-omniasr-ctc.jsonl
+
+benchmark-agent-audio-run:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.agent_runner --scenarios eval/results/agent_audio_scenarios.json --output eval/results/agent_audio/runs.jsonl --agent-provider $(AGENT_PROVIDER) --agent-model $(AGENT_MODEL) --repetitions $(AGENT_REPETITIONS)
+
+benchmark-agent-audio-score:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.agent_scorer eval/results/agent_audio/runs.jsonl --output benchmark/results/agent_audio_summary.json
 
 benchmark-privacy-prepare:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.prepare_pii_cases

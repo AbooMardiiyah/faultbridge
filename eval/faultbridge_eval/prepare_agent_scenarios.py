@@ -292,7 +292,7 @@ def scenario(
         "seed": seed,
         "expected": expected(
             language_pair=language_pair,
-            symptom=symptom,
+            symptom=symptom if consent else "unknown",
             consent=consent,
             outcome=outcome,
             tier=tier,

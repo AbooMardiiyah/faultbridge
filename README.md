@@ -64,9 +64,10 @@ credentials are present; the rest of the service starts without them.
 
 The runtime contains no committed subscriber, fault, account, or call records.
 Authoritative incidents and account state enter through protected internal API
-endpoints with source provenance and verification timestamps. Synthetic scenarios
-exist only inside the test suite. The project does not commit caller audio, raw
-provider outputs, credentials, phone numbers, or unredacted transcripts.
+endpoints with source provenance and verification timestamps. Clearly labelled,
+synthetic scenarios are committed under `benchmark/` for reproducible evaluation.
+The project does not commit real caller audio, raw provider outputs, credentials,
+real phone numbers, or unredacted production transcripts.
 
 ## Operational data boundary
 
@@ -97,5 +98,5 @@ the [completed automatic TTS report](docs/TTS_BENCHMARK_REPORT.md) records the
 200-output, three-judge results; the [privacy report](docs/PRIVACY_BENCHMARK_REPORT.md)
 records the deterministic PII scorecard; the
 [agent benchmark protocol](docs/AGENT_BENCHMARK_PROTOCOL.md) defines the 48
-executable scenarios; and [`eval/README.md`](eval/README.md) contains the
-reproducible commands.
+executable scenarios and 24-utterance named-ASR propagation panel; and
+[`eval/README.md`](eval/README.md) contains the reproducible commands.

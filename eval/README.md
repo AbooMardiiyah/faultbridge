@@ -201,6 +201,27 @@ gold-transcript result, and voice capability retention.
 The run is append-only and resumes completed repetitions. It refuses to mix a
 changed model, scenario hash, code commit, or dependency lock in one result file.
 
+The named-ASR propagation panel keeps six distinct product utterances per language
+pair and one Sahara voice, for 24 generated files. It measures whether errors from
+each ASR change the final tool-backed outcome:
+
+```bash
+make benchmark-agent-audio-prepare
+make benchmark-agent-audio-generate AGENT_AUDIO_BATCH_SIZE=6
+make benchmark-agent-audio-asr-sahara AGENT_AUDIO_BATCH_SIZE=6
+make benchmark-agent-audio-asr-faster-whisper
+make benchmark-agent-audio-asr-sbpn
+make benchmark-agent-audio-asr-omni
+make benchmark-agent-audio-attach
+make benchmark-agent-audio-run AGENT_PROVIDER=openai AGENT_MODEL=gpt-4.1-mini
+make benchmark-agent-audio-score
+```
+
+Both paid steps are append-only and resumable. With `d` generated audio seconds,
+the posted rates imply a Sahara charge of `d × (NGN 0.65 + NGN 0.43)` for TTS plus
+ASR. Disclose that this is synthetic Sahara speech and may contain source-model
+bias.
+
 Put zero-tolerance privacy and groundedness checks under each scenario's
 `expected.critical` object. After both scorecards exist, `make benchmark-route`
 creates a draft whole-utterance routing policy. A non-Sahara route is recommended
