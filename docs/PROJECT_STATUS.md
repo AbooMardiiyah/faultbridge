@@ -46,13 +46,14 @@ sessions; the Git history remains the authoritative implementation record.
 - A 48-scenario executable agent panel is frozen and balanced across all four
   language pairs and 12 resolution/safety capabilities. Its expected tool traces
   and database effects pass against the real isolated PostgreSQL policy stack.
-  The external-model run is ready for Together-hosted Llama 3.3 70B; its API key
-  still needs to be added to `.env` as `TOGETHER_API_KEY`.
+  Together-hosted Llama 3.3 70B is configured and has passed a live pilot; the
+  full external-model run remains.
 - The named-ASR downstream panel has 24 distinct synthetic telco utterances, six
   per language. Sahara TTS generated all 24 successfully (161.14 audio seconds),
-  and Sahara file ASR transcribed all 24 successfully. The audio, generation log,
-  ASR hypotheses, and SHA-256 checkpoint are preserved locally; the three local
-  ASR passes and external-agent scoring remain.
+  and Sahara, Faster-Whisper, OmniASR, and SBPN transcribed every file. The final
+  360-run Together panel achieved 100.0% strict task success for Sahara, 95.8%
+  for SBPN, 87.5% for OmniASR, and 79.2% for Faster-Whisper, with 0% critical
+  failure for every provider. Raw evidence remains reproducible from hashes.
 - One natural Hausa-English Sahara STT pilot succeeded after a transient provider
   failure: normalized WER 28.6%, CER 7.4%, and 5.31 seconds of post-audio latency.
   The sample size is one and must not appear as a model-level conclusion.
@@ -87,6 +88,9 @@ sessions; the Git history remains the authoritative implementation record.
 
 - AfriSwitch access is approved and `HF_TOKEN` is configured locally. The frozen
   400-clip benchmark panel and 1,600-condition robustness panel are prepared.
+- The private four-model ASR evidence is uploaded to
+  `Tiamz/faultbridge-asr-benchmark-evidence` at revision
+  `ef320d7f367e040c47b4021a397011dae894fe00`.
 - AssemblyAI credentials are optional for a fifth commercial sensitivity run. The
   four-model core panel does not depend on them.
 - `SAHARA_VOICEBOT_WORKFLOW_ID` is needed only if the demo uses an outbound Sahara
@@ -112,18 +116,15 @@ and spaced 2.1 seconds apart for the documented 30-request-per-minute limit.
 
 ## Active sequence
 
-1. Run Faster-Whisper, OmniASR, and SBPN over the 24 saved downstream clips.
-2. Attach all four named ASR hypotheses to the agent scenarios and verify the
-   frozen evidence hashes.
-3. Run and score the agent scenarios after configuring the Together key,
-   then derive evidence-based routing recommendations.
-4. Conduct the prepared TTS audit with three bilingual listeners per language
+1. Run and score the full 48-scenario Together panel, then derive evidence-based
+   routing recommendations from both agent scorecards.
+2. Conduct the prepared TTS audit with three bilingual listeners per language
    pair and add only qualified human results to the report.
-5. Deploy to Railway and test the caller and operations interfaces against live
+3. Deploy to Railway and test the caller and operations interfaces against live
    providers.
-6. Produce the three-page PDF, five-minute video, public repository release,
+4. Produce the three-page PDF, five-minute video, public repository release,
    Responsible AI note, and optional Hugging Face audio submission.
-7. Walk through `docs/FAULTBRIDGE_TECHNICAL_GUIDE.md` and rehearse the technical
+5. Walk through `docs/FAULTBRIDGE_TECHNICAL_GUIDE.md` and rehearse the technical
    defense and likely judge questions with the project owner.
 
 Hardware use and foreground validation are now authorized. Keep delivery workers

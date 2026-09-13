@@ -1,0 +1,94 @@
+{
+  "evidence_version": "faultbridge-agent-evidence-v1",
+  "files": [
+    {
+      "path": "benchmark/agent_audio_prompts.csv",
+      "bytes": 11299,
+      "sha256": "e87d5a06ed46e9dcf5e2ace16099e6637f5bd31b1949628fd067e00cdba3f0ce"
+    },
+    {
+      "path": "benchmark/telco_scenarios_audio.json",
+      "bytes": 44234,
+      "sha256": "51f68f21603cc9e43ad24f6a3a8edea599c6cac430f5e1367dfc47303fc68eec"
+    },
+    {
+      "path": "benchmark/agent_audio_generated.csv",
+      "bytes": 11780,
+      "sha256": "0f02d54fae55bb2f6e2a2cbce1d60d396cd71bd2de7053c5063a2b3a2fdc2307"
+    },
+    {
+      "path": "eval/results/agent_audio/generation.jsonl",
+      "bytes": 57674,
+      "sha256": "286241b9c6ddf3155a74c5a0bc2489d1fd6fc38cb3f6ed6acdfc6cfb371c81a3"
+    },
+    {
+      "path": "eval/results/agent_audio/asr/sahara-file-sync.jsonl",
+      "bytes": 32695,
+      "sha256": "87c03e8d1e19901acf2f6b1c7b886d3bab530739d5d53bd8c902f893dfeca594"
+    },
+    {
+      "path": "eval/results/agent_audio/asr/faster-whisper.jsonl",
+      "bytes": 26335,
+      "sha256": "370ebcd8d00e7c636abe3f089a762813da678fb2754c627aeb0f269b8dd77b75"
+    },
+    {
+      "path": "eval/results/agent_audio/asr/meta-omniasr-ctc.jsonl",
+      "bytes": 29573,
+      "sha256": "a76cd4243f3b6feed0453d7aba16b3c780b82d4a283269701502abdaf6f35765"
+    },
+    {
+      "path": "eval/results/agent_audio/asr/sbpn-base.jsonl",
+      "bytes": 28108,
+      "sha256": "294f987931dd441031eeab7fb7c8a90e56271a6579cc6bfb7dad97607c8dd0aa"
+    },
+    {
+      "path": "eval/results/agent_audio_scenarios.json",
+      "bytes": 86479,
+      "sha256": "0e156b84662ebf704290e8ee01aa30dbc9738994aec012a2d027af2638f2cefc"
+    },
+    {
+      "path": "eval/results/agent_audio/runs.jsonl",
+      "bytes": 1109991,
+      "sha256": "9ed17a2e149461090b7d97536f8c94e6405a3c81cb7589bfa247677261ae0eb0"
+    },
+    {
+      "path": "benchmark/results/agent_audio_summary.json",
+      "bytes": 13825,
+      "sha256": "2fb76b00dad49669444c2600047bc1dd888500f5027edd23b1947d82b04420eb"
+    },
+    {
+      "path": "benchmark/results/agent_audio_summary.csv",
+      "bytes": 3657,
+      "sha256": "edd0cdeb5caf00878e4b3116ca0bf4ffb581fff4150a6069148301ac71048658"
+    },
+    {
+      "path": "docs/AGENT_BENCHMARK_REPORT.md",
+      "bytes": 3162,
+      "sha256": "95d6b47734a23653760dd3a46d8bb3c6a8f693effaffafb76baf4b188c44b916"
+    }
+  ],
+  "generated_audio": {
+    "manifest": "benchmark/agent_audio_generated.csv",
+    "samples": 24,
+    "duration_seconds": 161.142857,
+    "voices": [
+      "female"
+    ],
+    "languages": 4
+  },
+  "agent_runs": {
+    "path": "eval/results/agent_audio/runs.jsonl",
+    "runs": 360,
+    "scenarios": 24,
+    "transcript_variants": 5,
+    "repetitions": 3,
+    "sha256": "9ed17a2e149461090b7d97536f8c94e6405a3c81cb7589bfa247677261ae0eb0"
+  },
+  "score": {
+    "scorer_version": "faultbridge-agent-scorer-v1",
+    "results_sha256": "9ed17a2e149461090b7d97536f8c94e6405a3c81cb7589bfa247677261ae0eb0",
+    "code_commit": "2ba482dcc80bdb3df6814fb683f331fc274e51ca",
+    "agent_provider": "together",
+    "agent_model": "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+  }
+}

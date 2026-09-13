@@ -1,11 +1,12 @@
 {
-  "status": "in_progress",
+  "status": "complete",
   "panel": {
     "samples": 24,
     "languages": 4,
     "samples_per_language": 6,
     "prompt_manifest_sha256": "e87d5a06ed46e9dcf5e2ace16099e6637f5bd31b1949628fd067e00cdba3f0ce",
-    "scenario_panel_sha256": "51f68f21603cc9e43ad24f6a3a8edea599c6cac430f5e1367dfc47303fc68eec"
+    "scenario_panel_sha256": "51f68f21603cc9e43ad24f6a3a8edea599c6cac430f5e1367dfc47303fc68eec",
+    "attached_scenarios_sha256": "0e156b84662ebf704290e8ee01aa30dbc9738994aec012a2d027af2638f2cefc"
   },
   "tts": {
     "provider": "sahara-tts",
@@ -16,24 +17,52 @@
     "generated_manifest_sha256": "0f02d54fae55bb2f6e2a2cbce1d60d396cd71bd2de7053c5063a2b3a2fdc2307",
     "raw_log_sha256": "286241b9c6ddf3155a74c5a0bc2489d1fd6fc38cb3f6ed6acdfc6cfb371c81a3"
   },
-  "asr_completed": {
-    "provider": "sahara-file-sync",
-    "successful_samples": 24,
-    "failed_samples": 0,
-    "raw_results_sha256": "87c03e8d1e19901acf2f6b1c7b886d3bab530739d5d53bd8c902f893dfeca594"
-  },
   "remaining": [
-    "Faster-Whisper transcription",
-    "OmniASR transcription",
-    "SBPN transcription",
-    "named-hypothesis attachment",
-    "external LLM agent runs",
-    "agent score aggregation",
-    "technical-guide walkthrough and judge-defense rehearsal"
+    "full 48-scenario external-model run",
+    "evidence-based routing recommendation",
+    "human TTS listener audit",
+    "Railway deployment and live-call validation",
+    "submission assets and judge-defense rehearsal"
   ],
-  "private_checkpoint": {
-    "path": "artifacts/agent-audio-checkpoint-20260913.tar.gz",
-    "bytes": 6046154,
-    "sha256": "ed10ef5900dd78d0e1430ab14c18024fd8f18186390d1a3a624bbdb154790ebd"
+  "asr": [
+    {
+      "provider": "sahara-file-sync",
+      "successful_samples": 24,
+      "failed_samples": 0,
+      "raw_results_sha256": "87c03e8d1e19901acf2f6b1c7b886d3bab530739d5d53bd8c902f893dfeca594"
+    },
+    {
+      "provider": "faster-whisper",
+      "successful_samples": 24,
+      "failed_samples": 0,
+      "raw_results_sha256": "370ebcd8d00e7c636abe3f089a762813da678fb2754c627aeb0f269b8dd77b75"
+    },
+    {
+      "provider": "meta-omniasr-ctc",
+      "successful_samples": 24,
+      "failed_samples": 0,
+      "raw_results_sha256": "a76cd4243f3b6feed0453d7aba16b3c780b82d4a283269701502abdaf6f35765"
+    },
+    {
+      "provider": "sbpn-base",
+      "successful_samples": 24,
+      "failed_samples": 0,
+      "raw_results_sha256": "294f987931dd441031eeab7fb7c8a90e56271a6579cc6bfb7dad97607c8dd0aa"
+    }
+  ],
+  "agent": {
+    "provider": "together",
+    "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "runs": 360,
+    "strict_passes": 333,
+    "critical_failures": 0,
+    "raw_runs_sha256": "9ed17a2e149461090b7d97536f8c94e6405a3c81cb7589bfa247677261ae0eb0",
+    "summary_json_sha256": "2fb76b00dad49669444c2600047bc1dd888500f5027edd23b1947d82b04420eb",
+    "summary_csv_sha256": "edd0cdeb5caf00878e4b3116ca0bf4ffb581fff4150a6069148301ac71048658"
+  },
+  "private_evidence_archive": {
+    "path": "artifacts/agent-benchmark-evidence-20260913.tar.gz",
+    "bytes": 6130058,
+    "sha256": "7d7a177ea679f6f35eee6311e4a479619ff21d8d9724083f923964838adab459"
   }
 }

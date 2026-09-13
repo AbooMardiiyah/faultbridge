@@ -26,6 +26,11 @@ The submitted configuration uses Sahara for speech and Together-hosted
 `meta-llama/Llama-3.3-70B-Instruct-Turbo` for structured complaint analysis.
 Together, OpenAI, and Groq share the same provider-neutral agent interface.
 
+The private, hash-pinned four-model ASR evidence is available at
+[`Tiamz/faultbridge-asr-benchmark-evidence`](https://huggingface.co/datasets/Tiamz/faultbridge-asr-benchmark-evidence),
+revision `ef320d7f367e040c47b4021a397011dae894fe00`. It will become public-gated for
+submission after the dataset card and upstream access terms are finalized.
+
 Run it with Python 3.11+, Docker, and `uv`:
 
 ```bash
@@ -102,7 +107,9 @@ the [completed automatic TTS report](docs/TTS_BENCHMARK_REPORT.md) records the
 200-output, three-judge results; the [privacy report](docs/PRIVACY_BENCHMARK_REPORT.md)
 records the deterministic PII scorecard; the
 [agent benchmark protocol](docs/AGENT_BENCHMARK_PROTOCOL.md) defines the 48
-executable scenarios and 24-utterance named-ASR propagation panel; and
+executable scenarios and 24-utterance named-ASR propagation panel; the
+[completed downstream agent report](docs/AGENT_BENCHMARK_REPORT.md) records 360
+real model-and-database executions; and
 [`eval/README.md`](eval/README.md) contains the reproducible commands.
 
 For a complete explanation of the product, architecture, data model, privacy

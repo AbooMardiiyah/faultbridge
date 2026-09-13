@@ -25,6 +25,9 @@ The archive SHA-256 is
 The frozen 400-clip manifest SHA-256 is
 `3d139832dcead055489cb6c668747db56c06090983d3a95ad644d65ff012b3c2`.
 Access and use remain subject to the AfriSwitch dataset card and CC BY-NC-SA 4.0.
+The private evidence is uploaded at
+`https://huggingface.co/datasets/Tiamz/faultbridge-asr-benchmark-evidence`, revision
+`ef320d7f367e040c47b4021a397011dae894fe00`.
 
 ## TTS evidence
 
@@ -46,3 +49,21 @@ license conditions.
 The local archive is `artifacts/tts-benchmark-evidence-20260913.tar.gz` (62,755,397
 bytes) with SHA-256
 `e78776afd90fdcbb210e8e2ac2328bf1f7f45f34f7544fee34e9784366125cc4`.
+
+## Downstream agent evidence
+
+The public `agent_audio_summary.json` and `.csv` contain the 360-run named-ASR
+scorecard. The private archive contains the 24 generated WAVs, generation log,
+four ASR result files, attached scenarios, and raw executable traces. Extract it
+at the repository root and run:
+
+```bash
+make benchmark-verify-agent-evidence
+```
+
+The command verifies every saved file and WAV hash, reruns the agent scorer, and
+byte-compares both regenerated aggregates. The archive is
+`artifacts/agent-benchmark-evidence-20260913.tar.gz` (6,130,058 bytes), SHA-256
+`7d7a177ea679f6f35eee6311e4a479619ff21d8d9724083f923964838adab459`.
+Its structure is recorded in `agent_evidence_manifest.json`; completion metadata
+is recorded in `agent_audio_checkpoint.json`.

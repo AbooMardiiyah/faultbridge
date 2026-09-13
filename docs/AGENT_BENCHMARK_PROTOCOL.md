@@ -91,7 +91,7 @@ traces remain ignored; the aggregate contains the result hash and provenance.
 ## Limits
 
 Oracle validation proves that expected outcomes agree with the real policy and
-database stack; it does not measure model quality. Final numbers remain empty
-until a configured external model completes the runs. The controlled text stress
-test does not replace the named-ASR panel, human-speech trials, or black-box
-conversation testing.
+database stack; it does not measure model quality. The completed named-ASR results
+are reported in `docs/AGENT_BENCHMARK_REPORT.md`. The controlled synthetic-speech
+test does not replace the natural AfriSwitch panel, human-speech trials, or
+black-box conversation testing.

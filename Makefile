@@ -1,4 +1,4 @@
-.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-faster-whisper-cuda benchmark-install-sbpn benchmark-install-omni benchmark-install-omni-cuda benchmark-prepare benchmark-robustness benchmark-sahara-batch benchmark-sahara-retry benchmark-faster-whisper-cuda benchmark-omni-cuda benchmark-score benchmark-verify-asr-evidence benchmark-agent-prepare benchmark-eval-db benchmark-agent-validate benchmark-agent-run benchmark-agent-score benchmark-agent-audio-prepare benchmark-agent-audio-generate benchmark-agent-audio-retry benchmark-agent-audio-asr-sahara benchmark-agent-audio-asr-faster-whisper benchmark-agent-audio-asr-sbpn benchmark-agent-audio-asr-omni benchmark-agent-audio-attach benchmark-agent-audio-run benchmark-agent-audio-score benchmark-privacy-prepare benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit benchmark-verify-tts-evidence
+.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-faster-whisper-cuda benchmark-install-sbpn benchmark-install-omni benchmark-install-omni-cuda benchmark-prepare benchmark-robustness benchmark-sahara-batch benchmark-sahara-retry benchmark-faster-whisper-cuda benchmark-omni-cuda benchmark-score benchmark-verify-asr-evidence benchmark-agent-prepare benchmark-eval-db benchmark-agent-validate benchmark-agent-run benchmark-agent-score benchmark-agent-audio-prepare benchmark-agent-audio-generate benchmark-agent-audio-retry benchmark-agent-audio-asr-sahara benchmark-agent-audio-asr-faster-whisper benchmark-agent-audio-asr-sbpn benchmark-agent-audio-asr-omni benchmark-agent-audio-attach benchmark-agent-audio-run benchmark-agent-audio-score benchmark-verify-agent-evidence benchmark-privacy-prepare benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit benchmark-verify-tts-evidence
 
 TORCH_BACKEND ?= cpu
 ASR_BATCH_SIZE ?= 10
@@ -151,6 +151,12 @@ benchmark-agent-audio-run:
 
 benchmark-agent-audio-score:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.agent_scorer eval/results/agent_audio/runs.jsonl --output benchmark/results/agent_audio_summary.json
+
+benchmark-verify-agent-evidence:
+	UV_CACHE_DIR=.uv-cache uv run python3 scripts/verify_agent_evidence.py
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.agent_scorer eval/results/agent_audio/runs.jsonl --output /tmp/faultbridge-agent-reproduced.json
+	cmp benchmark/results/agent_audio_summary.json /tmp/faultbridge-agent-reproduced.json
+	cmp benchmark/results/agent_audio_summary.csv /tmp/faultbridge-agent-reproduced.csv
 
 benchmark-privacy-prepare:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.prepare_pii_cases

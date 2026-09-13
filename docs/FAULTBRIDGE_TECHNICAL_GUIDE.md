@@ -181,10 +181,12 @@ has passed all 48. Final stochastic scores require an external OpenAI-compatible
 LLM key.
 
 A second 24-utterance panel measures actual ASR error propagation into agent
-actions. Sahara TTS generated six distinct telco complaints per language. Sahara
-ASR has completed all 24; Faster-Whisper, OmniASR, and SBPN remain. This panel is
-controlled synthetic speech and may favor Sahara ASR, so it complements rather
-than replaces the natural 400-clip benchmark.
+actions. Sahara TTS generated six distinct telco complaints per language, and all
+four ASR models transcribed the same files. Across 360 Together Llama 3.3 70B
+executions, strict task success was 100.0% for gold and Sahara transcripts, 95.8%
+for SBPN, 87.5% for OmniASR, and 79.2% for Faster-Whisper. Every provider had a
+0% critical safety failure rate. This controlled speech may favor Sahara ASR, so
+it complements rather than replaces the natural 400-clip benchmark.
 
 ## Metric Definitions
 
@@ -272,11 +274,12 @@ make benchmark-score           # natural ASR aggregate
 make benchmark-tts-score       # automatic TTS aggregate
 make benchmark-privacy-score   # exact PII scorecard
 make benchmark-agent-validate  # all 48 policy oracles
+make benchmark-verify-agent-evidence # reproduce downstream agent scores
 ```
 
 The current reports are `docs/ASR_BENCHMARK_REPORT.md`,
 `docs/TTS_BENCHMARK_REPORT.md`, `docs/PRIVACY_BENCHMARK_REPORT.md`, and
-`docs/AGENT_BENCHMARK_PROTOCOL.md`. Research rationale and citations are in
+`docs/AGENT_BENCHMARK_REPORT.md`. Research rationale and citations are in
 `docs/VOICE_BENCHMARK_RESEARCH.md`.
 
 ## Current Limits and Honest Claims
@@ -286,8 +289,8 @@ for a real telco deployment. Current operational records and agent scenarios are
 synthetic and clearly labelled. The code has production-oriented boundaries,
 auditing, idempotency, migrations, privacy controls, and failure handling, but it
 has not undergone a telco security review or large-scale load test. Human TTS
-ratings, human live-call trials, the named-ASR downstream completion, and the
-external LLM score remain before submission.
+ratings, human live-call trials, the full 48-scenario external-model panel, and
+deployment validation remain before submission.
 
 For a judge, the core defense is: **the LLM interprets language; verified data and
 deterministic policy authorize actions; every action is auditable; speech quality
