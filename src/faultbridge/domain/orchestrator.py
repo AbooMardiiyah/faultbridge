@@ -1,8 +1,25 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
+
 from faultbridge.domain.models import CallSession, Outcome, Tier, ToolEvent
 from faultbridge.services.privacy import pseudonymize_caller, redact_text
 from faultbridge.tools.telco import TelcoTools
+
+WEST_AFRICA_TIME = ZoneInfo("Africa/Lagos")
+
+
+def format_restoration_time(value: datetime | None) -> str:
+    """Return an incident ETA that is clear on screen and when spoken by TTS."""
+    if value is None:
+        return "being assessed"
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    local_value = value.astimezone(WEST_AFRICA_TIME)
+    clock = local_value.strftime("%I:%M %p").lstrip("0")
+    date = f"{local_value.day} {local_value.strftime('%B %Y')}"
+    return f"{clock} West Africa Time on {date}"
 
 
 class FaultBridgeOrchestrator:
@@ -61,11 +78,7 @@ class FaultBridgeOrchestrator:
             )
             session.tier = Tier.COMPLETE
             session.outcome = Outcome.KNOWN_FAULT_HANDLED
-            restoration = (
-                fault.estimated_restoration.isoformat()
-                if fault.estimated_restoration
-                else "being assessed"
-            )
+            restoration = format_restoration_time(fault.estimated_restoration)
             session.response = (
                 f"I found an active {fault.fault_type} affecting {fault.area}. "
                 f"The current restoration estimate is {restoration}. "

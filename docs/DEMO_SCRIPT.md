@@ -1,125 +1,98 @@
-# FaultBridge Five-Minute Demo Guide
+# FaultBridge Demo Script
 
-Record at 1440p or 1080p. Keep the browser at 100% zoom, close notifications,
-and use only synthetic caller details. Open the caller page at `/` and the
-operations workspace at `/operations` in separate tabs before recording. Enter
-the internal access key off camera.
+The verified local master is
+`artifacts/demo-video/FaultBridge-Intron-Demo.mp4`. It runs for 4 minutes
+47 seconds and uses Nigerian English narration. The Pidgin caller scene contains
+a real Sahara STT request, real application execution, and the returned Sahara
+TTS audio. Its small captions appear only while the caller or Sahara is speaking
+and sit below the interface.
 
-## Local Narrated Cut
+## 0:00 to 0:19 | Open With the Gap
 
-`artifacts/demo-video/FaultBridge-demo-narrated.mp4` is the 4 minute 58 second
-local cut. It uses the Nigerian English `en-NG-AbeoNeural` voice, H.264 video,
-and AAC audio. The displayed Pidgin scenario executes the real orchestrator,
-tools, and PostgreSQL state using labelled synthetic input. Replace that scene
-with a successful live microphone capture before submission if Sahara is
-available, while retaining the same narration and timing.
+**Show:** FaultBridge title card.
 
-## Recording Checklist
+**Say:** “A telco may know a fibre cut happened before its customers do. Yet
+every caller still explains the same outage from scratch. I am Hamzat, and this is
+FaultBridge: a code-switched voice support agent that turns one complaint into a
+verified answer, a safe action, and usable network evidence.”
 
-- Confirm the API and PostgreSQL health with `make docker-status`.
-- Confirm Sahara and Together credentials are configured without displaying them.
-- Use a headset or the prepared synthetic audio file to avoid room noise.
-- Keep `docs/BENCHMARK_REPORT.pdf` open at page 1.
-- Record one uninterrupted product flow, then add narration and title cards.
-- Keep the final video under 4 minutes 50 seconds to allow for upload processing.
+## 0:19 to 0:44 | Establish Trust
 
-## Script and Screen Actions
+**Show:** Caller support with Pidgin-English selected, consent checked, area
+`Evaluation Area 02`, cell `EVAL-002`, and synthetic number `08030000002`.
 
-### 0:00 to 0:25 | The problem
+Explain that FaultBridge supports four language pairs, obtains consent, redacts
+identifiers, and checks verified network state before taking action.
 
-**Show:** FaultBridge caller page.
+## 0:44 to 1:18 | Run the Voice Call
 
-**Say:** “Nigerian telco customers often describe faults by switching between a
-local language and English. Support systems can misunderstand the complaint or
-give an answer that is not grounded in network data. FaultBridge listens,
-protects personal data, checks verified telco state, and turns repeated unresolved
-calls into evidence for network operations.”
+Press **Start speaking** and say:
 
-### 0:25 to 1:45 | Resolve a known fault
+> Abeg, wetin dey happen to the network for this area? I don off and on my phone
+> tire, but signal still no dey since morning. I consent to automated processing.
 
-**Show:** Select `Pidgin-English`, area `Evaluation Area 02`, cell `EVAL-002`, and
-synthetic callback number `08030000002`. Check consent and start the call.
+Press **Stop recording**. Wait for **Complete**, then press **Play response**.
+Point out the transcribed complaint, confirmed fibre cut, natural West Africa Time
+estimate, queued 500 MB credit, and scheduled service update.
 
-**Say:** “Abeg, wetin dey happen to the network for this area? I don off and on
-my phone tire, but signal still no dey since morning. I consent to automated
-processing.”
+The wording follows common Nigerian telco complaint structure: location, duration,
+failed restart, and remaining symptom. It contains no copied identity or phone
+number. Public context includes reported no-signal complaints after phone restarts
+in [Business A.M.](https://www.businessamlive.com/wp-content/uploads/2025/03/371-17-March-23-March-2025.pdf)
+and broader connectivity complaints summarized by
+[X](https://x.com/i/trending/1819696088829534387?lang=en).
 
-This paraphrases a recurring public complaint structure: location, duration,
-failed phone restart, and no signal. It contains no copied username, phone number,
-or operator accusation.
+## 1:18 to 1:41 | Show Network Value
 
-Public wording references: a reported no-signal complaint after repeated phone
-restarts in [Business A.M.](https://www.businessamlive.com/wp-content/uploads/2025/03/371-17-March-23-March-2025.pdf),
-and the broader data, connectivity, and call-quality complaint pattern summarized
-by [X](https://x.com/i/trending/1819696088829534387?lang=en).
+Open **Operations**. Show recent calls, queued actions, and the four-stage path
+from speech to verified action. Explain that operational records contain a
+pseudonymous caller and redacted transcript.
 
-**Show:** The grounded response and completed actions.
+## 1:41 to 2:37 | Defend the Agent
 
-**Say:** “Sahara transcribes the code-switched speech with an explicit Pidgin
-language value. FaultBridge redacts sensitive text before analysis. The agent
-looks up this exact cell, finds a verified fibre-cut incident, checks the account,
-and queues only the compensation and callback allowed by policy. It does not
-invent a cause or repair time.”
+Open **Review trace** for the newest call. Point to:
 
-### 1:45 to 2:40 | Prove the agent used tools
+1. verified network fault match with NOC provenance;
+2. authoritative account check;
+3. idempotent compensation command;
+4. restoration callback command.
 
-**Show:** Open the operations workspace, unlock it, select the new call, and show
-the decision timeline.
+Explain the two other paths. An unknown fault uses an approved troubleshooting
+playbook and waits for caller verification. A failed verification opens a
+specialist handoff. Three distinct unresolved callers can propose an
+**unconfirmed** incident for NOC review.
 
-**Say:** “The operations view stores a pseudonymous caller reference and the safe
-transcript. This trace shows the actual tool sequence: fault lookup, account
-inspection, compensation, and callback. Each action is persisted in PostgreSQL
-and protected against duplicate delivery.”
+## 2:37 to 4:39 | Present the Benchmark
 
-Briefly point to candidate incidents and explain: “When no known fault explains a
-complaint, three distinct unresolved callers at one cell create an unconfirmed
-candidate incident for operator review. FaultBridge never labels crowd evidence
-as a confirmed outage.”
+Show the three pages of `docs/BENCHMARK_REPORT.pdf`.
 
-### 2:40 to 4:10 | Benchmark evidence
+- **Natural ASR:** 400 hash-frozen AfriSwitch clips, 100 per language pair, sent
+  to four systems. Empty outputs remain failures. Sahara achieved the lowest
+  equal-language WER at 55.0%.
+- **TTS and downstream task:** Sahara generated all 200 female and male outputs.
+  Three independent ASR families measured transcript fidelity. Across 648 real
+  LLM and PostgreSQL runs, Sahara transcripts produced 100% strict task success.
+  All four ASR paths had zero critical safety failures.
+- **Privacy and reproducibility:** 100 labelled synthetic cases achieved 100%
+  exact typed-span F1 within the declared deterministic scope. Raw JSONL, hashes,
+  failures, model versions, and aggregate verification commands are retained.
 
-**Show:** Pages 1 and 2 of `docs/BENCHMARK_REPORT.pdf`.
+State the limitation clearly: automatic TTS scores are diagnostic, while the
+qualified bilingual listening audit remains pending.
 
-**Say:** “We benchmarked the system at component and task level. The natural ASR
-panel contains 400 AfriSwitch clips, 100 for each of Hausa-English, Igbo-English,
-Pidgin-English, and Yoruba-English. Every model received the same hash-verified
-audio, and failed or empty transcripts stayed in the denominator. Sahara achieved
-the lowest equal-language WER at 55.0 percent, ahead of SBPN, OmniASR, and
-Faster-Whisper Turbo.”
+## 4:39 to 4:47 | Close
 
-“For TTS, Sahara generated female and male speech for 100 code-switched prompts.
-All 200 outputs succeeded. Three independent ASR families scored transcript
-fidelity, while the report clearly separates automatic flags from the pending
-human listening audit.”
+**Say:** “FaultBridge turns code-switched customer calls into grounded help for
+callers and usable evidence for network teams. Thank you.”
 
-“We also ran 648 real Llama and PostgreSQL agent executions. On the named-ASR
-panel, Sahara transcripts produced 100 percent strict task success, SBPN 95.8,
-OmniASR 87.5, and Faster-Whisper 79.2 percent. Every provider had zero critical
-safety failures. This measures whether speech errors change the final tool action,
-not only whether individual words are wrong.”
+## Before You Re-record
 
-### 4:10 to 4:40 | Privacy and reproducibility
+```bash
+make docker-up
+make demo-seed
+make docker-status
+```
 
-**Show:** Page 3 of the report and the repository README.
-
-**Say:** “The privacy scorecard covers 100 labelled synthetic cases and achieved
-100 percent exact typed-span precision, recall, and F1 within its declared scope.
-Raw benchmark evidence is hash-pinned, aggregates are reproducible from saved
-JSON results, and the natural-audio evidence is stored privately on Hugging Face
-until its access terms permit publication.”
-
-### 4:40 to 4:55 | Close
-
-**Show:** Caller and operations pages side by side.
-
-**Say:** “FaultBridge gives callers a useful, grounded answer and gives network
-teams structured evidence they can act on. It is a production-oriented,
-code-switched voice agent built for African telecom support.”
-
-## Recording Fallback
-
-If a live provider is temporarily unavailable, keep the successful local call and
-tool trace already captured, state the recording time on screen, and show the raw
-result hash. Do not substitute a mocked response or hide a failed request. Record
-the benchmark section independently so a provider retry does not require redoing
-the entire video.
+Use 100% browser zoom, close notifications, and enter the internal access key off
+camera. Use only the synthetic details above. Keep the final cut below five
+minutes and never replace a failed provider request with a fabricated response.

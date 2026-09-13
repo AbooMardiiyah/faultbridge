@@ -1,58 +1,42 @@
-# Intron Submission Package
+# Intron Submission Checklist
 
-## What We Will Submit
+## Ready Materials
 
-1. **Problem and solution description.** A short portal response explaining the
-   telco fault-information gap, the four code-switched language pairs, and the
-   three-tier resolution and discovery flow.
-2. **Demo video.** A public or unlisted YouTube link, no longer than five minutes,
-   showing real code-switching and a working prototype. Test the link while signed
-   out and in an incognito window.
-3. **Open-source code and documentation.** The public GitHub repository at the
-   exact submitted commit, with setup, architecture, privacy, benchmark, and
-   deployment instructions.
-4. **Benchmark report.** A maximum three-page PDF comparing Sahara, SBPN,
-   Faster-Whisper, and OmniASR. It must cover data, preprocessing, metric
-   definitions, per-language ASR results, TTS results, downstream task performance,
-   qualitative findings, limitations, and reproducibility.
-5. **Responsible AI note.** Link or upload `docs/RESPONSIBLE_AI.md`, covering
-   consent, redaction, pseudonymization, retention, deletion, grounding, candidate
-   incident review, and dataset limits.
-6. **Optional benchmark-audio bonus.** A Hugging Face dataset link containing only
-   publishable, de-identified synthetic domain audio plus metadata and provenance.
-   AfriSwitch audio must follow its access and licence terms and should not be
-   republished casually.
-7. **Optional working application URL.** A public Railway deployment lets judges
-   try the caller and operations interfaces, but it is supporting evidence rather
-   than an official required deliverable. Do not delay the required package for it.
+- **Working prototype:** caller and operations interfaces, Sahara voice pipeline,
+  Together model analysis, constrained tools, and PostgreSQL persistence.
+- **Demo master:** `artifacts/demo-video/FaultBridge-Intron-Demo.mp4`, 4:47,
+  H.264 video, AAC audio, 1440 by 1000, SHA-256
+  `9c0b4b34c436fa08331399ce7b7c746135148cb7bd354a4e52f7968650f5734d`.
+- **Benchmark report:** [BENCHMARK_REPORT.pdf](BENCHMARK_REPORT.pdf), exactly three
+  A4 pages.
+- **Responsible AI note:** [RESPONSIBLE_AI.md](RESPONSIBLE_AI.md).
+- **Code and documentation:** tested repository with Docker, Make, architecture,
+  operations, evaluation, and reproduction guidance.
+- **Optional evidence:** private, hash-pinned Hugging Face ASR bundle at revision
+  `ef320d7f367e040c47b4021a397011dae894fe00`.
 
-## Five-Minute Video Story
+## Required Submission Fields
 
-- **0:00–0:30:** the problem and one-line solution.
-- **0:30–1:35:** a code-switched Tier 1 call finds a verified fault, explains the
-  ETA, and queues an allowed callback or compensation.
-- **1:35–2:35:** a Tier 2 call uses account state and an approved playbook, then
-  waits for the caller's result.
-- **2:35–3:25:** the third distinct unresolved complaint creates a ticket and an
-  **unconfirmed** candidate incident visible in operations.
-- **3:25–4:25:** show the benchmark headline: 400 natural clips, four ASR models,
-  200 TTS outputs, three judges, four languages, and the downstream score.
-- **4:25–5:00:** show privacy evidence, reproducibility hashes, impact, and the
-  closing claim.
+1. **Problem and solution:** explain the repeated telco fault-information gap,
+   four code-switched language pairs, grounded three-tier resolution, and
+   crowd-signal discovery.
+2. **YouTube video:** upload the verified master as public or unlisted. Confirm it
+   plays while signed out and is under five minutes.
+3. **Public GitHub repository:** push the reviewed commit after rotating local API
+   tokens. Test setup instructions from a clean clone.
+4. **Benchmark report:** upload or link the three-page PDF.
+5. **Responsible AI note:** link the committed note.
 
-Do not spend video time scrolling through code. Show one short tool trace to prove
-that the agent used verified state, then use clear result visuals.
+## Final Owner Actions
 
-## Files to Finish Before Upload
+- Rotate the Sahara, Together, and Hugging Face tokens that were exposed during
+  local configuration output, then update the ignored `.env`.
+- Upload the final master to YouTube and add its URL to the repository README.
+- Create the public GitHub remote, push the reviewed branch, and tag the submitted
+  commit.
+- Paste the exact GitHub, YouTube, report, and Responsible AI links into the
+  portal.
+- Save screenshots of the completed submission and confirmation email.
 
-- `docs/DEMO_SCRIPT.md`: exact spoken phrases, seed state, clicks, and fallback
-  recording plan.
-- `docs/BENCHMARK_REPORT.pdf`: complete and visually checked at three A4 pages.
-- `benchmark/results/agent_audio_summary.json`: complete with 360 raw runs.
-- `docs/RESPONSIBLE_AI.md`: final review against demonstrated behavior.
-- README: final Railway, YouTube, report, and Hugging Face links.
-- GitHub release or immutable commit tag used by every submitted link.
-
-The required submission is a **working prototype plus evidence**: video, source
-code, three-page benchmark PDF, and Responsible AI note. A public deployment and
-publishable benchmark audio are valuable optional additions.
+Railway deployment is optional supporting evidence. Complete the required portal
+package before spending time on deployment or OpenTelemetry.

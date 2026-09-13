@@ -100,6 +100,8 @@ class OrchestratorIntegrationTests(unittest.TestCase):
             "noc-integration-test",
         )
         self.assertEqual(session.events[2].output["status"], "queued")
+        self.assertIn("West Africa Time", session.response)
+        self.assertNotRegex(session.response, r"\d{4}-\d{2}-\d{2}T")
 
     def test_missing_account_remains_unknown(self) -> None:
         session = self.start_unknown(1)

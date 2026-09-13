@@ -1,124 +1,116 @@
-# FaultBridge — Intron Submission
+# FaultBridge
 
-FaultBridge is a code-switched voice agent that resolves Nigerian telco fault calls
-from verified network and account state. Unresolved complaints become evidence for
-candidate network incidents, closing the gap between customer support and the NOC.
+FaultBridge is a code-switched voice support agent for Nigerian mobile networks.
+It turns a caller's complaint into a verified answer, a safe action, and useful
+network evidence.
 
-This repository is the Sahara-first entry for the Intron CodeSwitch Africa
-Challenge. A separate AssemblyAI-first repository will be created after this
-submission is complete.
+A telco may know about a fibre cut before its customers do, yet every caller still
+explains the same outage from scratch. FaultBridge connects the customer support
+call to verified NOC and account data. It supports Pidgin-English, Hausa-English,
+Igbo-English, and Yoruba-English.
 
-## Implemented System
+## What the Agent Does
 
-FaultBridge composes a provider-independent voice pipeline around a constrained
-agentic loop:
+1. Sahara transcribes the caller with an explicit language selection.
+2. FaultBridge redacts personal identifiers before model analysis or storage.
+3. A structured LLM extracts the issue without receiving authority to run tools.
+4. The policy engine checks the exact cell, account state, and approved playbooks.
+5. It queues an idempotent callback or compensation command when policy permits.
+6. Unresolved complaints become tickets and distinct-caller network signals.
+7. Three matching unresolved callers can propose an **unconfirmed** NOC incident.
+8. Sahara speaks the grounded response in the caller's selected language.
 
-1. transcribe PCM16 audio through the selected STT adapter;
-2. redact PII before structured LLM analysis;
-3. accept consent and pseudonymize the caller;
-4. look up an exact active fault for the caller's cell;
-5. otherwise inspect account state and retrieve an approved diagnostic playbook;
-6. synthesize the grounded response through the selected TTS adapter;
-7. verify the outcome, escalate unresolved calls, and cluster distinct complaints;
-8. queue callbacks and compensation for idempotent operator delivery.
+The submission uses Sahara for speech and Together-hosted Llama 3.3 70B for
+structured complaint analysis. Speech, model, and telephony implementations sit
+behind provider interfaces.
 
-The submitted configuration uses Sahara for speech and Together-hosted
-`meta-llama/Llama-3.3-70B-Instruct-Turbo` for structured complaint analysis.
-Together, OpenAI, and Groq share the same provider-neutral agent interface.
+## Run the Working Prototype
 
-The private, hash-pinned four-model ASR evidence is available at
-[`Tiamz/faultbridge-asr-benchmark-evidence`](https://huggingface.co/datasets/Tiamz/faultbridge-asr-benchmark-evidence),
-revision `ef320d7f367e040c47b4021a397011dae894fe00`. It will become public-gated for
-submission after the dataset card and upstream access terms are finalized.
-The judge-facing [three-page benchmark report](docs/BENCHMARK_REPORT.pdf) combines
-the ASR, TTS, privacy, downstream task, routing, and reproducibility results.
-
-Run it with Python 3.11+, Docker, and `uv`:
+Install Docker and [uv](https://docs.astral.sh/uv/), then:
 
 ```bash
 cp .env.example .env
-make install
-make db-up
-make migrate
-make test
-make run
+# Set strong local secrets plus SAHARA_API_KEY and TOGETHER_API_KEY.
+make docker-up
+make demo-seed
 ```
 
-To run the packaged API, migrations, and PostgreSQL entirely through Docker:
+Open `http://localhost:8010/` for caller support and
+`http://localhost:8010/operations` for the protected operations workspace.
+`make demo-seed` loads a labelled synthetic incident and account through the
+same authenticated ingestion API used by real integrations.
 
 ```bash
-make docker-up       # build and wait for the API and database to become healthy
-make docker-status   # show container health and published ports
-make docker-logs     # follow API and database logs
-make docker-down     # stop the complete stack
+make test           # run 90 unit and PostgreSQL integration tests
+make lint           # check formatting and static rules
+make docker-status  # inspect container health
+make docker-down    # stop the local stack
 ```
 
-The web interfaces are served by the API container, so no separate frontend
-process is required. Docker publishes them at `http://localhost:8010/`; `make run`
-uses port `8000`. Start delivery workers only after configuring operator webhooks
-with `make docker-workers`. Live provider endpoints remain unavailable until their
-credentials are present; the rest of the service starts without them.
+No separate frontend service is required. The FastAPI container serves both
+responsive web interfaces.
 
-## Repository layout
+## Architecture
 
-- `src/faultbridge/domain/`: call state and deterministic orchestration policy.
-- `src/faultbridge/services/`: PostgreSQL persistence and PII protection.
-- `src/faultbridge/tools/`: typed, auditable telco actions.
-- `src/faultbridge/adapters/`: Sahara and future voice-provider boundaries.
-- `migrations/`: versioned PostgreSQL schema.
-- `tests/`: policy, privacy, idempotency, and clustering tests.
-- `eval/`: frozen-manifest ASR scoring and executable agent-state evaluation.
-- `docs/`: architecture and responsible-AI documentation.
-- `src/faultbridge/static/`: responsive caller and operations interfaces.
+```mermaid
+flowchart LR
+    A[Caller audio] --> B[Sahara STT]
+    B --> C[PII redaction]
+    C --> D[Structured LLM analysis]
+    D --> E[Constrained policy engine]
+    E --> F[PostgreSQL tools]
+    F --> G[Audited actions and signals]
+    E --> H[Sahara TTS]
+```
 
-## Data status
+Only the policy engine can invoke tools. Confirmed outage answers require an exact
+match against a verified incident record. Approximate retrieval is never used as
+proof of a fault. Read [Architecture](docs/ARCHITECTURE.md) and
+[Architecture Decisions](docs/ARCHITECTURE_DECISIONS.md) for the boundaries and
+tradeoffs.
 
-The runtime contains no committed subscriber, fault, account, or call records.
-Authoritative incidents and account state enter through protected internal API
-endpoints with source provenance and verification timestamps. Clearly labelled,
-synthetic scenarios are committed under `benchmark/` for reproducible evaluation.
-The project does not commit real caller audio, raw provider outputs, credentials,
-real phone numbers, or unredacted production transcripts.
+## Benchmark Evidence
 
-## Operational data boundary
+The [three-page report](docs/BENCHMARK_REPORT.pdf) evaluates components and the
+complete agent:
 
-`PUT /internal/network-incidents/{incident_id}` accepts verified fault updates from
-a telco NOC, assurance platform, or authorized operations console.
-`PUT /internal/accounts` accepts verified account state from a CRM or billing
-adapter. Both endpoints require `X-Internal-API-Key`. Missing upstream data remains
-unknown; the agent does not manufacture a fault, balance, or compensation status.
+| Track | Evidence | Headline result |
+| --- | ---: | --- |
+| Natural ASR | 400 AfriSwitch clips, 4 systems | Sahara 55.0% equal-language WER |
+| Code-switched TTS | 200 Sahara outputs, 3 ASR judges | 200 of 200 generated |
+| Agent task execution | 648 LLM and PostgreSQL runs | Sahara transcript path 100% strict success |
+| Privacy | 100 labelled synthetic cases | 100% exact typed-span F1 within scope |
 
-## Sahara adapter
+Failures and empty transcripts remain in the denominator. Raw JSONL contains
+provider metadata, hashes, latency, and error records so aggregates can be
+recomputed. The natural-audio evidence is private because AfriSwitch access terms
+must be preserved:
+[`Tiamz/faultbridge-asr-benchmark-evidence`](https://huggingface.co/datasets/Tiamz/faultbridge-asr-benchmark-evidence),
+revision `ef320d7f367e040c47b4021a397011dae894fe00`.
 
-`SaharaStreamingSTT` and `SaharaStreamingTTS` implement the official WebSocket
-contracts. `SaharaSynchronousTTS` supplies the resumable benchmark transport, and
-`SaharaConversationCall` starts active outbound conversation workflows. Every
-speech request sends an explicit language selection. The browser maps Pidgin to
-`pcm`, Hausa to `ha`, Igbo to `ig`, and Yoruba to `yo`; missing language metadata
-is rejected before a provider call.
+Automatic TTS scores are diagnostic signals. A qualified bilingual listening
+audit remains pending, so this project makes no MOS or human-quality claim.
+Commands and metric definitions are in [eval/README.md](eval/README.md), with the
+full explanation in the
+[Technical Guide](docs/FAULTBRIDGE_TECHNICAL_GUIDE.md).
 
-See [Operations](docs/OPERATIONS.md) for provider selection, deployment, action
-delivery, privacy controls, and health checks. The
-[experience design guide](docs/EXPERIENCE_DESIGN.md) records the UI rationale and
-manual review checklist. The
-[voice benchmark research](docs/VOICE_BENCHMARK_RESEARCH.md) defines the
-industry-grounded evaluation protocol. The dedicated
-[TTS benchmark protocol](docs/TTS_BENCHMARK_PROTOCOL.md) defines hallucination,
-transcript loss, segment loss, accuracy, and the native-listener audit;
-the [completed automatic TTS report](docs/TTS_BENCHMARK_REPORT.md) records the
-200-output, three-judge results; the [privacy report](docs/PRIVACY_BENCHMARK_REPORT.md)
-records the deterministic PII scorecard; the
-[agent benchmark protocol](docs/AGENT_BENCHMARK_PROTOCOL.md) defines the 48
-executable scenarios and 24-utterance named-ASR propagation panel; the
-[completed executable agent report](docs/AGENT_BENCHMARK_REPORT.md) records 648
-real model-and-database executions across both panels; the
-[routing recommendation](docs/ROUTING_RECOMMENDATION.md) explains why Sahara
-remains the measured submission default; and
-[`eval/README.md`](eval/README.md) contains the reproducible commands.
+## Submission Materials
 
-For a complete explanation of the product, architecture, data model, privacy
-boundary, benchmark tracks, and every reported metric, read the
-[technical explanation guide](docs/FAULTBRIDGE_TECHNICAL_GUIDE.md). The
-[Railway deployment guide](docs/RAILWAY_DEPLOYMENT.md) and
-[submission plan](docs/SUBMISSION_PLAN.md) cover hosting and the final hackathon
-package.
+- [Benchmark report](docs/BENCHMARK_REPORT.pdf)
+- [Responsible AI note](docs/RESPONSIBLE_AI.md)
+- [Exact demo script](docs/DEMO_SCRIPT.md)
+- [Submission checklist](docs/SUBMISSION_PLAN.md)
+- [Operations and deployment](docs/OPERATIONS.md)
+
+The final local video master is
+`artifacts/demo-video/FaultBridge-Intron-Demo.mp4`. Generated media is ignored
+by Git; the submitted YouTube URL should point to this verified 4 minute 47 second
+cut.
+
+## Data and Security Boundary
+
+The repository contains no real subscriber, account, incident, or caller records.
+Raw call audio stays in memory. Stored callers are pseudonymous, transcripts are
+redacted, and authenticated deletion and retention controls are implemented.
+Credentials belong only in the ignored `.env` file. Review
+[Responsible AI](docs/RESPONSIBLE_AI.md) before connecting a real operator system.

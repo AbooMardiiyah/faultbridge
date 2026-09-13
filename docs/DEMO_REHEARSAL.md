@@ -1,37 +1,38 @@
-# FaultBridge Demo Rehearsal
+# Demo Rehearsal
 
-Use `artifacts/demo-video/FaultBridge-live-Pidgin-call.mp4` as the exact reference
-for the live section. Keep the internal key and `.env` outside the recording.
+Watch `artifacts/demo-video/FaultBridge-Intron-Demo.mp4` and follow
+[the exact script](DEMO_SCRIPT.md). The master is a scene-by-scene reference, not
+just a visual montage.
 
-## Before Recording
+## Setup
 
-1. Run `make docker-up` and confirm both services are healthy.
-2. Open `http://localhost:8010/` at 100% browser zoom.
+1. Run `make docker-up`, `make demo-seed`, and `make docker-status`.
+2. Open `http://localhost:8010/` at 100% zoom.
 3. Select `Pidgin + English`.
-4. Enter area `Evaluation Area 02`, cell `EVAL-002`, and callback number
-   `08030000002`.
-5. Check **I agree to voice processing** and enter the internal access key under
-   **Demo access**.
+4. Enter `Evaluation Area 02`, `EVAL-002`, and `08030000002`.
+5. Check consent and enter the internal key under **Demo access** off camera.
+6. Keep `/operations` and `docs/BENCHMARK_REPORT.pdf` ready in other tabs.
 
-## Live Caller Scene
+## Live Sequence
 
-Press **Start speaking**, wait for the red **Stop recording** state, and say:
+Speak the exact Pidgin complaint in the script, then stop recording. Wait without
+speaking while **Checking the evidence** appears. After **Complete**, show the
+transcript and action cards, then select **Play response**. Sahara should read a
+normal clock phrase such as “1:30 AM West Africa Time,” rather than an ISO
+timestamp.
 
-> Abeg, wetin dey happen to the network for this area? I don off and on my phone
-> tire, but signal still no dey since morning. I consent to automated processing.
+In Operations, open the newest call. Confirm that its call time and transcript
+match the live run before showing the four persisted tool events.
 
-Press **Stop recording**. Do not speak while **Checking the evidence** is shown.
-Wait for **Complete**, then point out the transcript, grounded fibre-cut answer,
-and the network, account, compensation, and callback action cards. Press
-**Play response** so the judges hear Sahara TTS.
+## Quality Check
 
-## Operations and Evidence
+- The caller and Sahara captions begin with their audio and never cover the UI.
+- No key, token, browser notification, real phone number, or unrelated tab appears.
+- The result says **known fault confirmed** and the operations trace shows the same
+  call.
+- Benchmark numbers match the three-page PDF.
+- The exported video is below five minutes and the YouTube link works while signed
+  out.
 
-Select **Operations**, unlock the workspace, and open the newest call with
-**Review trace**. Point to the PII-safe transcript, verified incident source,
-account check, queued credit, and callback. Then show the three pages of
-`docs/BENCHMARK_REPORT.pdf`: natural ASR, TTS and agent outcomes, then privacy and
-reproducibility. Finish on the FaultBridge closing card.
-
-If Sahara returns a temporary error, stop recording and retry later. Do not replace
-the live call with a response that did not pass through the voice endpoint.
+If Sahara returns a temporary provider error, stop the recording and retry later.
+Keep the last successful real call as the fallback.
