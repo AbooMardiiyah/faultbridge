@@ -10,10 +10,12 @@ from unittest.mock import patch
 
 from faultbridge_eval.manifest import BenchmarkSample
 from faultbridge_eval.metrics import segment_loss_counts
-from faultbridge_eval.tts_audit import target_phrase
+from faultbridge_eval.tts_audit import parser as audit_parser
+from faultbridge_eval.tts_audit import portable_audio_path, target_phrase
 from faultbridge_eval.tts_manifest import TTS_SETTINGS, select_prompts
 from faultbridge_eval.tts_runner import attempt_counts, generate, merge_wav_chunks
 from faultbridge_eval.tts_scorer import (
+    publishable_report,
     score_transcript,
     summarize_generation,
     summarize_transcripts,
@@ -48,6 +50,20 @@ class TTSMetricsTests(unittest.TestCase):
     def test_audit_target_uses_longest_switched_span(self) -> None:
         tagged = "local [[EN]]network[[/EN]] words [[EN]]service unavailable[[/EN]]"
         self.assertEqual(target_phrase(tagged), "service unavailable")
+
+    def test_audit_defaults_to_official_sync_generation_log(self) -> None:
+        args = audit_parser().parse_args([])
+
+        self.assertEqual(
+            args.generation, Path("eval/results/tts/sync_generation.jsonl")
+        )
+
+    def test_audit_uses_portable_audio_paths_inside_repository(self) -> None:
+        audio = Path.cwd() / "benchmark" / "tts_audio" / "sample.wav"
+
+        self.assertEqual(
+            portable_audio_path(str(audio)), "benchmark/tts_audio/sample.wav"
+        )
 
     def test_segment_loss_counts_contiguous_language_spans(self) -> None:
         counts = segment_loss_counts("bawo [[EN]]network down[[/EN]] yau", "bawo yau")
@@ -96,6 +112,13 @@ class TTSMetricsTests(unittest.TestCase):
         self.assertGreater(summary["hallucination_rate"], 0)
         self.assertGreater(summary["transcript_loss_rate"], 0)
         self.assertEqual(summary["exact_utterance_accuracy"], 0)
+
+    def test_public_tts_report_excludes_clip_level_audit_decisions(self) -> None:
+        public = publishable_report(
+            {"complete": True, "audit_candidates": [{"sample_id": "restricted"}]}
+        )
+
+        self.assertEqual(public, {"complete": True})
 
     def test_generation_summary_separates_audio_and_session_latency(self) -> None:
         summary = summarize_generation(

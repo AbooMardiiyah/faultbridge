@@ -33,9 +33,19 @@ RATING_FIELDS = (
     "code_switch_appropriateness_1_to_5",
     "missing_content_yes_no",
     "extra_content_yes_no",
-    "target_phrase_heard",
+    "typed_target_phrase",
     "reviewer_note",
 )
+
+
+def portable_audio_path(value: str) -> str:
+    path = Path(value)
+    if not path.is_absolute():
+        return path.as_posix()
+    try:
+        return path.relative_to(Path.cwd()).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 def stable_rank(seed: int, value: str) -> str:
@@ -114,7 +124,7 @@ def run(args: argparse.Namespace) -> None:
                 "assignment_id": f"tts-audit-{index:03d}",
                 "language_pair": record["language_pair"],
                 "gender": record["gender"],
-                "audio_path": record["audio_path"],
+                "audio_path": portable_audio_path(str(record["audio_path"])),
                 "audio_sha256": record["audio_sha256"],
                 "reference": record["reference"],
                 "reference_tagged": record["reference_tagged"],
@@ -155,7 +165,7 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument(
         "--generation",
         type=Path,
-        default=Path("eval/results/tts/generation.jsonl"),
+        default=Path("eval/results/tts/sync_generation.jsonl"),
     )
     command.add_argument(
         "--summary", type=Path, default=Path("eval/results/tts_summary.json")

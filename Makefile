@@ -1,4 +1,4 @@
-.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-faster-whisper-cuda benchmark-install-sbpn benchmark-install-omni benchmark-install-omni-cuda benchmark-prepare benchmark-robustness benchmark-sahara-batch benchmark-sahara-retry benchmark-faster-whisper-cuda benchmark-omni-cuda benchmark-score benchmark-verify-asr-evidence benchmark-agent-score benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit
+.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-faster-whisper-cuda benchmark-install-sbpn benchmark-install-omni benchmark-install-omni-cuda benchmark-prepare benchmark-robustness benchmark-sahara-batch benchmark-sahara-retry benchmark-faster-whisper-cuda benchmark-omni-cuda benchmark-score benchmark-verify-asr-evidence benchmark-agent-score benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit benchmark-verify-tts-evidence
 
 TORCH_BACKEND ?= cpu
 ASR_BATCH_SIZE ?= 10
@@ -134,7 +134,13 @@ benchmark-tts-asr-omni:
 	HF_HUB_OFFLINE=1 PYTHONPATH=src:eval .venv-omni/bin/python -m faultbridge_eval.runner --manifest benchmark/tts_generated.csv --output eval/results/tts/asr --provider omniasr --omni-device cuda
 
 benchmark-tts-score:
-	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.tts_scorer --generation eval/results/tts/sync_generation.jsonl --asr-results eval/results/tts/asr/*.jsonl
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.tts_scorer --generation eval/results/tts/sync_generation.jsonl --asr-results eval/results/tts/asr/*.jsonl --public-output benchmark/results/tts_benchmark_summary.json
 
 benchmark-tts-audit:
-	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.tts_audit
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.tts_audit --generation eval/results/tts/sync_generation.jsonl
+
+benchmark-verify-tts-evidence:
+	UV_CACHE_DIR=.uv-cache uv run python3 scripts/verify_tts_evidence.py
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.tts_scorer --generation eval/results/tts/sync_generation.jsonl --asr-results eval/results/tts/asr/*.jsonl --output /tmp/faultbridge-tts-reproduced.json --public-output /tmp/faultbridge-tts-public-reproduced.json
+	cmp benchmark/results/tts_benchmark_summary.json /tmp/faultbridge-tts-public-reproduced.json
+	cmp benchmark/results/tts_benchmark_summary.csv /tmp/faultbridge-tts-public-reproduced.csv

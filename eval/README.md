@@ -173,6 +173,10 @@ described as verified failures.
 language/voice cell, fills the remainder deterministically, and writes a separate
 controller key and randomized listener rating sheet. Do not expose the reference
 or target phrase to a listener before their typed identification response.
+The committed automatic report and public aggregate live in `docs/` and
+`benchmark/results/`. After restoring the private evidence archive, run
+`make benchmark-verify-tts-evidence` to validate every input and WAV hash and
+reproduce the public JSON and CSV byte-for-byte.
 
 ## Executable agent evaluation
 

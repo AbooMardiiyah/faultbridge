@@ -477,7 +477,10 @@ class SBPNTranscriber:
                 return ""
             return re.sub(r"<[^>]+>", "", _prediction_text(outputs[0])).strip()
 
-        transcript = await asyncio.to_thread(run)
+        # NeMo's transcription data loader can deadlock during worker-thread
+        # teardown on constrained CPU systems. This benchmark is sequential, so
+        # keep NeMo on the runner's main thread.
+        transcript = run()
         if not transcript:
             raise RuntimeError("SBPN returned no transcript")
         return TranscriptionResult(transcript, time.monotonic() - started)

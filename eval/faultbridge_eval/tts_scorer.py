@@ -23,6 +23,16 @@ from faultbridge_eval.tts_runner import latest_records
 SCORER_VERSION = "faultbridge-tts-scorer-v1"
 
 
+def publishable_report(report: dict[str, Any]) -> dict[str, Any]:
+    """Remove clip-level decisions tied to the gated evaluation panel."""
+    return {key: value for key, value in report.items() if key != "audit_candidates"}
+
+
+def _distinct(records: list[dict[str, Any]], key: str) -> list[Any]:
+    values = {json.dumps(record.get(key), sort_keys=True) for record in records}
+    return [json.loads(value) for value in sorted(values)]
+
+
 def _total_errors(records: list[dict[str, Any]]) -> ErrorCounts:
     total = ErrorCounts()
     for record in records:
@@ -262,6 +272,19 @@ def run(args: argparse.Namespace) -> None:
         for (judge, language_pair, gender), rows in sorted(groups.items())
     ]
     consensus = consensus_rows(scored)
+    generation_records = list(generation_by_id.values())
+    judge_provenance = []
+    for judge in judges:
+        judge_rows = [row for row in results if str(row["provider"]) == judge]
+        judge_provenance.append(
+            {
+                "provider": judge,
+                "model_identifiers": _distinct(judge_rows, "model_identifier"),
+                "parameters": _distinct(judge_rows, "parameters"),
+                "code_commits": _distinct(judge_rows, "code_commit"),
+                "lock_sha256": _distinct(judge_rows, "lock_sha256"),
+            }
+        )
     report = {
         "scorer_version": SCORER_VERSION,
         "complete": all(
@@ -275,7 +298,23 @@ def run(args: argparse.Namespace) -> None:
             "accuracy": "exact normalized utterance match rate",
         },
         "judges": judges,
-        "generation": summarize_generation(list(generation_by_id.values())),
+        "provenance": {
+            "generation": {
+                "providers": _distinct(generation_records, "provider"),
+                "model_identifiers": _distinct(generation_records, "model_identifier"),
+                "generator_versions": _distinct(
+                    generation_records, "generator_version"
+                ),
+                "prompt_manifest_sha256": _distinct(
+                    generation_records, "prompt_manifest_sha256"
+                ),
+                "parameters": _distinct(generation_records, "parameters"),
+                "code_commits": _distinct(generation_records, "code_commit"),
+                "lock_sha256": _distinct(generation_records, "lock_sha256"),
+            },
+            "asr_judges": judge_provenance,
+        },
+        "generation": summarize_generation(generation_records),
         "transcript_fidelity": transcript_summaries,
         "consensus": {
             "samples": len(consensus),
@@ -312,6 +351,20 @@ def run(args: argparse.Namespace) -> None:
             writer = csv.DictWriter(stream, fieldnames=list(transcript_summaries[0]))
             writer.writeheader()
             writer.writerows(transcript_summaries)
+    if args.public_output:
+        args.public_output.parent.mkdir(parents=True, exist_ok=True)
+        args.public_output.write_text(
+            json.dumps(publishable_report(report), indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        public_csv = args.public_output.with_suffix(".csv")
+        if transcript_summaries:
+            with public_csv.open("w", newline="", encoding="utf-8") as stream:
+                writer = csv.DictWriter(
+                    stream, fieldnames=list(transcript_summaries[0])
+                )
+                writer.writeheader()
+                writer.writerows(transcript_summaries)
     print(f"Wrote {args.output} and {csv_path}")
 
 
@@ -322,6 +375,7 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument(
         "--output", type=Path, default=Path("eval/results/tts_summary.json")
     )
+    command.add_argument("--public-output", type=Path)
     command.add_argument("--allow-incomplete", action="store_true")
     return command
 

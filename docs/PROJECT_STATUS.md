@@ -29,6 +29,16 @@ sessions; the Git history remains the authoritative implementation record.
   one male Hausa voice. All five outputs were valid, hash-verified WAV files with
   no clipping; the four female prompts averaged 9.18 seconds to first audio. These
   are contract diagnostics, not final benchmark results.
+- The official Sahara TTS panel is complete: all 200 female/male outputs succeeded
+  on their first paid request. All WAV hashes verify; the files are 22.05 kHz mono
+  PCM16, total 1,672.29 audio seconds and 71 MB, with no clipped samples. At the
+  posted NGN 0.65 per generated second, measured generation cost is approximately
+  NGN 1,086.99.
+- Faster-Whisper Turbo, SBPN, and OmniASR each judged all 200 TTS outputs with no
+  missing or empty results. The public 24-cell aggregate and automatic report
+  cover organizer-requested WER, hallucination, transcript loss, segment loss,
+  and strict accuracy. A deterministic 40-output bilingual audit is prepared;
+  human ratings remain pending and no MOS is claimed.
 - One natural Hausa-English Sahara STT pilot succeeded after a transient provider
   failure: normalized WER 28.6%, CER 7.4%, and 5.31 seconds of post-audio latency.
   The sample size is one and must not appear as a model-level conclusion.
@@ -86,21 +96,14 @@ documented HTTP 503 timeout, records rate-limit headers, and downloads audio
 without forwarding the bearer token to object storage. Requests are sequential
 and spaced 2.1 seconds apart for the documented 30-request-per-minute limit.
 
-The official synchronous TTS panel is complete: 200/200 female/male outputs
-succeeded without retries. All WAV hashes verify; the files are 22.05 kHz mono
-PCM16, total 1,672.29 audio seconds and 71 MB, with no clipped samples. At the
-posted NGN 0.65 per generated second, measured generation cost is approximately
-NGN 1,086.99. Faster-Whisper judging has 2/200 successful rows and resumes from
-there; SBPN and OmniASR judging have not started.
-
 ## Active sequence
 
-1. Finish the three independent ASR transcriptions of the generated TTS panel,
-   score them, and conduct the predeclared bilingual-listener audit.
+1. Conduct the prepared TTS audit with three bilingual listeners per language
+   pair and add the qualified human results to the report.
 2. Test the caller and operations interfaces against live providers.
-3. Score TTS and agent results, generate the report, and derive
-   evidence-based routing recommendations.
-4. Complete the telco scenarios, privacy set, five-minute demo, and submission
+3. Complete and score the agent scenarios and derive evidence-based routing
+   recommendations.
+4. Complete the privacy set, five-minute demo, and submission
    package.
 
 Hardware use and foreground validation are now authorized. Keep delivery workers

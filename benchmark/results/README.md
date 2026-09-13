@@ -1,12 +1,13 @@
 # ASR Result Reproduction
 
-The public repository stores aggregate results. Clip-level hypotheses are in the
-private Hugging Face dataset repository
-`tiamz/faultbridge-asr-benchmark-evidence`, because they are model outputs tied to
-the gated AfriSwitch panel. No audio is uploaded.
+The public repository stores aggregate results. Clip-level hypotheses remain in a
+local private archive pending creation of the private Hugging Face dataset
+repository `tiamz/faultbridge-asr-benchmark-evidence`; they are model outputs tied
+to the gated AfriSwitch panel. No source audio is included.
 
-Download `asr-benchmark-evidence-20260913.tar.gz` from that repository and extract
-it at the FaultBridge repository root. Then run:
+Once the private repository exists, upload
+`asr-benchmark-evidence-20260913.tar.gz`; reviewers with AfriSwitch access can
+extract it at the FaultBridge repository root and run:
 
 ```bash
 make benchmark-verify-asr-evidence
@@ -24,3 +25,24 @@ The archive SHA-256 is
 The frozen 400-clip manifest SHA-256 is
 `3d139832dcead055489cb6c668747db56c06090983d3a95ad644d65ff012b3c2`.
 Access and use remain subject to the AfriSwitch dataset card and CC BY-NC-SA 4.0.
+
+## TTS evidence
+
+The TTS public aggregate is `tts_benchmark_summary.json` and `.csv`; its report is
+`docs/TTS_BENCHMARK_REPORT.md`. The private local archive includes the raw Sahara
+generation log, 600 independent-ASR hypotheses, 200 generated WAVs, their hash
+manifest, and the blinded audit materials. After extracting the archive at the
+repository root, run:
+
+```bash
+make benchmark-verify-tts-evidence
+```
+
+The target verifies every evidence and audio hash, reruns
+`faultbridge-tts-scorer-v1`, and compares the regenerated public JSON and CSV
+byte-for-byte. Private distribution remains subject to AfriSwitch access and
+license conditions.
+
+The local archive is `artifacts/tts-benchmark-evidence-20260913.tar.gz` (62,755,397
+bytes) with SHA-256
+`e78776afd90fdcbb210e8e2ac2328bf1f7f45f34f7544fee34e9784366125cc4`.

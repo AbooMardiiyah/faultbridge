@@ -1,0 +1,104 @@
+{
+  "evidence_version": "faultbridge-tts-evidence-v1",
+  "created_date": "2026-09-13",
+  "distribution": "Raw model outputs and generated audio are retained privately and shared subject to AfriSwitch access conditions.",
+  "artifact": {
+    "sha256": "e78776afd90fdcbb210e8e2ac2328bf1f7f45f34f7544fee34e9784366125cc4",
+    "bytes": 62755397,
+    "local_path": "artifacts/tts-benchmark-evidence-20260913.tar.gz"
+  },
+  "generated_audio": {
+    "manifest": "benchmark/tts_generated.csv",
+    "manifest_sha256": "862ec4f9159fba1ea9262168a65b185b464394ca621f9e14445fe4ca5a336e18",
+    "samples": 200,
+    "bytes": 73756720,
+    "duration_seconds": 1672.2884353741497,
+    "format": "22050 Hz mono PCM16 WAV"
+  },
+  "raw_evidence": {
+    "generation_attempt_rows": 200,
+    "generation_successes": 200,
+    "asr_judges": 3,
+    "asr_result_rows": 600,
+    "asr_successes": 600,
+    "human_audit_outputs": 40,
+    "human_ratings_status": "pending"
+  },
+  "files": [
+    {
+      "path": "benchmark/tts_prompts.csv",
+      "sha256": "882d814fff276e27abb0623312f9f0e38c7c335eba68205ea4fb3be7e93216c0",
+      "bytes": 60715
+    },
+    {
+      "path": "benchmark/tts_generated.csv",
+      "sha256": "862ec4f9159fba1ea9262168a65b185b464394ca621f9e14445fe4ca5a336e18",
+      "bytes": 124243
+    },
+    {
+      "path": "benchmark/results/tts_generation_summary.json",
+      "sha256": "9e4853b621eabe6e4260d40c73b1d0077b36025087b4d98fa3ead1e5415dc916",
+      "bytes": 4218
+    },
+    {
+      "path": "benchmark/results/tts_benchmark_summary.json",
+      "sha256": "f4b8dd0175c0d5271b894625cfeee7cfb02d0dc6ffd24954d5d9ace3970bf023",
+      "bytes": 27168
+    },
+    {
+      "path": "benchmark/results/tts_benchmark_summary.csv",
+      "sha256": "43edac0f504617a89ff034f9a96a8d6905ce24a4822d0bb0ef612a3c6ec4c5b1",
+      "bytes": 6572
+    },
+    {
+      "path": "docs/TTS_BENCHMARK_PROTOCOL.md",
+      "sha256": "c60dbcc292e3792db3671381610763dfd4cdb28e610f04f38472a418d4bc84a7",
+      "bytes": 14626
+    },
+    {
+      "path": "docs/TTS_BENCHMARK_REPORT.md",
+      "sha256": "2c3d5e0c8643b84f3cc9963a39fbed1e2d33628dd1add056adbddb66db78bd92",
+      "bytes": 6164
+    },
+    {
+      "path": "eval/results/tts/sync_generation.jsonl",
+      "sha256": "f091491d3e710d120ddc5ec1e57c2f1046d37b6ac00d04863091fd059a6289f0",
+      "bytes": 471533
+    },
+    {
+      "path": "eval/results/tts/asr/faster-whisper.jsonl",
+      "sha256": "8125fdf37e263172902c7b8cd97f1afdd5154dbbe851f7e700738dc8afb03bc1",
+      "bytes": 232442
+    },
+    {
+      "path": "eval/results/tts/asr/meta-omniasr-ctc.jsonl",
+      "sha256": "abc5514abf5035c781d77fc51c81e4ad4ef675e4318376c2cdc8cc22a43133cd",
+      "bytes": 258756
+    },
+    {
+      "path": "eval/results/tts/asr/sbpn-base.jsonl",
+      "sha256": "09bad4975e0647f2f9ef78062ddd808a2704b0c481d1e65a36f8403f0b4093ac",
+      "bytes": 246878
+    },
+    {
+      "path": "eval/results/tts_summary.json",
+      "sha256": "bbb1bcdefb784130ff4cf989bae79aa0335955020f89f4b45561c9ac83dab1d6",
+      "bytes": 96665
+    },
+    {
+      "path": "eval/results/tts_summary.csv",
+      "sha256": "43edac0f504617a89ff034f9a96a8d6905ce24a4822d0bb0ef612a3c6ec4c5b1",
+      "bytes": 6572
+    },
+    {
+      "path": "eval/results/tts/audit_controller.csv",
+      "sha256": "9441a26374a59cf1f2b3d2c7c10f702882aced4c04c92e9322d6d92e70096076",
+      "bytes": 24476
+    },
+    {
+      "path": "eval/results/tts/audit_controller_ratings.csv",
+      "sha256": "42ff86b190b1807bb7980d8e6a56efe668848896c97ef6d3272b12d842296e87",
+      "bytes": 6085
+    }
+  ]
+}
