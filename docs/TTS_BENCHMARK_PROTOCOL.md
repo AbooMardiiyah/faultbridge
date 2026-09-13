@@ -60,17 +60,11 @@ These language codes match Intron's code-switched STT list, and the TTS values
 match Intron's supported-language and accent table.[^3] The runner records exact
 text, parameters, request time, time to first audio, time to last audio, session
 close time, WAV properties, audio SHA-256, code commit, dependency-lock hash, and
-failures. The real-time factor uses time to last audio, excluding the later commit
-acknowledgement wait. It merges multiple provider WAV chunks by decoding and
-concatenating PCM frames; binary WAV files are never joined blindly.
-
-The live streaming endpoint can return a complete `READY` WAV chunk without later
-returning its persisted-session `COMMITTED_AUDIO` summary. The adapter always
-sends `COMMIT`; the benchmark waits two seconds for that summary and retains the
-already complete audio if the summary is absent. The application default remains
-10 seconds. The generation log records the exact timeout. A missing summary is a
-provider observability limitation; it is not counted as missing speech when the
-fetched WAV validates and its hash is retained.
+failures. The official panel uses Intron's synchronous `POST /tts/v1/generate`
+endpoint and records its returned text ID and rate-limit headers. If a request
+times out with HTTP 503, the runner polls that same text ID instead of submitting
+and billing the prompt again. It downloads the returned audio URL without
+forwarding the API bearer token, then validates and hashes the WAV.[^10]
 
 ## Metric Definitions
 
@@ -214,12 +208,11 @@ is skipped, and failed samples with the fewest attempts are retried first. Repea
 for `TTS_GENDERS=male`. The unbounded `make benchmark-tts-generate` command is
 reserved for a deliberately funded full run.
 
-Intron documents a 300-second WebSocket session lifetime, a 60-second idle limit,
-and 10–100 characters per streaming text chunk. It does not publish a connection
-rate for this WebSocket endpoint. FaultBridge therefore runs sequentially and
-starts sessions no faster than once every two seconds, matching the stricter
-30-request-per-minute synchronous TTS rate. Every result records the starting
-credit balance returned by `SESSION_CREATED` so credit use can be audited.[^10]
+Intron documents a 30-request-per-minute limit for synchronous generation and a
+100-request-per-minute limit for status polling. FaultBridge runs sequentially
+and starts paid generation requests no faster than once every 2.1 seconds. Every
+outcome is appended immediately, so an interrupted run resumes without
+regenerating successful audio.[^10]
 
 Then transcribe `benchmark/tts_generated.csv` with all three independent ASR
 judges and score their JSONL outputs:
@@ -247,4 +240,4 @@ No estimated, mocked, or manually improved number may appear in a results table.
 [^7]: Méndez Kline and Zellou. “[The Perception of Code-Switched vs. Monolingual Sentences in TTS Voices](https://doi.org/10.3389/fcomp.2025.1565604).” Frontiers in Computer Science, 2025.
 [^8]: Chinen et al. “[ViSQOL v3: An Open Source Production Ready Objective Speech and Audio Metric](https://research.google/pubs/visqol-v3-an-open-source-production-ready-objective-speech-and-audio-metric/).” 2020.
 [^9]: Shi et al. “[VERSA: A Versatile Evaluation Toolkit for Speech, Audio, and Music](https://github.com/wavlab-speech/versa).” 2025.
-[^10]: Intron Voice. “[TTS Streaming](https://docs.voice.intron.io/docs/tts/tts-streaming).” Accessed 12 September 2026.
+[^10]: Intron Voice. “[TTS Generate](https://docs.voice.intron.io/docs/tts/tts-generate)” and “[Get Text Status](https://docs.voice.intron.io/docs/tts/tts-status).” Accessed 13 September 2026.

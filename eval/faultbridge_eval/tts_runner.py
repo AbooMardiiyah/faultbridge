@@ -14,15 +14,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from faultbridge.adapters.sahara import SaharaStreamingTTS
+from faultbridge.adapters.sahara import SaharaStreamingTTS, SaharaSynchronousTTS
 from faultbridge_eval.manifest import REQUIRED_COLUMNS, sha256_file
 from faultbridge_eval.runner import append_record, environment_provenance
 from faultbridge_eval.tts_manifest import FIELDS
 
-GENERATOR_VERSION = "faultbridge-tts-generator-v5"
+GENERATOR_VERSION = "faultbridge-tts-generator-v6"
 RESUMABLE_GENERATOR_VERSIONS = {
     "faultbridge-tts-generator-v4",
-    GENERATOR_VERSION,
+    "faultbridge-tts-generator-v5",
+    "faultbridge-tts-generator-v6",
 }
 
 
@@ -143,18 +144,40 @@ async def generate(
     api_key: str,
     provenance: dict[str, Any],
     commit_ack_timeout_seconds: float,
+    transport: str,
     attempt: int,
 ) -> dict[str, Any]:
     sample_id = f"{prompt['prompt_id']}-{gender}-r{repetition}"
-    tts = SaharaStreamingTTS(
-        api_key=api_key,
-        gender=gender,
-        commit_timeout_seconds=commit_ack_timeout_seconds,
-    )
+    if transport == "sync":
+        tts: SaharaStreamingTTS | SaharaSynchronousTTS = SaharaSynchronousTTS(
+            api_key=api_key,
+            gender=gender,
+        )
+        model_identifier = "sahara-synchronous-tts"
+        parameters = {
+            "endpoint": tts.endpoint,
+            "output_format": tts.output_format,
+            "rate_limit_requests_per_minute": 30,
+            "transport": "synchronous-generate",
+        }
+    else:
+        tts = SaharaStreamingTTS(
+            api_key=api_key,
+            gender=gender,
+            commit_timeout_seconds=commit_ack_timeout_seconds,
+        )
+        model_identifier = "sahara-streaming-tts"
+        parameters = {
+            "output_format": tts.output_format,
+            "websocket_compression": "disabled",
+            "stream_timeout_seconds": tts.timeout_seconds,
+            "commit_ack_timeout_seconds": tts.commit_timeout_seconds,
+            "transport": "streaming-websocket",
+        }
     base: dict[str, Any] = {
         "generator_version": GENERATOR_VERSION,
         "provider": "sahara-tts",
-        "model_identifier": "sahara-streaming-tts",
+        "model_identifier": model_identifier,
         "sample_id": sample_id,
         "prompt_id": prompt["prompt_id"],
         "source_sample_id": prompt["source_sample_id"],
@@ -165,12 +188,7 @@ async def generate(
         "gender": gender,
         "repetition": repetition,
         "attempt": attempt,
-        "parameters": {
-            "output_format": tts.output_format,
-            "websocket_compression": "disabled",
-            "stream_timeout_seconds": tts.timeout_seconds,
-            "commit_ack_timeout_seconds": tts.commit_timeout_seconds,
-        },
+        "parameters": parameters,
         "reference": prompt["text"],
         "reference_tagged": prompt["text_tagged"],
         "cmi": float(prompt["cmi"]),
@@ -201,6 +219,8 @@ async def generate(
             **base,
             "status": "failed",
             "credit_balance_start": tts.credit_balance,
+            "provider_request_id": getattr(tts, "request_id", None),
+            "rate_limit_headers": getattr(tts, "rate_limit_headers", {}),
             "error_type": type(error).__name__,
             "error_message": str(error),
             "first_audio_seconds": first_audio_seconds,
@@ -213,6 +233,8 @@ async def generate(
         **base,
         "status": "ok",
         "credit_balance_start": tts.credit_balance,
+        "provider_request_id": getattr(tts, "request_id", None),
+        "rate_limit_headers": getattr(tts, "rate_limit_headers", {}),
         "audio_path": str(destination),
         "audio_sha256": sha256_file(destination),
         "duration_seconds": measurement.duration_seconds,
@@ -325,10 +347,16 @@ async def run(args: argparse.Namespace) -> None:
             f"generation log contains {len(unexpected)} samples outside this panel"
         )
     for sample_id, record in existing.items():
+        expected_model = (
+            "sahara-synchronous-tts"
+            if args.transport == "sync"
+            else "sahara-streaming-tts"
+        )
         if (
             record.get("generator_version") not in RESUMABLE_GENERATOR_VERSIONS
             or record.get("prompt_manifest_sha256")
             != provenance["prompt_manifest_sha256"]
+            or record.get("model_identifier") != expected_model
         ):
             raise ValueError(
                 f"generation log configuration changed at {sample_id}; "
@@ -365,6 +393,7 @@ async def run(args: argparse.Namespace) -> None:
             api_key=api_key,
             provenance=provenance,
             commit_ack_timeout_seconds=args.commit_ack_timeout,
+            transport=args.transport,
             attempt=attempts.get(sample_id, 0) + 1,
         )
         append_record(args.log, record)
@@ -397,13 +426,16 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument(
         "--prompts", type=Path, default=Path("benchmark/tts_prompts.csv")
     )
-    command.add_argument("--audio-root", type=Path, default=Path("benchmark/tts_audio"))
+    command.add_argument(
+        "--audio-root", type=Path, default=Path("benchmark/tts_audio/sync")
+    )
     command.add_argument(
         "--output-manifest", type=Path, default=Path("benchmark/tts_generated.csv")
     )
     command.add_argument(
-        "--log", type=Path, default=Path("eval/results/tts/generation.jsonl")
+        "--log", type=Path, default=Path("eval/results/tts/sync_generation.jsonl")
     )
+    command.add_argument("--transport", choices=["sync", "streaming"], default="sync")
     command.add_argument(
         "--genders", nargs="+", choices=["female", "male"], default=["female", "male"]
     )
@@ -419,8 +451,8 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument(
         "--min-request-interval",
         type=float,
-        default=2.0,
-        help="minimum seconds between WebSocket session starts (default: 2)",
+        default=2.1,
+        help="minimum seconds between paid request starts (default: 2.1)",
     )
     command.add_argument(
         "--max-consecutive-failures",

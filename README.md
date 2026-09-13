@@ -79,10 +79,11 @@ unknown; the agent does not manufacture a fault, balance, or compensation status
 ## Sahara adapter
 
 `SaharaStreamingSTT` and `SaharaStreamingTTS` implement the official WebSocket
-contracts. `SaharaConversationCall` starts active outbound conversation workflows.
-Every streaming request sends an explicit language selection. The browser maps
-Pidgin to `pcm`, Hausa to `ha`, Igbo to `ig`, and Yoruba to `yo`; missing language
-metadata is rejected before a provider call.
+contracts. `SaharaSynchronousTTS` supplies the resumable benchmark transport, and
+`SaharaConversationCall` starts active outbound conversation workflows. Every
+speech request sends an explicit language selection. The browser maps Pidgin to
+`pcm`, Hausa to `ha`, Igbo to `ig`, and Yoruba to `yo`; missing language metadata
+is rejected before a provider call.
 
 See [Operations](docs/OPERATIONS.md) for provider selection, deployment, action
 delivery, privacy controls, and health checks. The

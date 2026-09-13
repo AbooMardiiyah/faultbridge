@@ -6,7 +6,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 import httpx
 import websockets
@@ -327,6 +327,173 @@ class SaharaStreamingTTS:
                 SaharaStreamingSTT._raise_for_error(committed)
                 if committed.get("message_type") != "COMMITTED_AUDIO":
                     raise SaharaError("Sahara TTS did not commit the audio session")
+
+
+@dataclass(slots=True)
+class SaharaSynchronousTTS:
+    """Client for Sahara's synchronous JSON TTS endpoint."""
+
+    api_key: str
+    endpoint: str = "https://infer.voice.intron.io/tts/v1/generate"
+    status_endpoint: str = "https://infer.voice.intron.io/tts/v1/status/{text_id}"
+    gender: str = "female"
+    output_format: str = "wav"
+    request_timeout_seconds: float = 130.0
+    total_timeout_seconds: float = 300.0
+    poll_interval_seconds: float = 1.0
+    credit_balance: float | int | str | None = field(default=None, init=False)
+    request_id: str | None = field(default=None, init=False)
+    rate_limit_headers: dict[str, str] = field(default_factory=dict, init=False)
+
+    async def synthesize(self, text: str, *, language: str, accent: str) -> Any:
+        normalized = re.sub(r"\s+", " ", text).strip()
+        language = language.strip()
+        accent = accent.strip()
+        self._validate(normalized, language, accent)
+        self.request_id = None
+        self.rate_limit_headers = {}
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        body = {
+            "text": normalized,
+            "voice_language": language,
+            "voice_accent": accent,
+            "voice_gender": self.gender,
+            "output_audio_format": self.output_format,
+        }
+        timeout = httpx.Timeout(self.request_timeout_seconds)
+        async with asyncio.timeout(self.total_timeout_seconds):
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.post(self.endpoint, headers=headers, json=body)
+                self._capture_rate_limits(response)
+                payload = self._response_payload(response)
+                data = self._response_data(payload)
+                self.request_id = self._text_id(data, payload)
+                if response.status_code == 503:
+                    if not self.request_id:
+                        raise SaharaError(
+                            "Sahara synchronous TTS timed out without a text ID"
+                        )
+                    data = await self._poll_status(client, headers)
+                elif response.is_error:
+                    raise SaharaError(
+                        "Sahara synchronous TTS failed with HTTP "
+                        f"{response.status_code}: {self._message(payload)}"
+                    )
+                elif data.get("processing_status") != "TTS_TEXT_AUDIO_GENERATED":
+                    if not self.request_id:
+                        raise SaharaError(
+                            "Sahara synchronous TTS returned neither audio nor a text ID"
+                        )
+                    data = await self._poll_status(client, headers)
+
+            audio_url = str(data.get("audio_path") or "").strip()
+            parsed = urlparse(audio_url)
+            if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+                raise SaharaError(
+                    "Sahara synchronous TTS returned an invalid audio URL"
+                )
+            # Use a separate client so the Sahara bearer token is never forwarded
+            # to a presigned object-storage URL.
+            async with httpx.AsyncClient(
+                timeout=self.request_timeout_seconds, follow_redirects=True
+            ) as download_client:
+                audio_response = await download_client.get(audio_url)
+            if audio_response.is_error:
+                raise SaharaError(
+                    "Sahara TTS audio download failed with HTTP "
+                    f"{audio_response.status_code}"
+                )
+            if not audio_response.content:
+                raise SaharaError("Sahara synchronous TTS returned empty audio")
+            yield audio_response.content
+
+    def _validate(self, text: str, language: str, accent: str) -> None:
+        if not self.api_key:
+            raise ValueError("Sahara API key is required")
+        if not text:
+            raise ValueError("Sahara TTS text is required")
+        if len(text) > 4096:
+            raise ValueError(
+                "Sahara synchronous TTS text cannot exceed 4096 characters"
+            )
+        if not language:
+            raise ValueError("Sahara TTS language is required")
+        if not accent:
+            raise ValueError("Sahara TTS accent is required")
+        if self.gender not in {"female", "male"}:
+            raise ValueError("Sahara TTS gender must be female or male")
+        if self.output_format not in {"wav", "opus"}:
+            raise ValueError("Sahara TTS output format must be wav or opus")
+        if self.poll_interval_seconds <= 0:
+            raise ValueError("Sahara TTS poll interval must be positive")
+
+    def _capture_rate_limits(self, response: httpx.Response) -> None:
+        for name in (
+            "retry-after",
+            "x-ratelimit-limit",
+            "x-ratelimit-remaining",
+            "x-ratelimit-reset",
+        ):
+            if name in response.headers:
+                self.rate_limit_headers[name] = response.headers[name]
+
+    @staticmethod
+    def _response_payload(response: httpx.Response) -> dict[str, Any]:
+        try:
+            payload = response.json()
+        except ValueError as error:
+            raise SaharaError(
+                "Sahara synchronous TTS returned a non-JSON response"
+            ) from error
+        if not isinstance(payload, dict):
+            raise SaharaError("Sahara synchronous TTS returned invalid JSON")
+        return payload
+
+    @staticmethod
+    def _response_data(payload: dict[str, Any]) -> dict[str, Any]:
+        data = payload.get("data")
+        return data if isinstance(data, dict) else {}
+
+    @staticmethod
+    def _text_id(data: dict[str, Any], payload: dict[str, Any]) -> str | None:
+        value = data.get("text_id") or payload.get("text_id")
+        return str(value) if value else None
+
+    @staticmethod
+    def _message(payload: dict[str, Any]) -> str:
+        value = payload.get("message") or payload.get("status") or "unknown error"
+        return str(value)
+
+    async def _poll_status(
+        self, client: httpx.AsyncClient, headers: dict[str, str]
+    ) -> dict[str, Any]:
+        assert self.request_id is not None
+        status_url = self.status_endpoint.format(text_id=self.request_id)
+        while True:
+            response = await client.get(status_url, headers=headers)
+            self._capture_rate_limits(response)
+            payload = self._response_payload(response)
+            if response.is_error:
+                raise SaharaError(
+                    "Sahara TTS status failed with HTTP "
+                    f"{response.status_code}: {self._message(payload)}"
+                )
+            data = self._response_data(payload)
+            status = data.get("processing_status")
+            if status == "TTS_TEXT_AUDIO_GENERATED":
+                return data
+            if status == "TTS_TEXT_AUDIO_PROCESSING_FAILED":
+                raise SaharaError("Sahara TTS processing failed")
+            if status not in {
+                "TTS_TEXT_AUDIO_QUEUED",
+                "TTS_TEXT_AUDIO_PENDING",
+                "TTS_TEXT_AUDIO_PROCESSING",
+            }:
+                raise SaharaError(f"unexpected Sahara TTS status {status!r}")
+            await asyncio.sleep(self.poll_interval_seconds)
 
 
 @dataclass(frozen=True, slots=True)

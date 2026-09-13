@@ -1,11 +1,11 @@
 {
   "evidence_version": "faultbridge-asr-evidence-v1",
   "created_date": "2026-09-13",
-  "distribution": "Raw model outputs are retained in an ignored local artifact and shared privately subject to AfriSwitch access conditions.",
+  "distribution": "Raw model outputs are retained privately and shared subject to AfriSwitch access conditions.",
   "artifact": {
     "local_path": "artifacts/asr-benchmark-evidence-20260913.tar.gz",
-    "sha256": "f4fc58e4129fbe5999351b180c29e4e25bb2c4b680a204aab44762c923ad5bc1",
-    "bytes": 305594
+    "sha256": "57100b24e76c574928c3eee254f0d560cabd55ff14ce4d7a6f285af9f39f1479",
+    "bytes": 381157
   },
   "files": [
     {
@@ -100,6 +100,11 @@
       "path": "eval/results/diagnostics/faster_whisper_no_vad_failures.json",
       "sha256": "9d7dc22fbf8bb168a26095357a57e54a0e07691fa1d4d23e0855910083fc5cae",
       "bytes": 3478
+    },
+    {
+      "path": "benchmark/manifest.csv",
+      "sha256": "3d139832dcead055489cb6c668747db56c06090983d3a95ad644d65ff012b3c2",
+      "bytes": 232032
     },
     {
       "path": "benchmark/results/asr_four_model_summary.json",

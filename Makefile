@@ -1,4 +1,4 @@
-.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-faster-whisper-cuda benchmark-install-sbpn benchmark-install-omni benchmark-install-omni-cuda benchmark-prepare benchmark-robustness benchmark-sahara-batch benchmark-sahara-retry benchmark-faster-whisper-cuda benchmark-omni-cuda benchmark-score benchmark-agent-score benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit
+.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-faster-whisper-cuda benchmark-install-sbpn benchmark-install-omni benchmark-install-omni-cuda benchmark-prepare benchmark-robustness benchmark-sahara-batch benchmark-sahara-retry benchmark-faster-whisper-cuda benchmark-omni-cuda benchmark-score benchmark-verify-asr-evidence benchmark-agent-score benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit
 
 TORCH_BACKEND ?= cpu
 ASR_BATCH_SIZE ?= 10
@@ -97,6 +97,12 @@ benchmark-omni-cuda:
 benchmark-score:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.scorer --manifest benchmark/manifest.csv eval/results/raw/*.jsonl
 
+benchmark-verify-asr-evidence:
+	UV_CACHE_DIR=.uv-cache uv run python3 scripts/verify_asr_evidence.py
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.scorer --manifest benchmark/manifest.csv --output /tmp/faultbridge-asr-reproduced.json eval/results/raw/sahara-file-sync.jsonl eval/results/raw/sbpn-base.jsonl eval/results/raw/faster-whisper.jsonl eval/results/raw/meta-omniasr-ctc.jsonl
+	cmp benchmark/results/asr_four_model_summary.json /tmp/faultbridge-asr-reproduced.json
+
+
 benchmark-agent-score:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.agent_scorer eval/results/agent_runs.jsonl
 
@@ -110,25 +116,25 @@ benchmark-tts-prepare:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.tts_manifest
 
 benchmark-tts-generate:
-	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.tts_runner
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.tts_runner --transport sync
 
 benchmark-tts-batch:
-	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.tts_runner --genders $(TTS_GENDERS) --limit $(TTS_BATCH_SIZE)
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.tts_runner --transport sync --genders $(TTS_GENDERS) --limit $(TTS_BATCH_SIZE)
 
 benchmark-tts-retry:
-	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.tts_runner --genders $(TTS_GENDERS) --retry-failures --limit $(TTS_BATCH_SIZE)
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.tts_runner --transport sync --genders $(TTS_GENDERS) --retry-failures --limit $(TTS_BATCH_SIZE)
 
 benchmark-tts-asr-faster-whisper:
-	PYTHONPATH=src:eval .venv-benchmark/bin/python -m faultbridge_eval.runner --manifest benchmark/tts_generated.csv --output eval/results/tts/asr --provider faster-whisper
+	CUDA_SITE_PACKAGES="$$(.venv-benchmark/bin/python -c 'import site; print(site.getsitepackages()[0])')"; LD_LIBRARY_PATH="$${CUDA_SITE_PACKAGES}/nvidia/cublas/lib:$${CUDA_SITE_PACKAGES}/nvidia/cudnn/lib" HF_HUB_OFFLINE=1 PYTHONPATH=src:eval .venv-benchmark/bin/python -m faultbridge_eval.runner --manifest benchmark/tts_generated.csv --output eval/results/tts/asr --provider faster-whisper --whisper-device cuda --whisper-compute-type int8_float16
 
 benchmark-tts-asr-sbpn:
 	PYTHONPATH=src:eval .venv-sbpn/bin/python -m faultbridge_eval.runner --manifest benchmark/tts_generated.csv --output eval/results/tts/asr --provider sbpn
 
 benchmark-tts-asr-omni:
-	PYTHONPATH=src:eval .venv-omni/bin/python -m faultbridge_eval.runner --manifest benchmark/tts_generated.csv --output eval/results/tts/asr --provider omniasr
+	HF_HUB_OFFLINE=1 PYTHONPATH=src:eval .venv-omni/bin/python -m faultbridge_eval.runner --manifest benchmark/tts_generated.csv --output eval/results/tts/asr --provider omniasr --omni-device cuda
 
 benchmark-tts-score:
-	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.tts_scorer --generation eval/results/tts/generation.jsonl --asr-results eval/results/tts/asr/*.jsonl
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.tts_scorer --generation eval/results/tts/sync_generation.jsonl --asr-results eval/results/tts/asr/*.jsonl
 
 benchmark-tts-audit:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.tts_audit

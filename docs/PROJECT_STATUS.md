@@ -1,6 +1,6 @@
 # Project Status
 
-Updated 12 September 2026. This file records durable working context for future
+Updated 13 September 2026. This file records durable working context for future
 sessions; the Git history remains the authoritative implementation record.
 
 ## Completed
@@ -21,6 +21,10 @@ sessions; the Git history remains the authoritative implementation record.
   a 1,600-row deterministic telephone/noise/loss robustness manifest.
 - Frozen 100-prompt code-switched TTS panel and an executable Sahara generation,
   independent-ASR fidelity, latency, waveform, and consensus scoring pipeline.
+- Complete four-model ASR comparison on all 400 frozen clips. The committed report
+  and machine-readable aggregate cover Sahara, SBPN, Faster-Whisper Turbo, and
+  Meta OmniASR with 24 paired comparisons and 96 diagnostic slices. A private raw
+  evidence bundle reproduces the committed aggregate byte-for-byte.
 - Live Sahara pilots passed for female Hausa, Igbo, Pidgin, and Yoruba voices and
   one male Hausa voice. All five outputs were valid, hash-verified WAV files with
   no clipping; the four female prompts averaged 9.18 seconds to first audio. These
@@ -71,41 +75,32 @@ documented STT and TTS language codes explicitly. New mission prizes recognize t
 benchmark datasets and one benchmark report, alongside the Fintech, Telco & Call
 Center category prize, so benchmark rigor remains the highest-priority workstream.
 
-The live TTS server returned complete `READY` audio but omitted the documented
-`COMMITTED_AUDIO` summary. The adapter now sends `COMMIT`, waits 10 seconds for the
-summary, and preserves the already validated WAV when only the summary times out.
-The original failed pilot and five successful contract pilots remain in the
-ignored `eval/results/tts/pilots/` audit directory.
+The exploratory WebSocket log retains 46 attempts across 45 prompt/voice cells:
+9 valid WAVs and 36 final failures. Thirty-five failures were reserved-bit protocol
+closures and one was a provider chunk-size rejection. These are retained as
+transport diagnostics and are not mixed into the official TTS panel.
 
-TTS generator v5 separates time to first audio, time to last audio, and session
-close time. Its real-time factor ends at the last audio chunk, so the optional
-commit-acknowledgement timeout cannot inflate synthesis latency.
+TTS generator v6 uses the documented synchronous generate endpoint in a separate
+append-only log. It submits each prompt once, polls the returned text ID after a
+documented HTTP 503 timeout, records rate-limit headers, and downloads audio
+without forwarding the bearer token to object storage. Requests are sequential
+and spaced 2.1 seconds apart for the documented 30-request-per-minute limit.
 
-The original stopped Sahara run left 38 auditable female-voice outcomes: 4
-successes, 32 WebSocket protocol closures, and 2 provider chunk-size failures. No
-result was deleted. After the account top-up and runner audit, one targeted retry
-of a former chunk-size failure succeeded, leaving 5 successful and 33 failed
-latest outcomes. Credit-safe Make targets cap each invocation, resume unattempted
-samples, distribute retries fairly, and stop automatically after three consecutive
-provider failures.
-The preflight audit found that the old splitter could create seven text chunks over
-Sahara's 100-character maximum; a complete-partition splitter now keeps all 100
-frozen prompts within 10–100 characters. WebSocket compression is disabled to
-avoid the intermittent reserved-bit protocol closures observed in the stopped
-run. Streaming documentation publishes session and chunk limits but no connection
-rate, so paid runners remain sequential with a conservative two-second minimum
-between session starts and record the balance returned at session creation.
+The official synchronous TTS panel is complete: 200/200 female/male outputs
+succeeded without retries. All WAV hashes verify; the files are 22.05 kHz mono
+PCM16, total 1,672.29 audio seconds and 71 MB, with no clipped samples. At the
+posted NGN 0.65 per generated second, measured generation cost is approximately
+NGN 1,086.99. Faster-Whisper judging has 2/200 successful rows and resumes from
+there; SBPN and OmniASR judging have not started.
 
 ## Active sequence
 
-1. Run one-clip ASR performance pilots, then complete the frozen provider panel
-   with resumable raw results.
-2. Generate and independently transcribe the female/male Sahara TTS panel; conduct
-   the predeclared bilingual-listener audit.
-3. Test the caller and operations interfaces against live providers.
-4. Score ASR, TTS, and agent results, generate the report, and derive
+1. Finish the three independent ASR transcriptions of the generated TTS panel,
+   score them, and conduct the predeclared bilingual-listener audit.
+2. Test the caller and operations interfaces against live providers.
+3. Score TTS and agent results, generate the report, and derive
    evidence-based routing recommendations.
-5. Complete the telco scenarios, privacy set, five-minute demo, and submission
+4. Complete the telco scenarios, privacy set, five-minute demo, and submission
    package.
 
 Hardware use and foreground validation are now authorized. Keep delivery workers

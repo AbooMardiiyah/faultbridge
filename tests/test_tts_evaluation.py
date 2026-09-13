@@ -6,12 +6,13 @@ import tempfile
 import unittest
 import wave
 from pathlib import Path
+from unittest.mock import patch
 
 from faultbridge_eval.manifest import BenchmarkSample
 from faultbridge_eval.metrics import segment_loss_counts
 from faultbridge_eval.tts_audit import target_phrase
 from faultbridge_eval.tts_manifest import TTS_SETTINGS, select_prompts
-from faultbridge_eval.tts_runner import attempt_counts, merge_wav_chunks
+from faultbridge_eval.tts_runner import attempt_counts, generate, merge_wav_chunks
 from faultbridge_eval.tts_scorer import (
     score_transcript,
     summarize_generation,
@@ -144,6 +145,58 @@ class TTSPromptSelectionTests(unittest.TestCase):
         self.assertEqual(
             {sample.language_pair for sample in selected}, set(TTS_SETTINGS)
         )
+
+
+class TTSGenerationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_sync_generation_records_paid_request_provenance(self) -> None:
+        class FakeSyncTTS:
+            endpoint = "https://infer.voice.intron.io/tts/v1/generate"
+            output_format = "wav"
+
+            def __init__(self, **_kwargs) -> None:
+                self.credit_balance = None
+                self.request_id = "text-123"
+                self.rate_limit_headers = {"x-ratelimit-remaining": "28"}
+
+            async def synthesize(self, _text, *, language, accent):
+                self.language = language
+                self.accent = accent
+                yield wav_bytes(1000)
+
+        prompt = {
+            "prompt_id": "tts-one",
+            "source_sample_id": "source-one",
+            "source_audio_sha256": "a" * 64,
+            "language_pair": "Pidgin-English",
+            "language": "pcm",
+            "accent": "pidgin",
+            "text": "Network no dey work today.",
+            "text_tagged": "[[EN]]Network[[/EN]] no dey work today.",
+            "cmi": "20",
+            "switch_points": "1",
+            "source_group": "speaker-one",
+        }
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch("faultbridge_eval.tts_runner.SaharaSynchronousTTS", FakeSyncTTS),
+        ):
+            result = await generate(
+                prompt,
+                gender="female",
+                repetition=1,
+                audio_root=Path(directory),
+                api_key="test-key",
+                provenance={"code_commit": "abc"},
+                commit_ack_timeout_seconds=2.0,
+                transport="sync",
+                attempt=1,
+            )
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["model_identifier"], "sahara-synchronous-tts")
+        self.assertEqual(result["provider_request_id"], "text-123")
+        self.assertEqual(result["rate_limit_headers"]["x-ratelimit-remaining"], "28")
+        self.assertEqual(result["parameters"]["transport"], "synchronous-generate")
 
 
 if __name__ == "__main__":

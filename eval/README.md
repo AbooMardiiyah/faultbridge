@@ -140,11 +140,12 @@ the panel with `make benchmark-tts-retry TTS_BATCH_SIZE=10 TTS_GENDERS=female`.
 Successful audio is never regenerated. Generation also pauses automatically after
 three consecutive provider failures, which limits spend during an outage or credit
 failure. Use `make benchmark-tts-generate` only for an intentionally unbounded full
-run. Sessions start no faster than once every two seconds; Intron does not publish
-a separate per-minute limit for the streaming WebSocket endpoint. The runner also
-records the balance reported in each `SESSION_CREATED` response. For a targeted
-contract check, pass `--prompt-id ID --genders female --retry-failures --limit 1`
-directly to `faultbridge_eval.tts_runner`.
+run. Paid synchronous requests start no faster than once every 2.1 seconds, below
+Intron's documented 30-request-per-minute limit. HTTP 503 responses are polled by
+their existing text ID, preventing a duplicate paid submission. The runner records
+text IDs and returned rate-limit headers. For a targeted contract check, pass
+`--prompt-id ID --genders female --retry-failures --limit 1` directly to
+`faultbridge_eval.tts_runner`.
 
 Transcribe `benchmark/tts_generated.csv` with three independent model families,
 then calculate the organizer-requested metrics:
@@ -156,6 +157,11 @@ make benchmark-tts-asr-omni
 make benchmark-tts-score
 make benchmark-tts-audit
 ```
+
+The Make targets use the same reportable configurations as the ASR benchmark:
+Faster-Whisper Turbo on CUDA `int8_float16`, SBPN on CPU, and OmniASR CTC on CUDA.
+Each judge receives the same 200 generated WAVs and its result metadata records
+the full runtime configuration.
 
 The scorer reports judge-specific WER/CER, insertion-based hallucination,
 deletion-based transcript loss, complete tagged-language segment loss, exact

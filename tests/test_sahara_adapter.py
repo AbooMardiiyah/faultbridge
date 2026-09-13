@@ -5,10 +5,13 @@ import unittest
 from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
+import httpx
+
 from faultbridge.adapters.sahara import (
     SaharaError,
     SaharaStreamingSTT,
     SaharaStreamingTTS,
+    SaharaSynchronousTTS,
     language_code,
     pcm16_chunks,
     text_chunks,
@@ -48,6 +51,33 @@ class MissingCommitSocket(FakeSocket):
             return await super().recv()
         await asyncio.Future()
         raise AssertionError("unreachable")
+
+
+class FakeHTTPClient:
+    def __init__(
+        self,
+        *,
+        post_responses: list[httpx.Response] | None = None,
+        get_responses: list[httpx.Response] | None = None,
+    ) -> None:
+        self.post_responses = list(post_responses or [])
+        self.get_responses = list(get_responses or [])
+        self.posts: list[tuple[str, dict]] = []
+        self.gets: list[tuple[str, dict]] = []
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *_):
+        return None
+
+    async def post(self, url: str, **kwargs) -> httpx.Response:
+        self.posts.append((url, kwargs))
+        return self.post_responses.pop(0)
+
+    async def get(self, url: str, **kwargs) -> httpx.Response:
+        self.gets.append((url, kwargs))
+        return self.get_responses.pop(0)
 
 
 class SaharaAdapterTests(unittest.TestCase):
@@ -165,6 +195,96 @@ class SaharaLanguageContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(connect.call_args.kwargs["compression"])
         self.assertEqual(chunks, [audio])
         self.assertEqual(tts.credit_balance, 9.75)
+
+    async def test_sync_tts_sends_explicit_voice_and_downloads_without_token(
+        self,
+    ) -> None:
+        api = FakeHTTPClient(
+            post_responses=[
+                httpx.Response(
+                    200,
+                    headers={"x-ratelimit-remaining": "29"},
+                    json={
+                        "status": "Ok",
+                        "data": {
+                            "text_id": "text-1",
+                            "processing_status": "TTS_TEXT_AUDIO_GENERATED",
+                            "audio_path": "https://audio.example/output.wav",
+                        },
+                    },
+                )
+            ]
+        )
+        download = FakeHTTPClient(
+            get_responses=[httpx.Response(200, content=b"valid-wav-bytes")]
+        )
+        with patch(
+            "faultbridge.adapters.sahara.httpx.AsyncClient",
+            side_effect=[api, download],
+        ):
+            tts = SaharaSynchronousTTS(api_key="test-key", gender="male")
+            chunks = [
+                chunk
+                async for chunk in tts.synthesize(
+                    "Network no dey work today.",
+                    language="pcm",
+                    accent="pidgin",
+                )
+            ]
+
+        request = api.posts[0][1]
+        self.assertEqual(request["json"]["voice_language"], "pcm")
+        self.assertEqual(request["json"]["voice_accent"], "pidgin")
+        self.assertEqual(request["json"]["voice_gender"], "male")
+        self.assertEqual(request["headers"]["Authorization"], "Bearer test-key")
+        self.assertEqual(download.gets, [("https://audio.example/output.wav", {})])
+        self.assertEqual(chunks, [b"valid-wav-bytes"])
+        self.assertEqual(tts.request_id, "text-1")
+        self.assertEqual(tts.rate_limit_headers["x-ratelimit-remaining"], "29")
+
+    async def test_sync_tts_polls_same_job_after_documented_timeout(self) -> None:
+        api = FakeHTTPClient(
+            post_responses=[
+                httpx.Response(
+                    503,
+                    json={"data": {"text_id": "text-2"}, "status": "Error"},
+                )
+            ],
+            get_responses=[
+                httpx.Response(
+                    200,
+                    json={
+                        "status": "Ok",
+                        "data": {
+                            "processing_status": "TTS_TEXT_AUDIO_GENERATED",
+                            "audio_path": "https://audio.example/recovered.wav",
+                        },
+                    },
+                )
+            ],
+        )
+        download = FakeHTTPClient(
+            get_responses=[httpx.Response(200, content=b"recovered-wav")]
+        )
+        with patch(
+            "faultbridge.adapters.sahara.httpx.AsyncClient",
+            side_effect=[api, download],
+        ):
+            tts = SaharaSynchronousTTS(api_key="test-key", poll_interval_seconds=0.01)
+            chunks = [
+                chunk
+                async for chunk in tts.synthesize(
+                    "Network no dey work today.",
+                    language="pcm",
+                    accent="pidgin",
+                )
+            ]
+
+        self.assertEqual(
+            api.gets[0][0],
+            "https://infer.voice.intron.io/tts/v1/status/text-2",
+        )
+        self.assertEqual(chunks, [b"recovered-wav"])
 
     async def test_tts_rejects_an_empty_language(self) -> None:
         generator = SaharaStreamingTTS(api_key="test-key").synthesize(
