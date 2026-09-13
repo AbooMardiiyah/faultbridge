@@ -48,6 +48,15 @@ make benchmark-install-sbpn
 make benchmark-install-omni
 ```
 
+Install Faster-Whisper's CUDA runtime with
+`make benchmark-install-faster-whisper-cuda`. The target adds only cuBLAS and
+cuDNN to its isolated environment.
+
+On a CUDA 12.8-compatible NVIDIA system, install OmniASR's isolated GPU runtime
+instead with `make benchmark-install-omni-cuda`. This replaces only the
+`.venv-omni` CPU Torch and fairseq2 binaries; it does not enlarge the application
+container.
+
 The local weights download only when each provider first starts. Use
 `TORCH_BACKEND=cu128` on the two PyTorch install targets only after CUDA is visible;
 CPU is the safe default. Results resume by successful sample ID. The runner refuses
@@ -80,6 +89,13 @@ PYTHONPATH=src:eval .venv-omni/bin/python -m faultbridge_eval.runner \
   --manifest benchmark/manifest.csv --provider omniasr
 ```
 
+For the reproducible GPU configurations used in the four-model report, run
+`make benchmark-faster-whisper-cuda` and `make benchmark-omni-cuda`. These use
+Faster-Whisper `int8_float16` and OmniASR CUDA inference respectively. Both set
+`HF_HUB_OFFLINE=1`, so first cache the model checkpoints with an online pilot.
+Result metadata records model, device, compute type, and runtime versions, and the
+runner rejects configuration changes in an existing append-only result file.
+
 AssemblyAI and the optional Sahara WebSocket provider receive audio at real-time
 pace unless `--no-realtime-pacing` is supplied. AssemblyAI uses `whisper-rt`
 because Universal-3 Pro Streaming does not currently cover the four Nigerian
@@ -99,6 +115,12 @@ also produces paired model-difference intervals and equal-language macro results
 Failed transcriptions remain in the denominator as empty hypotheses. Incomplete
 provider panels are rejected unless `--allow-incomplete` is explicitly used for
 development.
+
+The final four-model aggregate is committed under `benchmark/results/`; raw
+JSONL transcripts remain ignored. The Faster-Whisper empty-output audit also
+reran its 16 blank cases without VAD. Forced decoding returned text for all 16 but
+had 100% median WER and obvious repetitions or unrelated boilerplate, so the
+official comparison retains the default VAD-on results.
 
 ## Code-switched TTS evaluation
 

@@ -1,4 +1,4 @@
-.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-sbpn benchmark-install-omni benchmark-prepare benchmark-robustness benchmark-sahara-batch benchmark-sahara-retry benchmark-score benchmark-agent-score benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit
+.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-faster-whisper-cuda benchmark-install-sbpn benchmark-install-omni benchmark-install-omni-cuda benchmark-prepare benchmark-robustness benchmark-sahara-batch benchmark-sahara-retry benchmark-faster-whisper-cuda benchmark-omni-cuda benchmark-score benchmark-agent-score benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit
 
 TORCH_BACKEND ?= cpu
 ASR_BATCH_SIZE ?= 10
@@ -55,6 +55,9 @@ docker-workers:
 benchmark-install: .venv-benchmark/bin/python
 	UV_CACHE_DIR=.uv-cache uv pip install --python .venv-benchmark/bin/python -r eval/requirements-benchmark.txt
 
+benchmark-install-faster-whisper-cuda: .venv-benchmark/bin/python
+	UV_CACHE_DIR=.uv-cache UV_HTTP_TIMEOUT=300 uv pip install --python .venv-benchmark/bin/python -r eval/requirements-faster-whisper-cuda.txt
+
 .venv-benchmark/bin/python:
 	UV_CACHE_DIR=.uv-cache uv venv .venv-benchmark
 
@@ -66,6 +69,9 @@ benchmark-install-sbpn: .venv-sbpn/bin/python
 
 benchmark-install-omni: .venv-omni/bin/python
 	UV_CACHE_DIR=.uv-cache uv pip install --python .venv-omni/bin/python --torch-backend $(TORCH_BACKEND) --extra-index-url https://fair.pkg.atmeta.com/fairseq2/whl/pt2.8.0/$(TORCH_BACKEND) --index-strategy unsafe-best-match -r eval/requirements-omni.txt
+
+benchmark-install-omni-cuda: .venv-omni/bin/python
+	UV_CACHE_DIR=.uv-cache UV_HTTP_TIMEOUT=300 uv pip install --python .venv-omni/bin/python --torch-backend cu128 --extra-index-url https://fair.pkg.atmeta.com/fairseq2/whl/pt2.8.0/cu128 --index-strategy unsafe-best-match -r eval/requirements-omni-cuda.txt
 
 .venv-omni/bin/python:
 	UV_CACHE_DIR=.uv-cache uv venv --python 3.11 .venv-omni
@@ -81,6 +87,12 @@ benchmark-sahara-batch:
 
 benchmark-sahara-retry:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.runner --manifest benchmark/manifest.csv --output eval/results/raw --provider sahara-file --retry-failures --limit $(ASR_BATCH_SIZE)
+
+benchmark-faster-whisper-cuda:
+	CUDA_SITE_PACKAGES="$$(.venv-benchmark/bin/python -c 'import site; print(site.getsitepackages()[0])')"; LD_LIBRARY_PATH="$${CUDA_SITE_PACKAGES}/nvidia/cublas/lib:$${CUDA_SITE_PACKAGES}/nvidia/cudnn/lib" HF_HUB_OFFLINE=1 PYTHONPATH=src:eval .venv-benchmark/bin/python -m faultbridge_eval.runner --manifest benchmark/manifest.csv --output eval/results/raw --provider faster-whisper --whisper-device cuda --whisper-compute-type int8_float16
+
+benchmark-omni-cuda:
+	HF_HUB_OFFLINE=1 PYTHONPATH=src:eval .venv-omni/bin/python -m faultbridge_eval.runner --manifest benchmark/manifest.csv --output eval/results/raw --provider omniasr --omni-device cuda
 
 benchmark-score:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.scorer --manifest benchmark/manifest.csv eval/results/raw/*.jsonl
