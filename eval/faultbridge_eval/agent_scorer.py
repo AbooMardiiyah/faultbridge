@@ -8,6 +8,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+from faultbridge_eval.metrics import percentile
+
 
 def read_runs(path: Path) -> list[dict[str, Any]]:
     runs = [
@@ -33,6 +35,11 @@ def summarize_variant(
     assertion_total = 0
     critical_evaluated = 0
     critical_failures = 0
+    model_latencies = [
+        float(run["agent_model_seconds"])
+        for run in runs
+        if run.get("agent_model_seconds") is not None
+    ]
     for scenario_runs in by_scenario.values():
         ordered = sorted(scenario_runs, key=lambda row: int(row["repetition"]))
         passed = [bool(row["grade"]["passed"]) for row in ordered]
@@ -59,6 +66,12 @@ def summarize_variant(
         "critical_runs": critical_evaluated,
         "critical_failure_rate": (
             critical_failures / critical_evaluated if critical_evaluated else None
+        ),
+        "agent_model_latency_p50_seconds": (
+            percentile(model_latencies, 0.5) if model_latencies else None
+        ),
+        "agent_model_latency_p95_seconds": (
+            percentile(model_latencies, 0.95) if model_latencies else None
         ),
     }
     if language_pair is not None:

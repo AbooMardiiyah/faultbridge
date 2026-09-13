@@ -244,6 +244,8 @@ Agent and privacy metrics have different denominators:
 - **pass@1:** success on the first run.
 - **pass@3:** at least one success in three runs.
 - **pass³:** all three runs succeed; this is the stricter reliability measure.
+- **Agent-model latency:** time spent waiting for structured complaint analysis,
+  reported at p50 and p95 separately from speech and database time.
 - **ASR propagation loss:** gold-transcript task success minus ASR-transcript task
   success.
 - **Voice capability retention:** ASR-transcript success divided by gold-transcript

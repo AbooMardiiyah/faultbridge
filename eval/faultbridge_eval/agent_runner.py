@@ -5,6 +5,7 @@ import asyncio
 import hashlib
 import json
 import os
+import time
 from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
@@ -200,6 +201,7 @@ async def run_variant(
     seed_state(database, scenario.get("seed", {}), pseudonym_secret=pseudonym_secret)
     inputs = scenario["input"]
     safe_transcript = redact_text(transcript)
+    model_started = time.perf_counter()
     if inputs["consent"]:
         analysis = await model.analyze_complaint(
             safe_transcript,
@@ -211,6 +213,7 @@ async def run_variant(
             language_pair=inputs["language_pair"],
             consent=False,
         )
+    agent_model_seconds = time.perf_counter() - model_started
     orchestrator = FaultBridgeOrchestrator(TelcoTools(database), pseudonym_secret)
     session = orchestrator.start_call(
         caller_id=inputs["caller_id"],
@@ -248,6 +251,7 @@ async def run_variant(
         "language_pair": inputs["language_pair"],
         "variant": variant,
         "repetition": repetition,
+        "agent_model_seconds": agent_model_seconds,
         "input_sha256": hashlib.sha256(transcript.encode()).hexdigest(),
         "analysis": asdict(analysis),
         "observed": observed,

@@ -104,6 +104,7 @@ class EvaluationScorerTests(unittest.TestCase):
                             "language_pair": "Pidgin-English",
                             "variant": variant,
                             "repetition": repetition,
+                            "agent_model_seconds": float(repetition),
                             "grade": {
                                 "passed": passed,
                                 "assertions_passed": int(passed),
@@ -126,6 +127,8 @@ class EvaluationScorerTests(unittest.TestCase):
         self.assertEqual(asr["pass_power_k"], 0.0)
         self.assertEqual(asr["asr_propagation_loss_pass_at_1"], 0.0)
         self.assertEqual(asr["voice_capability_retention"], 1.0)
+        self.assertEqual(asr["agent_model_latency_p50_seconds"], 2.0)
+        self.assertEqual(asr["agent_model_latency_p95_seconds"], 2.9)
         self.assertEqual(len(report["by_language"]), 2)
 
 
