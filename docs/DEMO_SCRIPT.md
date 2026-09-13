@@ -5,6 +5,15 @@ and use only synthetic caller details. Open the caller page at `/` and the
 operations workspace at `/operations` in separate tabs before recording. Enter
 the internal access key off camera.
 
+## Local Narrated Cut
+
+`artifacts/demo-video/FaultBridge-demo-narrated.mp4` is the 4 minute 58 second
+local cut. It uses the Nigerian English `en-NG-AbeoNeural` voice, H.264 video,
+and AAC audio. The displayed Pidgin scenario executes the real orchestrator,
+tools, and PostgreSQL state using labelled synthetic input. Replace that scene
+with a successful live microphone capture before submission if Sahara is
+available, while retaining the same narration and timing.
+
 ## Recording Checklist
 
 - Confirm the API and PostgreSQL health with `make docker-status`.
