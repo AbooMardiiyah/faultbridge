@@ -47,8 +47,8 @@ that the agent used verified state, then use clear result visuals.
 
 - `docs/DEMO_SCRIPT.md`: exact spoken phrases, seed state, clicks, and fallback
   recording plan.
-- `docs/BENCHMARK_REPORT.pdf`: final report, checked to remain at three pages.
-- `benchmark/results/agent_audio_summary.json`: named-ASR downstream results.
+- `docs/BENCHMARK_REPORT.pdf`: complete and visually checked at three A4 pages.
+- `benchmark/results/agent_audio_summary.json`: complete with 360 raw runs.
 - `docs/RESPONSIBLE_AI.md`: final review against demonstrated behavior.
 - README: final Railway, YouTube, report, and Hugging Face links.
 - GitHub release or immutable commit tag used by every submitted link.

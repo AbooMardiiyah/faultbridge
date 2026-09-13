@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FaultBridge Benchmark Report</title>
+  <style>
+    :root { --ink:#17202a; --muted:#5f6b73; --line:#d4d8dc; --accent:#17324d; --pale:#f3f5f7; }
+    * { box-sizing:border-box; }
+    @page { size:A4; margin:0; }
+    body { margin:0; color:var(--ink); background:#dfe9e6; font:9.2pt/1.35 Arial, sans-serif; }
+    .page { width:210mm; height:297mm; margin:0 auto; padding:12mm 14mm 11mm; background:white; page-break-after:always; overflow:hidden; position:relative; }
+    .page:last-child { page-break-after:auto; }
+    h1,h2,h3,p { margin-top:0; }
+    h1 { margin-bottom:2mm; font-size:25pt; line-height:1; letter-spacing:-.6pt; }
+    h2 { margin:0 0 2.5mm; padding-bottom:1.2mm; border-bottom:1.5px solid var(--accent); font-size:13pt; }
+    h3 { margin:0 0 1mm; font-size:9.5pt; text-transform:uppercase; letter-spacing:.45pt; color:var(--accent); }
+    p { margin-bottom:2.4mm; }
+    strong { color:var(--accent); }
+    .eyebrow { color:var(--accent); font-size:8pt; font-weight:bold; letter-spacing:1.4pt; text-transform:uppercase; }
+    .lede { max-width:163mm; color:#36565a; font-size:11pt; line-height:1.42; }
+    .rule { width:24mm; height:1.6mm; margin:4mm 0; background:var(--accent); }
+    .hero { padding:6mm; margin:4mm 0 5mm; border:1px solid var(--line); background:var(--pale); display:grid; grid-template-columns:1.5fr 1fr; gap:6mm; }
+    .hero .number { font-size:26pt; font-weight:800; line-height:1; color:var(--accent); }
+    .hero small { color:var(--muted); }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:5mm; }
+    .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:3mm; }
+    .card { padding:3mm; border:1px solid var(--line); border-radius:3mm; background:#fff; }
+    .metric { padding:3mm; border-radius:2.5mm; background:var(--pale); }
+    .metric b { display:block; font-size:16pt; color:var(--accent); }
+    table { width:100%; border-collapse:collapse; margin:2mm 0 3mm; font-size:8.1pt; }
+    th { padding:1.5mm 1.2mm; color:white; background:#174e50; text-align:left; }
+    td { padding:1.35mm 1.2mm; border-bottom:1px solid var(--line); }
+    tr:nth-child(even) td { background:#f5faf8; }
+    .right { text-align:right; }
+    .callout { padding:3mm 3.5mm; border-left:3px solid var(--accent); background:var(--pale); }
+    .tight p { margin-bottom:1.6mm; }
+    ul { margin:1.2mm 0 2mm; padding-left:5mm; }
+    li { margin-bottom:1.1mm; }
+    .footer { position:absolute; left:14mm; right:14mm; bottom:6mm; display:flex; justify-content:space-between; color:#718487; font-size:7.2pt; }
+    .tag { display:inline-block; padding:1mm 2mm; margin:0 1mm 1mm 0; border:1px solid #b9c1c8; color:var(--accent); font-size:7.5pt; font-weight:bold; }
+    .small { color:var(--muted); font-size:7.7pt; }
+    .sources { font-size:7.1pt; line-height:1.3; }
+    a { color:var(--accent); text-decoration:none; }
+  </style>
+</head>
+<body>
+  <section class="page">
+    <div class="eyebrow">Prepared by Hamzat · Sahara CodeSwitch Africa Challenge · 13 September 2026</div>
+    <div class="rule"></div>
+    <h1>FaultBridge</h1>
+    <p class="lede">A code-switched Nigerian telco support agent that grounds answers in verified operational data, resolves eligible faults, and turns repeated unresolved complaints into unconfirmed incidents for NOC review.</p>
+
+    <div class="hero">
+      <div>
+        <h3>Evaluation question</h3>
+        <p>Can a voice agent understand Hausa-English, Igbo-English, Nigerian Pidgin-English, and Yoruba-English while choosing the correct tools, protecting caller data, and avoiding invented network facts?</p>
+        <span class="tag">400 natural clips</span><span class="tag">4 ASR systems</span><span class="tag">68.63 minutes</span><span class="tag">351 source groups</span>
+      </div>
+      <div><div class="number">55.0%</div><small>Sahara equal-language WER, the strongest aggregate on the frozen natural-speech panel.</small></div>
+    </div>
+
+    <h2>Natural code-switched ASR</h2>
+    <p>We selected 100 hash-frozen AfriSwitch clips per language, balanced across code-mixing, switch count, duration, and source groups. Every model received identical 16 kHz PCM16 audio. Failed and empty outputs stayed in the denominator. Confidence intervals use 2,000 deterministic source-clustered bootstrap samples.</p>
+    <table>
+      <thead><tr><th>Language pair</th><th class="right">Sahara</th><th class="right">SBPN</th><th class="right">OmniASR</th><th class="right">Faster-Whisper</th></tr></thead>
+      <tbody>
+        <tr><td>Hausa-English</td><td class="right"><strong>38.9%</strong></td><td class="right">45.1%</td><td class="right">68.0%</td><td class="right">98.3%</td></tr>
+        <tr><td>Igbo-English</td><td class="right"><strong>62.1%</strong></td><td class="right">65.7%</td><td class="right">79.9%</td><td class="right">85.0%</td></tr>
+        <tr><td>Pidgin-English</td><td class="right"><strong>35.6%</strong></td><td class="right">39.3%</td><td class="right">55.7%</td><td class="right">51.5%</td></tr>
+        <tr><td>Yoruba-English</td><td class="right">83.6%</td><td class="right">82.1%</td><td class="right"><strong>81.4%</strong></td><td class="right">91.2%</td></tr>
+        <tr><td><b>Equal-language WER</b></td><td class="right"><strong>55.0%</strong></td><td class="right">58.1%</td><td class="right">71.2%</td><td class="right">81.5%</td></tr>
+      </tbody>
+    </table>
+    <div class="grid2">
+      <div class="callout"><b>Paired finding.</b> Sahara's WER advantage over SBPN is statistically supported for Hausa, Igbo, and Pidgin. The Yoruba interval crosses zero, so its apparent model ordering is inconclusive.</div>
+      <div class="callout"><b>Honest failure accounting.</b> Empty-output rates were Sahara 10.5%, SBPN 8.8%, OmniASR 4.5%, and Faster-Whisper 4.0%. Eight difficult clips were empty for every model.</div>
+    </div>
+    <div class="footer"><span>FaultBridge · Benchmark Report</span><span>1 / 3</span></div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">Speech quality must survive the agent</div>
+    <h2>TTS fidelity, task completion, and privacy</h2>
+    <div class="grid3">
+      <div class="metric"><b>200/200</b>Sahara TTS outputs generated successfully</div>
+      <div class="metric"><b>648</b>real model + PostgreSQL agent executions</div>
+      <div class="metric"><b>0%</b>critical safety failure rate</div>
+    </div>
+
+    <h3 style="margin-top:4mm">Sahara code-switched TTS</h3>
+    <p>One hundred genuine code-switched AfriSwitch texts, 25 per language, were synthesized once with female and male Sahara voices. All outputs were valid 22.05 kHz mono PCM16 WAVs, totaling 1,672.29 seconds with no clipped samples. Three independent ASR families judged every output.</p>
+    <table>
+      <thead><tr><th>Independent judge</th><th class="right">WER</th><th class="right">Extra words</th><th class="right">Transcript loss</th><th class="right">Segment loss</th></tr></thead>
+      <tbody>
+        <tr><td>SBPN Multilingual Base</td><td class="right"><strong>39.7%</strong></td><td class="right">2.2%</td><td class="right"><strong>7.6%</strong></td><td class="right"><strong>27.7%</strong></td></tr>
+        <tr><td>Meta OmniASR CTC 300M v2</td><td class="right">51.3%</td><td class="right"><strong>2.1%</strong></td><td class="right">9.4%</td><td class="right">36.8%</td></tr>
+        <tr><td>Faster-Whisper large-v3-turbo</td><td class="right">58.6%</td><td class="right">3.3%</td><td class="right">12.7%</td><td class="right">39.6%</td></tr>
+      </tbody>
+    </table>
+    <p class="small">These are automatic audit signals, not confirmed TTS defects. Judge disagreement is large, so a frozen 40-file bilingual listening audit is prepared before any MOS or human-confirmed hallucination claim.</p>
+
+    <h3>Executable agent evaluation</h3>
+    <p>The 48-scenario capability panel covered 12 resolution and safety paths per language. Together-hosted Llama 3.3 70B, deterministic policy, real typed tools, and isolated PostgreSQL state passed <strong>288/288</strong> gold and controlled-stress executions. Gold analysis latency was 1.20 s p50 / 2.25 s p95.</p>
+    <table>
+      <thead><tr><th>24-utterance named-ASR panel</th><th class="right">Strict success</th><th class="right">Assertion accuracy</th><th class="right">Capability retained</th></tr></thead>
+      <tbody>
+        <tr><td>Gold transcript</td><td class="right">100.0%</td><td class="right">100.0%</td><td class="right">100.0%</td></tr>
+        <tr><td>Sahara ASR</td><td class="right"><strong>100.0%</strong></td><td class="right"><strong>100.0%</strong></td><td class="right"><strong>100.0%</strong></td></tr>
+        <tr><td>SBPN</td><td class="right">95.8%</td><td class="right">99.2%</td><td class="right">95.8%</td></tr>
+        <tr><td>OmniASR</td><td class="right">87.5%</td><td class="right">98.4%</td><td class="right">87.5%</td></tr>
+        <tr><td>Faster-Whisper</td><td class="right">79.2%</td><td class="right">97.6%</td><td class="right">79.2%</td></tr>
+      </tbody>
+    </table>
+    <div class="grid2 tight">
+      <div class="card"><h3>Failure analysis</h3><p>All 27 strict failures came from nine stable scenario/provider cells where ASR lost a symptom or language cue. No run leaked declared PII or promoted an unconfirmed incident as fact.</p></div>
+      <div class="card"><h3>Privacy gate</h3><p>100 synthetic cases, 100 independently labelled phone, email, account/SIM, and numeric spans: 100% exact typed-span precision, recall, and F1; zero post-redaction leakages within scope.</p></div>
+    </div>
+    <div class="footer"><span>FaultBridge · Benchmark Report</span><span>2 / 3</span></div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">From benchmark to product decision</div>
+    <h2>Metrics, reproducibility, and limits</h2>
+    <div class="grid2">
+      <div>
+        <h3>Metric definitions</h3>
+        <ul>
+          <li><b>WER</b> = substitutions + deletions + insertions, divided by reference words. Lower is better and values may exceed 100%.</li>
+          <li><b>Hallucination / transcript loss</b> use insertion and deletion rates as automatic TTS indicators.</li>
+          <li><b>Segment loss</b> is the share of tagged language spans with no correctly aligned word.</li>
+          <li><b>Strict task success</b> requires every analysis, tool-trace, response, state, and privacy assertion to pass.</li>
+          <li><b>pass@1 / pass@3 / pass³</b> mean first-run, any-of-three, and all-three success.</li>
+          <li><b>Capability retention</b> divides ASR-transcript task success by gold-transcript success.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Reproducible evidence</h3>
+        <ul>
+          <li>Frozen manifests bind every sample and generated WAV to SHA-256.</li>
+          <li>Raw JSONL is append-only and retains failures, provider IDs, parameters, model versions, code commit, lock hash, and latency.</li>
+          <li>`make benchmark-verify-asr-evidence`, `-tts-evidence`, and `-agent-evidence` regenerate public aggregates byte for byte.</li>
+          <li>Private ASR evidence: <a href="https://huggingface.co/datasets/Tiamz/faultbridge-asr-benchmark-evidence">Tiamz/faultbridge-asr-benchmark-evidence</a>, revision <span class="small">ef320d7f…fe00</span>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Measured routing decision</h3>
+    <div class="callout"><strong>Use Sahara for all four language pairs in the submission.</strong> No alternative currently combines a statistically supported paired WER advantage, ≤1% provider-failure evidence, comparable deployed p95 latency, and zero critical downstream failures. The evidence-gated router is implemented, but multi-ASR routing stays off until those conditions pass.</div>
+
+    <h3 style="margin-top:4mm">Responsible deployment boundary</h3>
+    <div class="grid2 tight">
+      <div class="card"><p><b>Consent and privacy.</b> Declined consent bypasses speech and model providers. Accepted transcripts are redacted before the LLM, database, tools, logs, or UI; caller IDs are HMAC-pseudonymized.</p><p><b>Grounding.</b> Verified incidents and account records enter through authenticated internal APIs. Missing values stay unknown.</p></div>
+      <div class="card"><p><b>Agent authority.</b> The LLM extracts a constrained complaint schema. Deterministic policy authorizes typed tools, and every tool input/output is audited.</p><p><b>Crowd discovery.</b> Three distinct callers may create an <i>unconfirmed</i> candidate incident; only an operator can verify it.</p></div>
+    </div>
+
+    <h3 style="margin-top:4mm">Limitations</h3>
+    <p>The natural ASR panel is difficult research speech, not a population prevalence sample. The named-ASR panel uses one Sahara female synthetic voice and may favor Sahara recognition. Automatic TTS judges cannot replace bilingual listening. The privacy claim excludes names, street addresses, and fully word-spelled numbers. API, CPU, and GPU timing environments are not directly comparable. FaultBridge still requires authoritative NOC/CRM integrations, a telco security review, matched live-stream latency, and human call trials before production.</p>
+
+    <div class="sources">
+      <b>Sources and artifacts.</b> AfriSwitch dataset card: huggingface.co/datasets/intronhealth/AfriSwitch · Intron speech API: docs.voice.intron.io · RAI speech evaluation: isca-archive.org/interspeech_2025/rai25_interspeech.pdf · Full methods and exact tables: `docs/ASR_BENCHMARK_REPORT.md`, `docs/TTS_BENCHMARK_REPORT.md`, `docs/AGENT_BENCHMARK_REPORT.md`, and `docs/PRIVACY_BENCHMARK_REPORT.md`.
+    </div>
+    <div class="footer"><span>FaultBridge · Benchmark Report</span><span>3 / 3</span></div>
+  </section>
+</body>
+</html>

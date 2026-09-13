@@ -30,6 +30,8 @@ The private, hash-pinned four-model ASR evidence is available at
 [`Tiamz/faultbridge-asr-benchmark-evidence`](https://huggingface.co/datasets/Tiamz/faultbridge-asr-benchmark-evidence),
 revision `ef320d7f367e040c47b4021a397011dae894fe00`. It will become public-gated for
 submission after the dataset card and upstream access terms are finalized.
+The judge-facing [three-page benchmark report](docs/BENCHMARK_REPORT.pdf) combines
+the ASR, TTS, privacy, downstream task, routing, and reproducibility results.
 
 Run it with Python 3.11+, Docker, and `uv`:
 
