@@ -28,7 +28,8 @@
         "properties": {
           "incidents": {"type": "array", "items": {"type": "object"}},
           "accounts": {"type": "array", "items": {"type": "object"}},
-          "playbooks": {"type": "array", "items": {"type": "object"}}
+          "playbooks": {"type": "array", "items": {"type": "object"}},
+          "prior_signals": {"type": "array", "items": {"type": "object"}}
         },
         "additionalProperties": false
       },

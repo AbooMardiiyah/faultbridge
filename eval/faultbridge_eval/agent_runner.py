@@ -12,11 +12,13 @@ from typing import Any
 from urllib.parse import urlparse
 
 from faultbridge.adapters.llm import OpenAICompatibleAgentModel
+from faultbridge.domain.models import CallSession, Outcome, Tier
 from faultbridge.domain.orchestrator import FaultBridgeOrchestrator
 from faultbridge.services.database import Database, apply_migrations
 from faultbridge.services.privacy import pseudonymize_caller, redact_text
 from faultbridge.tools.telco import TelcoTools
 from faultbridge_eval.agent_grader import grade_agent_trace
+from faultbridge_eval.runner import environment_provenance
 
 EFFECT_TABLES = (
     "call_sessions",
@@ -31,12 +33,17 @@ EFFECT_TABLES = (
 
 def require_evaluation_database() -> str:
     database_url = os.environ.get("EVALUATION_DATABASE_URL", "")
+    runtime_url = os.environ.get("DATABASE_URL", "")
+    if not database_url and runtime_url:
+        parsed = urlparse(runtime_url)
+        runtime_name = parsed.path.strip("/")
+        database_url = parsed._replace(path=f"/{runtime_name}_eval").geturl()
     if not database_url:
         raise ValueError("EVALUATION_DATABASE_URL is required")
     database_name = urlparse(database_url).path.strip("/").lower()
     if not any(marker in database_name for marker in ("eval", "test")):
         raise ValueError("evaluation database name must contain 'eval' or 'test'")
-    if database_url == os.environ.get("DATABASE_URL"):
+    if database_url == runtime_url:
         raise ValueError("EVALUATION_DATABASE_URL must differ from DATABASE_URL")
     return database_url
 
@@ -63,7 +70,7 @@ def reset_state(database: Database) -> None:
         connection.execute(
             """
             TRUNCATE network_incidents, accounts, call_sessions,
-                     troubleshooting_playbooks
+                     troubleshooting_playbooks, candidate_incidents
             RESTART IDENTITY CASCADE
             """,
             prepare=False,
@@ -120,6 +127,28 @@ def seed_state(
                 "verified_at": verified_at(playbook.get("verified_at")),
             }
         )
+    for signal in seed.get("prior_signals", []):
+        caller_ref = pseudonymize_caller(str(signal["caller_id"]), pseudonym_secret)
+        session = CallSession(
+            caller_ref=caller_ref,
+            area=str(signal["area"]),
+            cell_id=str(signal["cell_id"]).strip().upper(),
+            language_pair=str(signal["language_pair"]),
+            symptom=str(signal["symptom"]),
+            safe_transcript="Seeded prior complaint signal.",
+            consent=True,
+            tier=Tier.COMPLETE,
+            outcome=Outcome.ESCALATED,
+            response="Seeded evaluation state.",
+        )
+        database.save_session(session)
+        database.record_signal(
+            session.call_id,
+            caller_ref,
+            session.cell_id,
+            session.symptom,
+            30,
+        )
 
 
 def observe(database: Database, session: Any) -> dict[str, Any]:
@@ -161,6 +190,7 @@ async def run_variant(
     model: OpenAICompatibleAgentModel,
     pseudonym_secret: str,
     repetition: int,
+    provenance: dict[str, Any],
 ) -> dict[str, Any]:
     reset_state(database)
     seed_state(database, scenario.get("seed", {}), pseudonym_secret=pseudonym_secret)
@@ -202,6 +232,7 @@ async def run_variant(
     )
     return {
         "benchmark_version": "faultbridge-agent-v1",
+        **provenance,
         "scenario_id": scenario["scenario_id"],
         "variant": variant,
         "repetition": repetition,
@@ -220,20 +251,58 @@ async def run(args: argparse.Namespace) -> None:
         raise ValueError(
             "FAULTBRIDGE_PSEUDONYM_SECRET must contain at least 32 characters"
         )
-    model = build_model(args)
-    apply_migrations(database_url, Path("migrations"))
-    database = Database(database_url, min_size=1, max_size=2)
     scenarios = json.loads(args.scenarios.read_text(encoding="utf-8"))
     if not isinstance(scenarios, list) or not scenarios:
         raise ValueError("scenario file must contain a non-empty JSON array")
+    provenance = {
+        **environment_provenance(args.scenarios),
+        "agent_provider": args.agent_provider,
+        "agent_model": args.agent_model,
+    }
+    completed: set[tuple[str, str, int]] = set()
+    mode = "w"
+    if args.output.is_file() and not args.overwrite:
+        existing = [
+            json.loads(line)
+            for line in args.output.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        for record in existing:
+            for key in (
+                "manifest_sha256",
+                "code_commit",
+                "lock_sha256",
+                "agent_provider",
+                "agent_model",
+            ):
+                if record.get(key) != provenance.get(key):
+                    raise ValueError(
+                        f"existing agent results use a different {key}; "
+                        "pass --overwrite for a new benchmark run"
+                    )
+            completed.add(
+                (
+                    str(record["scenario_id"]),
+                    str(record["variant"]),
+                    int(record["repetition"]),
+                )
+            )
+        mode = "a"
+    model = build_model(args)
+    apply_migrations(database_url, Path("migrations"))
+    database = Database(database_url, min_size=1, max_size=2)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     try:
-        with args.output.open("w", encoding="utf-8") as stream:
+        with args.output.open(mode, encoding="utf-8") as stream:
             for scenario in scenarios:
                 variants = {"gold": scenario["input"]["transcript"]}
                 variants.update(scenario.get("hypotheses", {}))
                 for variant, transcript in variants.items():
                     for repetition in range(1, args.repetitions + 1):
+                        key = (str(scenario["scenario_id"]), variant, repetition)
+                        if key in completed:
+                            print(*key, "skipped")
+                            continue
                         record = await run_variant(
                             scenario,
                             variant,
@@ -242,6 +311,7 @@ async def run(args: argparse.Namespace) -> None:
                             model=model,
                             pseudonym_secret=pseudonym_secret,
                             repetition=repetition,
+                            provenance=provenance,
                         )
                         stream.write(json.dumps(record, default=str) + "\n")
                         print(
@@ -268,6 +338,11 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--agent-model", default="gpt-4.1-mini")
     command.add_argument("--timeout-seconds", type=float, default=30.0)
     command.add_argument("--repetitions", type=int, default=3)
+    command.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="replace an existing result log instead of resuming it",
+    )
     return command
 
 

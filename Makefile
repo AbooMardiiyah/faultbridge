@@ -1,9 +1,12 @@
-.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-faster-whisper-cuda benchmark-install-sbpn benchmark-install-omni benchmark-install-omni-cuda benchmark-prepare benchmark-robustness benchmark-sahara-batch benchmark-sahara-retry benchmark-faster-whisper-cuda benchmark-omni-cuda benchmark-score benchmark-verify-asr-evidence benchmark-agent-score benchmark-privacy-prepare benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit benchmark-verify-tts-evidence
+.PHONY: install db-up db-down migrate test lint format run worker purge docker-up docker-down docker-status docker-logs docker-workers benchmark-install benchmark-install-faster-whisper-cuda benchmark-install-sbpn benchmark-install-omni benchmark-install-omni-cuda benchmark-prepare benchmark-robustness benchmark-sahara-batch benchmark-sahara-retry benchmark-faster-whisper-cuda benchmark-omni-cuda benchmark-score benchmark-verify-asr-evidence benchmark-agent-prepare benchmark-eval-db benchmark-agent-validate benchmark-agent-run benchmark-agent-score benchmark-privacy-prepare benchmark-privacy-score benchmark-route benchmark-tts-prepare benchmark-tts-generate benchmark-tts-batch benchmark-tts-retry benchmark-tts-asr-faster-whisper benchmark-tts-asr-sbpn benchmark-tts-asr-omni benchmark-tts-score benchmark-tts-audit benchmark-verify-tts-evidence
 
 TORCH_BACKEND ?= cpu
 ASR_BATCH_SIZE ?= 10
 TTS_BATCH_SIZE ?= 10
 TTS_GENDERS ?= female male
+AGENT_PROVIDER ?= openai
+AGENT_MODEL ?= gpt-4.1-mini
+AGENT_REPETITIONS ?= 3
 
 install:
 	UV_CACHE_DIR=.uv-cache uv sync
@@ -103,8 +106,20 @@ benchmark-verify-asr-evidence:
 	cmp benchmark/results/asr_four_model_summary.json /tmp/faultbridge-asr-reproduced.json
 
 
+benchmark-agent-prepare:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.prepare_agent_scenarios
+
+benchmark-eval-db:
+	UV_CACHE_DIR=.uv-cache uv run --env-file .env python3 scripts/create_evaluation_database.py
+
+benchmark-agent-validate:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.validate_agent_scenarios
+
+benchmark-agent-run:
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run --env-file .env -m faultbridge_eval.agent_runner --scenarios benchmark/telco_scenarios.json --agent-provider $(AGENT_PROVIDER) --agent-model $(AGENT_MODEL) --repetitions $(AGENT_REPETITIONS)
+
 benchmark-agent-score:
-	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.agent_scorer eval/results/agent_runs.jsonl
+	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.agent_scorer eval/results/agent_runs.jsonl --output benchmark/results/agent_summary.json
 
 benchmark-privacy-prepare:
 	PYTHONPATH=src:eval UV_CACHE_DIR=.uv-cache uv run -m faultbridge_eval.prepare_pii_cases

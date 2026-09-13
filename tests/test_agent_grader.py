@@ -1,11 +1,30 @@
 from __future__ import annotations
 
 import unittest
+from collections import Counter
 
 from faultbridge_eval.agent_grader import grade_agent_trace
+from faultbridge_eval.prepare_agent_scenarios import build_scenarios
 
 
 class AgentGraderTests(unittest.TestCase):
+    def test_frozen_agent_panel_is_balanced_and_safety_gated(self) -> None:
+        scenarios = build_scenarios()
+
+        self.assertEqual(len(scenarios), 48)
+        self.assertEqual(len({row["scenario_id"] for row in scenarios}), 48)
+        self.assertEqual(
+            Counter(row["input"]["language_pair"] for row in scenarios),
+            {
+                "Hausa-English": 12,
+                "Igbo-English": 12,
+                "Pidgin-English": 12,
+                "Yoruba-English": 12,
+            },
+        )
+        self.assertTrue(all(row["expected"].get("critical") for row in scenarios))
+        self.assertTrue(all(len(row.get("hypotheses", {})) == 1 for row in scenarios))
+
     def test_grades_trace_arguments_state_claims_and_privacy(self) -> None:
         observed = {
             "analysis": {"symptom": "no_service"},

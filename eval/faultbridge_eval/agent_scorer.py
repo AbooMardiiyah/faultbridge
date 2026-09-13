@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 from collections import defaultdict
 from pathlib import Path
@@ -61,8 +62,9 @@ def summarize_variant(runs: list[dict[str, Any]], variant: str) -> dict[str, Any
 
 
 def run(args: argparse.Namespace) -> None:
+    records = read_runs(args.results)
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for record in read_runs(args.results):
+    for record in records:
         grouped[str(record["variant"])].append(record)
     summaries = [
         summarize_variant(records, variant)
@@ -77,6 +79,18 @@ def run(args: argparse.Namespace) -> None:
             )
     report = {
         "scorer_version": "faultbridge-agent-scorer-v1",
+        "results_sha256": hashlib.sha256(args.results.read_bytes()).hexdigest(),
+        "provenance": {
+            key: sorted({str(record.get(key)) for record in records})
+            for key in (
+                "benchmark_version",
+                "manifest_sha256",
+                "code_commit",
+                "lock_sha256",
+                "agent_provider",
+                "agent_model",
+            )
+        },
         "variants": summaries,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

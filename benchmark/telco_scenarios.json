@@ -1,0 +1,3278 @@
+[
+  {
+    "scenario_id": "agent-001-consent-decline",
+    "input": {
+      "caller_id": "08030000001",
+      "transcript": "Network dina ya daina aiki, babu signal kwata-kwata. Do not record or process this call.",
+      "area": "Evaluation Area 01",
+      "cell_id": "eval-001",
+      "language_pair": "Hausa-English",
+      "consent": false
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Net work dina ya daina aiki babu signal kwata-kwata Do not record or process this call"
+    },
+    "seed": {},
+    "expected": {
+      "analysis": {
+        "language_pair": "Hausa-English",
+        "symptom": "no_service",
+        "consent": false
+      },
+      "outcome": "consent_declined",
+      "tier": "complete",
+      "next_action": null,
+      "exact_tools": [],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 0,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "processing are off"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000001"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-002-known-fault-eligible",
+    "input": {
+      "caller_id": "08030000002",
+      "transcript": "Network dina ya daina aiki, babu signal kwata-kwata. I consent to automated processing.",
+      "area": "Evaluation Area 02",
+      "cell_id": "EVAL-002",
+      "language_pair": "Hausa-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Net work dina ya daina aiki babu signal kwata-kwata I consent to automated processing"
+    },
+    "seed": {
+      "incidents": [
+        {
+          "incident_id": "INC-EVAL-002",
+          "operator": "Evaluation Mobile",
+          "cell_id": "EVAL-002",
+          "area": "Evaluation Area 02",
+          "fault_type": "fibre cut",
+          "status": "active",
+          "cause": "verified civil works",
+          "estimated_restoration": "2026-09-13T18:00:00+00:00",
+          "source_system": "evaluation-noc",
+          "source_reference": "alarm-002",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "accounts": [
+        {
+          "caller_id": "08030000002",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": true,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Hausa-English",
+        "symptom": "no_service",
+        "consent": true
+      },
+      "outcome": "known_fault_handled",
+      "tier": "complete",
+      "next_action": null,
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "queue_compensation",
+        "schedule_callback"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 4,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 1,
+        "callback_commands": 1
+      },
+      "required_response_terms": [
+        "active fibre cut",
+        "Evaluation Area 02",
+        "scheduled an update"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000002"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-003-known-fault-standard",
+    "input": {
+      "caller_id": "08030000003",
+      "transcript": "Ina da signal amma mobile data ba ya aiki. I consent to automated processing.",
+      "area": "Evaluation Area 03",
+      "cell_id": "eval-003",
+      "language_pair": "Hausa-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Ina da signal amma data ba ya aiki I consent to automated processing"
+    },
+    "seed": {
+      "incidents": [
+        {
+          "incident_id": "INC-EVAL-003",
+          "operator": "Evaluation Mobile",
+          "cell_id": "EVAL-003",
+          "area": "Evaluation Area 03",
+          "fault_type": "fibre cut",
+          "status": "active",
+          "cause": "verified civil works",
+          "estimated_restoration": "2026-09-13T18:00:00+00:00",
+          "source_system": "evaluation-noc",
+          "source_reference": "alarm-003",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "accounts": [
+        {
+          "caller_id": "08030000003",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Hausa-English",
+        "symptom": "data_unavailable",
+        "consent": true
+      },
+      "outcome": "known_fault_handled",
+      "tier": "complete",
+      "next_action": null,
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "schedule_callback"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 1
+      },
+      "required_response_terms": [
+        "active fibre cut",
+        "Evaluation Area 03",
+        "scheduled an update"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000003"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-004-guided-playbook",
+    "input": {
+      "caller_id": "08030000004",
+      "transcript": "Ina da signal amma mobile data ba ya aiki. I consent to automated processing.",
+      "area": "Evaluation Area 04",
+      "cell_id": "EVAL-004",
+      "language_pair": "Hausa-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Ina da signal amma data ba ya aiki I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000004",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000004",
+          "issue_type": "data_unavailable",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Hausa-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-004",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Hausa-English",
+        "symptom": "data_unavailable",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "automatic registration"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000004"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-005-guided-resolved",
+    "input": {
+      "caller_id": "08030000005",
+      "transcript": "Ina da signal amma mobile data ba ya aiki. I consent to automated processing.",
+      "area": "Evaluation Area 05",
+      "cell_id": "eval-005",
+      "language_pair": "Hausa-English",
+      "consent": true,
+      "resolved": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Ina da signal amma data ba ya aiki I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000005",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000005",
+          "issue_type": "data_unavailable",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Hausa-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-005",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Hausa-English",
+        "symptom": "data_unavailable",
+        "consent": true
+      },
+      "outcome": "guided_fix_resolved",
+      "tier": "complete",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook",
+        "verify_resolution"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 4,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "closing this case as resolved"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000005"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-006-first-escalation",
+    "input": {
+      "caller_id": "08030000006",
+      "transcript": "Network dina ya daina aiki, babu signal kwata-kwata. I consent to automated processing.",
+      "area": "Evaluation Area 06",
+      "cell_id": "EVAL-006",
+      "language_pair": "Hausa-English",
+      "consent": true,
+      "resolved": false
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Net work dina ya daina aiki babu signal kwata-kwata I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000006",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000006",
+          "issue_type": "no_service",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Hausa-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-006",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Hausa-English",
+        "symptom": "no_service",
+        "consent": true
+      },
+      "outcome": "escalated",
+      "tier": "complete",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook",
+        "verify_resolution",
+        "create_handoff",
+        "record_complaint_signal"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 6,
+        "complaint_signals": 1,
+        "candidate_incidents": 0,
+        "tickets": 1,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "opened ticket"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000006"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-007-crowd-threshold",
+    "input": {
+      "caller_id": "08030000007",
+      "transcript": "Kiran waya yana yankewa kuma voice quality ba kyau. I consent to automated processing.",
+      "area": "Evaluation Area 07",
+      "cell_id": "eval-007",
+      "language_pair": "Hausa-English",
+      "consent": true,
+      "resolved": false
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Kiran waya yana yankewa kuma voice quality ba kyau I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000007",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "prior_signals": [
+        {
+          "caller_id": "07040000070",
+          "area": "Evaluation Area 07",
+          "cell_id": "EVAL-007",
+          "language_pair": "Hausa-English",
+          "symptom": "call_quality"
+        },
+        {
+          "caller_id": "07040000071",
+          "area": "Evaluation Area 07",
+          "cell_id": "EVAL-007",
+          "language_pair": "Hausa-English",
+          "symptom": "call_quality"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Hausa-English",
+        "symptom": "call_quality",
+        "consent": true
+      },
+      "outcome": "escalated",
+      "tier": "complete",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook",
+        "verify_resolution",
+        "create_handoff",
+        "record_complaint_signal",
+        "propose_candidate_incident"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 3,
+        "action_events": 7,
+        "complaint_signals": 3,
+        "candidate_incidents": 1,
+        "tickets": 1,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "opened ticket",
+        "candidate incident"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000007"
+        ],
+        "candidate_must_be_unconfirmed": true
+      },
+      "candidate_must_be_unconfirmed": true
+    }
+  },
+  {
+    "scenario_id": "agent-008-barred-account",
+    "input": {
+      "caller_id": "08030000008",
+      "transcript": "Kiran waya yana yankewa kuma voice quality ba kyau. I consent to automated processing.",
+      "area": "Evaluation Area 08",
+      "cell_id": "EVAL-008",
+      "language_pair": "Hausa-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Kiran waya yana yankewa kuma voice quality ba kyau I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000008",
+          "data_balance_mb": 2048,
+          "barred": true,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Hausa-English",
+        "symptom": "call_quality",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "restore_account_access",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "line is barred"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000008"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-009-empty-balance",
+    "input": {
+      "caller_id": "08030000009",
+      "transcript": "Data bundle dina yana karewa da sauri sosai. I consent to automated processing.",
+      "area": "Evaluation Area 09",
+      "cell_id": "eval-009",
+      "language_pair": "Hausa-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Data bundle dina yana karewa da sauri sosai I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000009",
+          "data_balance_mb": 0,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Hausa-English",
+        "symptom": "rapid_data_depletion",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "restore_data_balance",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "no active data balance"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000009"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-010-missing-account",
+    "input": {
+      "caller_id": "08030000010",
+      "transcript": "Na yi recharge amma credit bai shiga ba. I consent to automated processing.",
+      "area": "Evaluation Area 10",
+      "cell_id": "EVAL-010",
+      "language_pair": "Hausa-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Na yi recharge amma credit bai shiga ba I consent to automated processing"
+    },
+    "seed": {},
+    "expected": {
+      "analysis": {
+        "language_pair": "Hausa-English",
+        "symptom": "recharge_failed",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "run_device_diagnostic",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "could not verify account state"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000010"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-011-generic-fallback",
+    "input": {
+      "caller_id": "08030000011",
+      "transcript": "SIM dina yana nuna invalid SIM. I consent to automated processing.",
+      "area": "Evaluation Area 11",
+      "cell_id": "eval-011",
+      "language_pair": "Hausa-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "SIM dina yana nuna invalid SIM I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000011",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Hausa-English",
+        "symptom": "sim_issue",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "airplane mode"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000011"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-012-pii-before-model",
+    "input": {
+      "caller_id": "08030000012",
+      "transcript": "An cire min kuɗi twice, billing ɗin ba daidai ba ne. I consent to automated processing. Call 0803 555 0101 or email privacy.case@example.com.",
+      "area": "Evaluation Area 12",
+      "cell_id": "EVAL-012",
+      "language_pair": "Hausa-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "An cire min kuɗi twice billing ɗin ba daidai ba ne I consent to automated processing Call 0803 555 0101 or email privacycase@examplecom"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000012",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000012",
+          "issue_type": "billing_dispute",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Hausa-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-012",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Hausa-English",
+        "symptom": "billing_dispute",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "automatic registration"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000012",
+          "0803 555 0101",
+          "privacy.case@example.com"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-013-consent-decline",
+    "input": {
+      "caller_id": "08030000013",
+      "transcript": "Network m anaghị arụ ọrụ, enweghị m signal ọ bụla. Do not record or process this call.",
+      "area": "Evaluation Area 13",
+      "cell_id": "eval-013",
+      "language_pair": "Igbo-English",
+      "consent": false
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Net work m anaghi aru oru enweghi m signal o bula Do not record or process this call"
+    },
+    "seed": {},
+    "expected": {
+      "analysis": {
+        "language_pair": "Igbo-English",
+        "symptom": "no_service",
+        "consent": false
+      },
+      "outcome": "consent_declined",
+      "tier": "complete",
+      "next_action": null,
+      "exact_tools": [],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 0,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "processing are off"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000013"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-014-known-fault-eligible",
+    "input": {
+      "caller_id": "08030000014",
+      "transcript": "Network m anaghị arụ ọrụ, enweghị m signal ọ bụla. I consent to automated processing.",
+      "area": "Evaluation Area 14",
+      "cell_id": "EVAL-014",
+      "language_pair": "Igbo-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Net work m anaghi aru oru enweghi m signal o bula I consent to automated processing"
+    },
+    "seed": {
+      "incidents": [
+        {
+          "incident_id": "INC-EVAL-014",
+          "operator": "Evaluation Mobile",
+          "cell_id": "EVAL-014",
+          "area": "Evaluation Area 14",
+          "fault_type": "fibre cut",
+          "status": "active",
+          "cause": "verified civil works",
+          "estimated_restoration": "2026-09-13T18:00:00+00:00",
+          "source_system": "evaluation-noc",
+          "source_reference": "alarm-014",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "accounts": [
+        {
+          "caller_id": "08030000014",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": true,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Igbo-English",
+        "symptom": "no_service",
+        "consent": true
+      },
+      "outcome": "known_fault_handled",
+      "tier": "complete",
+      "next_action": null,
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "queue_compensation",
+        "schedule_callback"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 4,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 1,
+        "callback_commands": 1
+      },
+      "required_response_terms": [
+        "active fibre cut",
+        "Evaluation Area 14",
+        "scheduled an update"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000014"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-015-known-fault-standard",
+    "input": {
+      "caller_id": "08030000015",
+      "transcript": "Enwere m signal mana mobile data anaghị arụ ọrụ. I consent to automated processing.",
+      "area": "Evaluation Area 15",
+      "cell_id": "eval-015",
+      "language_pair": "Igbo-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Enwere m signal mana data anaghi aru oru I consent to automated processing"
+    },
+    "seed": {
+      "incidents": [
+        {
+          "incident_id": "INC-EVAL-015",
+          "operator": "Evaluation Mobile",
+          "cell_id": "EVAL-015",
+          "area": "Evaluation Area 15",
+          "fault_type": "fibre cut",
+          "status": "active",
+          "cause": "verified civil works",
+          "estimated_restoration": "2026-09-13T18:00:00+00:00",
+          "source_system": "evaluation-noc",
+          "source_reference": "alarm-015",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "accounts": [
+        {
+          "caller_id": "08030000015",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Igbo-English",
+        "symptom": "data_unavailable",
+        "consent": true
+      },
+      "outcome": "known_fault_handled",
+      "tier": "complete",
+      "next_action": null,
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "schedule_callback"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 1
+      },
+      "required_response_terms": [
+        "active fibre cut",
+        "Evaluation Area 15",
+        "scheduled an update"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000015"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-016-guided-playbook",
+    "input": {
+      "caller_id": "08030000016",
+      "transcript": "Enwere m signal mana mobile data anaghị arụ ọrụ. I consent to automated processing.",
+      "area": "Evaluation Area 16",
+      "cell_id": "EVAL-016",
+      "language_pair": "Igbo-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Enwere m signal mana data anaghi aru oru I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000016",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000016",
+          "issue_type": "data_unavailable",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Igbo-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-016",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Igbo-English",
+        "symptom": "data_unavailable",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "automatic registration"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000016"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-017-guided-resolved",
+    "input": {
+      "caller_id": "08030000017",
+      "transcript": "Enwere m signal mana mobile data anaghị arụ ọrụ. I consent to automated processing.",
+      "area": "Evaluation Area 17",
+      "cell_id": "eval-017",
+      "language_pair": "Igbo-English",
+      "consent": true,
+      "resolved": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Enwere m signal mana data anaghi aru oru I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000017",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000017",
+          "issue_type": "data_unavailable",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Igbo-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-017",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Igbo-English",
+        "symptom": "data_unavailable",
+        "consent": true
+      },
+      "outcome": "guided_fix_resolved",
+      "tier": "complete",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook",
+        "verify_resolution"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 4,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "closing this case as resolved"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000017"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-018-first-escalation",
+    "input": {
+      "caller_id": "08030000018",
+      "transcript": "Network m anaghị arụ ọrụ, enweghị m signal ọ bụla. I consent to automated processing.",
+      "area": "Evaluation Area 18",
+      "cell_id": "EVAL-018",
+      "language_pair": "Igbo-English",
+      "consent": true,
+      "resolved": false
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Net work m anaghi aru oru enweghi m signal o bula I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000018",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000018",
+          "issue_type": "no_service",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Igbo-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-018",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Igbo-English",
+        "symptom": "no_service",
+        "consent": true
+      },
+      "outcome": "escalated",
+      "tier": "complete",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook",
+        "verify_resolution",
+        "create_handoff",
+        "record_complaint_signal"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 6,
+        "complaint_signals": 1,
+        "candidate_incidents": 0,
+        "tickets": 1,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "opened ticket"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000018"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-019-crowd-threshold",
+    "input": {
+      "caller_id": "08030000019",
+      "transcript": "Oku m na-akwụsị, voice quality adịghị mma. I consent to automated processing.",
+      "area": "Evaluation Area 19",
+      "cell_id": "eval-019",
+      "language_pair": "Igbo-English",
+      "consent": true,
+      "resolved": false
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Oku m na-akwusi voice quality adighi mma I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000019",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "prior_signals": [
+        {
+          "caller_id": "07040000190",
+          "area": "Evaluation Area 19",
+          "cell_id": "EVAL-019",
+          "language_pair": "Igbo-English",
+          "symptom": "call_quality"
+        },
+        {
+          "caller_id": "07040000191",
+          "area": "Evaluation Area 19",
+          "cell_id": "EVAL-019",
+          "language_pair": "Igbo-English",
+          "symptom": "call_quality"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Igbo-English",
+        "symptom": "call_quality",
+        "consent": true
+      },
+      "outcome": "escalated",
+      "tier": "complete",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook",
+        "verify_resolution",
+        "create_handoff",
+        "record_complaint_signal",
+        "propose_candidate_incident"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 3,
+        "action_events": 7,
+        "complaint_signals": 3,
+        "candidate_incidents": 1,
+        "tickets": 1,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "opened ticket",
+        "candidate incident"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000019"
+        ],
+        "candidate_must_be_unconfirmed": true
+      },
+      "candidate_must_be_unconfirmed": true
+    }
+  },
+  {
+    "scenario_id": "agent-020-barred-account",
+    "input": {
+      "caller_id": "08030000020",
+      "transcript": "Oku m na-akwụsị, voice quality adịghị mma. I consent to automated processing.",
+      "area": "Evaluation Area 20",
+      "cell_id": "EVAL-020",
+      "language_pair": "Igbo-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Oku m na-akwusi voice quality adighi mma I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000020",
+          "data_balance_mb": 2048,
+          "barred": true,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Igbo-English",
+        "symptom": "call_quality",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "restore_account_access",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "line is barred"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000020"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-021-empty-balance",
+    "input": {
+      "caller_id": "08030000021",
+      "transcript": "Data bundle m na-agwụ very fast. I consent to automated processing.",
+      "area": "Evaluation Area 21",
+      "cell_id": "eval-021",
+      "language_pair": "Igbo-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Data bundle m na-agwu very fast I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000021",
+          "data_balance_mb": 0,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Igbo-English",
+        "symptom": "rapid_data_depletion",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "restore_data_balance",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "no active data balance"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000021"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-022-missing-account",
+    "input": {
+      "caller_id": "08030000022",
+      "transcript": "Emere m recharge mana credit abataghị. I consent to automated processing.",
+      "area": "Evaluation Area 22",
+      "cell_id": "EVAL-022",
+      "language_pair": "Igbo-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Emere m recharge mana credit abataghi I consent to automated processing"
+    },
+    "seed": {},
+    "expected": {
+      "analysis": {
+        "language_pair": "Igbo-English",
+        "symptom": "recharge_failed",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "run_device_diagnostic",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "could not verify account state"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000022"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-023-generic-fallback",
+    "input": {
+      "caller_id": "08030000023",
+      "transcript": "SIM m na-egosi invalid SIM. I consent to automated processing.",
+      "area": "Evaluation Area 23",
+      "cell_id": "eval-023",
+      "language_pair": "Igbo-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "SIM m na-egosi invalid SIM I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000023",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Igbo-English",
+        "symptom": "sim_issue",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "airplane mode"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000023"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-024-pii-before-model",
+    "input": {
+      "caller_id": "08030000024",
+      "transcript": "E wepụrụ ego m twice, billing ahụ ezighi ezi. I consent to automated processing. Call 0803 555 0101 or email privacy.case@example.com.",
+      "area": "Evaluation Area 24",
+      "cell_id": "EVAL-024",
+      "language_pair": "Igbo-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "E wepuru ego m twice billing ahu ezighi ezi I consent to automated processing Call 0803 555 0101 or email privacycase@examplecom"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000024",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000024",
+          "issue_type": "billing_dispute",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Igbo-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-024",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Igbo-English",
+        "symptom": "billing_dispute",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "automatic registration"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000024",
+          "0803 555 0101",
+          "privacy.case@example.com"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-025-consent-decline",
+    "input": {
+      "caller_id": "08030000025",
+      "transcript": "My network no dey work, signal no show at all. Do not record or process this call.",
+      "area": "Evaluation Area 25",
+      "cell_id": "eval-025",
+      "language_pair": "Pidgin-English",
+      "consent": false
+    },
+    "hypotheses": {
+      "controlled_asr_error": "My net work no dey work signal no show at all Do not record or process this call"
+    },
+    "seed": {},
+    "expected": {
+      "analysis": {
+        "language_pair": "Pidgin-English",
+        "symptom": "no_service",
+        "consent": false
+      },
+      "outcome": "consent_declined",
+      "tier": "complete",
+      "next_action": null,
+      "exact_tools": [],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 0,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "processing are off"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000025"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-026-known-fault-eligible",
+    "input": {
+      "caller_id": "08030000026",
+      "transcript": "My network no dey work, signal no show at all. I consent to automated processing.",
+      "area": "Evaluation Area 26",
+      "cell_id": "EVAL-026",
+      "language_pair": "Pidgin-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "My net work no dey work signal no show at all I consent to automated processing"
+    },
+    "seed": {
+      "incidents": [
+        {
+          "incident_id": "INC-EVAL-026",
+          "operator": "Evaluation Mobile",
+          "cell_id": "EVAL-026",
+          "area": "Evaluation Area 26",
+          "fault_type": "fibre cut",
+          "status": "active",
+          "cause": "verified civil works",
+          "estimated_restoration": "2026-09-13T18:00:00+00:00",
+          "source_system": "evaluation-noc",
+          "source_reference": "alarm-026",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "accounts": [
+        {
+          "caller_id": "08030000026",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": true,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Pidgin-English",
+        "symptom": "no_service",
+        "consent": true
+      },
+      "outcome": "known_fault_handled",
+      "tier": "complete",
+      "next_action": null,
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "queue_compensation",
+        "schedule_callback"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 4,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 1,
+        "callback_commands": 1
+      },
+      "required_response_terms": [
+        "active fibre cut",
+        "Evaluation Area 26",
+        "scheduled an update"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000026"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-027-known-fault-standard",
+    "input": {
+      "caller_id": "08030000027",
+      "transcript": "Signal dey but mobile data no dey connect. I consent to automated processing.",
+      "area": "Evaluation Area 27",
+      "cell_id": "eval-027",
+      "language_pair": "Pidgin-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Signal dey but data no dey connect I consent to automated processing"
+    },
+    "seed": {
+      "incidents": [
+        {
+          "incident_id": "INC-EVAL-027",
+          "operator": "Evaluation Mobile",
+          "cell_id": "EVAL-027",
+          "area": "Evaluation Area 27",
+          "fault_type": "fibre cut",
+          "status": "active",
+          "cause": "verified civil works",
+          "estimated_restoration": "2026-09-13T18:00:00+00:00",
+          "source_system": "evaluation-noc",
+          "source_reference": "alarm-027",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "accounts": [
+        {
+          "caller_id": "08030000027",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Pidgin-English",
+        "symptom": "data_unavailable",
+        "consent": true
+      },
+      "outcome": "known_fault_handled",
+      "tier": "complete",
+      "next_action": null,
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "schedule_callback"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 1
+      },
+      "required_response_terms": [
+        "active fibre cut",
+        "Evaluation Area 27",
+        "scheduled an update"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000027"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-028-guided-playbook",
+    "input": {
+      "caller_id": "08030000028",
+      "transcript": "Signal dey but mobile data no dey connect. I consent to automated processing.",
+      "area": "Evaluation Area 28",
+      "cell_id": "EVAL-028",
+      "language_pair": "Pidgin-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Signal dey but data no dey connect I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000028",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000028",
+          "issue_type": "data_unavailable",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Pidgin-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-028",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Pidgin-English",
+        "symptom": "data_unavailable",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "automatic registration"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000028"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-029-guided-resolved",
+    "input": {
+      "caller_id": "08030000029",
+      "transcript": "Signal dey but mobile data no dey connect. I consent to automated processing.",
+      "area": "Evaluation Area 29",
+      "cell_id": "eval-029",
+      "language_pair": "Pidgin-English",
+      "consent": true,
+      "resolved": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Signal dey but data no dey connect I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000029",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000029",
+          "issue_type": "data_unavailable",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Pidgin-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-029",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Pidgin-English",
+        "symptom": "data_unavailable",
+        "consent": true
+      },
+      "outcome": "guided_fix_resolved",
+      "tier": "complete",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook",
+        "verify_resolution"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 4,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "closing this case as resolved"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000029"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-030-first-escalation",
+    "input": {
+      "caller_id": "08030000030",
+      "transcript": "My network no dey work, signal no show at all. I consent to automated processing.",
+      "area": "Evaluation Area 30",
+      "cell_id": "EVAL-030",
+      "language_pair": "Pidgin-English",
+      "consent": true,
+      "resolved": false
+    },
+    "hypotheses": {
+      "controlled_asr_error": "My net work no dey work signal no show at all I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000030",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000030",
+          "issue_type": "no_service",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Pidgin-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-030",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Pidgin-English",
+        "symptom": "no_service",
+        "consent": true
+      },
+      "outcome": "escalated",
+      "tier": "complete",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook",
+        "verify_resolution",
+        "create_handoff",
+        "record_complaint_signal"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 6,
+        "complaint_signals": 1,
+        "candidate_incidents": 0,
+        "tickets": 1,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "opened ticket"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000030"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-031-crowd-threshold",
+    "input": {
+      "caller_id": "08030000031",
+      "transcript": "My calls dey cut and the voice quality bad. I consent to automated processing.",
+      "area": "Evaluation Area 31",
+      "cell_id": "eval-031",
+      "language_pair": "Pidgin-English",
+      "consent": true,
+      "resolved": false
+    },
+    "hypotheses": {
+      "controlled_asr_error": "My calls dey cut and the voice quality bad I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000031",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "prior_signals": [
+        {
+          "caller_id": "07040000310",
+          "area": "Evaluation Area 31",
+          "cell_id": "EVAL-031",
+          "language_pair": "Pidgin-English",
+          "symptom": "call_quality"
+        },
+        {
+          "caller_id": "07040000311",
+          "area": "Evaluation Area 31",
+          "cell_id": "EVAL-031",
+          "language_pair": "Pidgin-English",
+          "symptom": "call_quality"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Pidgin-English",
+        "symptom": "call_quality",
+        "consent": true
+      },
+      "outcome": "escalated",
+      "tier": "complete",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook",
+        "verify_resolution",
+        "create_handoff",
+        "record_complaint_signal",
+        "propose_candidate_incident"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 3,
+        "action_events": 7,
+        "complaint_signals": 3,
+        "candidate_incidents": 1,
+        "tickets": 1,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "opened ticket",
+        "candidate incident"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000031"
+        ],
+        "candidate_must_be_unconfirmed": true
+      },
+      "candidate_must_be_unconfirmed": true
+    }
+  },
+  {
+    "scenario_id": "agent-032-barred-account",
+    "input": {
+      "caller_id": "08030000032",
+      "transcript": "My calls dey cut and the voice quality bad. I consent to automated processing.",
+      "area": "Evaluation Area 32",
+      "cell_id": "EVAL-032",
+      "language_pair": "Pidgin-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "My calls dey cut and the voice quality bad I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000032",
+          "data_balance_mb": 2048,
+          "barred": true,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Pidgin-English",
+        "symptom": "call_quality",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "restore_account_access",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "line is barred"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000032"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-033-empty-balance",
+    "input": {
+      "caller_id": "08030000033",
+      "transcript": "My data bundle dey finish too fast. I consent to automated processing.",
+      "area": "Evaluation Area 33",
+      "cell_id": "eval-033",
+      "language_pair": "Pidgin-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "My data bundle dey finish too fast I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000033",
+          "data_balance_mb": 0,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Pidgin-English",
+        "symptom": "rapid_data_depletion",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "restore_data_balance",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "no active data balance"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000033"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-034-missing-account",
+    "input": {
+      "caller_id": "08030000034",
+      "transcript": "I recharge but the credit no enter. I consent to automated processing.",
+      "area": "Evaluation Area 34",
+      "cell_id": "EVAL-034",
+      "language_pair": "Pidgin-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "I recharge but the credit no enter I consent to automated processing"
+    },
+    "seed": {},
+    "expected": {
+      "analysis": {
+        "language_pair": "Pidgin-English",
+        "symptom": "recharge_failed",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "run_device_diagnostic",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "could not verify account state"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000034"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-035-generic-fallback",
+    "input": {
+      "caller_id": "08030000035",
+      "transcript": "My SIM dey show invalid SIM. I consent to automated processing.",
+      "area": "Evaluation Area 35",
+      "cell_id": "eval-035",
+      "language_pair": "Pidgin-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "My SIM dey show invalid SIM I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000035",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Pidgin-English",
+        "symptom": "sim_issue",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "airplane mode"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000035"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-036-pii-before-model",
+    "input": {
+      "caller_id": "08030000036",
+      "transcript": "Una debit me twice, the billing no correct. I consent to automated processing. Call 0803 555 0101 or email privacy.case@example.com.",
+      "area": "Evaluation Area 36",
+      "cell_id": "EVAL-036",
+      "language_pair": "Pidgin-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Una debit me twice the billing no correct I consent to automated processing Call 0803 555 0101 or email privacycase@examplecom"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000036",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000036",
+          "issue_type": "billing_dispute",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Pidgin-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-036",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Pidgin-English",
+        "symptom": "billing_dispute",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "automatic registration"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000036",
+          "0803 555 0101",
+          "privacy.case@example.com"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-037-consent-decline",
+    "input": {
+      "caller_id": "08030000037",
+      "transcript": "Network mi kò ṣiṣẹ́, mi ò rí signal rárá. Do not record or process this call.",
+      "area": "Evaluation Area 37",
+      "cell_id": "eval-037",
+      "language_pair": "Yoruba-English",
+      "consent": false
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Net work mi ko sise mi o ri signal rara Do not record or process this call"
+    },
+    "seed": {},
+    "expected": {
+      "analysis": {
+        "language_pair": "Yoruba-English",
+        "symptom": "no_service",
+        "consent": false
+      },
+      "outcome": "consent_declined",
+      "tier": "complete",
+      "next_action": null,
+      "exact_tools": [],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 0,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "processing are off"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000037"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-038-known-fault-eligible",
+    "input": {
+      "caller_id": "08030000038",
+      "transcript": "Network mi kò ṣiṣẹ́, mi ò rí signal rárá. I consent to automated processing.",
+      "area": "Evaluation Area 38",
+      "cell_id": "EVAL-038",
+      "language_pair": "Yoruba-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Net work mi ko sise mi o ri signal rara I consent to automated processing"
+    },
+    "seed": {
+      "incidents": [
+        {
+          "incident_id": "INC-EVAL-038",
+          "operator": "Evaluation Mobile",
+          "cell_id": "EVAL-038",
+          "area": "Evaluation Area 38",
+          "fault_type": "fibre cut",
+          "status": "active",
+          "cause": "verified civil works",
+          "estimated_restoration": "2026-09-13T18:00:00+00:00",
+          "source_system": "evaluation-noc",
+          "source_reference": "alarm-038",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "accounts": [
+        {
+          "caller_id": "08030000038",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": true,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Yoruba-English",
+        "symptom": "no_service",
+        "consent": true
+      },
+      "outcome": "known_fault_handled",
+      "tier": "complete",
+      "next_action": null,
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "queue_compensation",
+        "schedule_callback"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 4,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 1,
+        "callback_commands": 1
+      },
+      "required_response_terms": [
+        "active fibre cut",
+        "Evaluation Area 38",
+        "scheduled an update"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000038"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-039-known-fault-standard",
+    "input": {
+      "caller_id": "08030000039",
+      "transcript": "Signal wà ṣùgbọ́n mobile data kò connect. I consent to automated processing.",
+      "area": "Evaluation Area 39",
+      "cell_id": "eval-039",
+      "language_pair": "Yoruba-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Signal wa sugbon data ko connect I consent to automated processing"
+    },
+    "seed": {
+      "incidents": [
+        {
+          "incident_id": "INC-EVAL-039",
+          "operator": "Evaluation Mobile",
+          "cell_id": "EVAL-039",
+          "area": "Evaluation Area 39",
+          "fault_type": "fibre cut",
+          "status": "active",
+          "cause": "verified civil works",
+          "estimated_restoration": "2026-09-13T18:00:00+00:00",
+          "source_system": "evaluation-noc",
+          "source_reference": "alarm-039",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "accounts": [
+        {
+          "caller_id": "08030000039",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Yoruba-English",
+        "symptom": "data_unavailable",
+        "consent": true
+      },
+      "outcome": "known_fault_handled",
+      "tier": "complete",
+      "next_action": null,
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "schedule_callback"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 1
+      },
+      "required_response_terms": [
+        "active fibre cut",
+        "Evaluation Area 39",
+        "scheduled an update"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000039"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-040-guided-playbook",
+    "input": {
+      "caller_id": "08030000040",
+      "transcript": "Signal wà ṣùgbọ́n mobile data kò connect. I consent to automated processing.",
+      "area": "Evaluation Area 40",
+      "cell_id": "EVAL-040",
+      "language_pair": "Yoruba-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Signal wa sugbon data ko connect I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000040",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000040",
+          "issue_type": "data_unavailable",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Yoruba-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-040",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Yoruba-English",
+        "symptom": "data_unavailable",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "automatic registration"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000040"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-041-guided-resolved",
+    "input": {
+      "caller_id": "08030000041",
+      "transcript": "Signal wà ṣùgbọ́n mobile data kò connect. I consent to automated processing.",
+      "area": "Evaluation Area 41",
+      "cell_id": "eval-041",
+      "language_pair": "Yoruba-English",
+      "consent": true,
+      "resolved": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Signal wa sugbon data ko connect I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000041",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000041",
+          "issue_type": "data_unavailable",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Yoruba-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-041",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Yoruba-English",
+        "symptom": "data_unavailable",
+        "consent": true
+      },
+      "outcome": "guided_fix_resolved",
+      "tier": "complete",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook",
+        "verify_resolution"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 4,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "closing this case as resolved"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000041"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-042-first-escalation",
+    "input": {
+      "caller_id": "08030000042",
+      "transcript": "Network mi kò ṣiṣẹ́, mi ò rí signal rárá. I consent to automated processing.",
+      "area": "Evaluation Area 42",
+      "cell_id": "EVAL-042",
+      "language_pair": "Yoruba-English",
+      "consent": true,
+      "resolved": false
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Net work mi ko sise mi o ri signal rara I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000042",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000042",
+          "issue_type": "no_service",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Yoruba-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-042",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Yoruba-English",
+        "symptom": "no_service",
+        "consent": true
+      },
+      "outcome": "escalated",
+      "tier": "complete",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook",
+        "verify_resolution",
+        "create_handoff",
+        "record_complaint_signal"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 6,
+        "complaint_signals": 1,
+        "candidate_incidents": 0,
+        "tickets": 1,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "opened ticket"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000042"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-043-crowd-threshold",
+    "input": {
+      "caller_id": "08030000043",
+      "transcript": "Call mi ń gé, voice quality náà kò dára. I consent to automated processing.",
+      "area": "Evaluation Area 43",
+      "cell_id": "eval-043",
+      "language_pair": "Yoruba-English",
+      "consent": true,
+      "resolved": false
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Call mi n ge voice quality naa ko dara I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000043",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "prior_signals": [
+        {
+          "caller_id": "07040000430",
+          "area": "Evaluation Area 43",
+          "cell_id": "EVAL-043",
+          "language_pair": "Yoruba-English",
+          "symptom": "call_quality"
+        },
+        {
+          "caller_id": "07040000431",
+          "area": "Evaluation Area 43",
+          "cell_id": "EVAL-043",
+          "language_pair": "Yoruba-English",
+          "symptom": "call_quality"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Yoruba-English",
+        "symptom": "call_quality",
+        "consent": true
+      },
+      "outcome": "escalated",
+      "tier": "complete",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook",
+        "verify_resolution",
+        "create_handoff",
+        "record_complaint_signal",
+        "propose_candidate_incident"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 3,
+        "action_events": 7,
+        "complaint_signals": 3,
+        "candidate_incidents": 1,
+        "tickets": 1,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "opened ticket",
+        "candidate incident"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000043"
+        ],
+        "candidate_must_be_unconfirmed": true
+      },
+      "candidate_must_be_unconfirmed": true
+    }
+  },
+  {
+    "scenario_id": "agent-044-barred-account",
+    "input": {
+      "caller_id": "08030000044",
+      "transcript": "Call mi ń gé, voice quality náà kò dára. I consent to automated processing.",
+      "area": "Evaluation Area 44",
+      "cell_id": "EVAL-044",
+      "language_pair": "Yoruba-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Call mi n ge voice quality naa ko dara I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000044",
+          "data_balance_mb": 2048,
+          "barred": true,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Yoruba-English",
+        "symptom": "call_quality",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "restore_account_access",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "line is barred"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000044"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-045-empty-balance",
+    "input": {
+      "caller_id": "08030000045",
+      "transcript": "Data bundle mi ń tán very fast. I consent to automated processing.",
+      "area": "Evaluation Area 45",
+      "cell_id": "eval-045",
+      "language_pair": "Yoruba-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Data bundle mi n tan very fast I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000045",
+          "data_balance_mb": 0,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Yoruba-English",
+        "symptom": "rapid_data_depletion",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "restore_data_balance",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "no active data balance"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000045"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-046-missing-account",
+    "input": {
+      "caller_id": "08030000046",
+      "transcript": "Mo ṣe recharge ṣùgbọ́n credit kò wọlé. I consent to automated processing.",
+      "area": "Evaluation Area 46",
+      "cell_id": "EVAL-046",
+      "language_pair": "Yoruba-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "Mo se recharge sugbon credit ko wole I consent to automated processing"
+    },
+    "seed": {},
+    "expected": {
+      "analysis": {
+        "language_pair": "Yoruba-English",
+        "symptom": "recharge_failed",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "run_device_diagnostic",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "could not verify account state"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000046"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-047-generic-fallback",
+    "input": {
+      "caller_id": "08030000047",
+      "transcript": "SIM mi ń fi invalid SIM hàn. I consent to automated processing.",
+      "area": "Evaluation Area 47",
+      "cell_id": "eval-047",
+      "language_pair": "Yoruba-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "SIM mi n fi invalid SIM han I consent to automated processing"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000047",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Yoruba-English",
+        "symptom": "sim_issue",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "airplane mode"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000047"
+        ]
+      }
+    }
+  },
+  {
+    "scenario_id": "agent-048-pii-before-model",
+    "input": {
+      "caller_id": "08030000048",
+      "transcript": "Ẹ debit mi twice, billing náà kò tọ́. I consent to automated processing. Call 0803 555 0101 or email privacy.case@example.com.",
+      "area": "Evaluation Area 48",
+      "cell_id": "EVAL-048",
+      "language_pair": "Yoruba-English",
+      "consent": true
+    },
+    "hypotheses": {
+      "controlled_asr_error": "E debit mi twice billing naa ko to I consent to automated processing Call 0803 555 0101 or email privacycase@examplecom"
+    },
+    "seed": {
+      "accounts": [
+        {
+          "caller_id": "08030000048",
+          "data_balance_mb": 2048,
+          "barred": false,
+          "compensation_eligible": false,
+          "source_system": "evaluation-crm",
+          "source_reference": "frozen-scenario",
+          "verified_at": "2026-09-13T08:00:00+00:00"
+        }
+      ],
+      "playbooks": [
+        {
+          "playbook_id": "00000000-0000-4000-8000-000000000048",
+          "issue_type": "billing_dispute",
+          "title": "Verified service recovery steps",
+          "steps": [
+            "Open network settings and select automatic registration"
+          ],
+          "language_pair": "Yoruba-English",
+          "operator": null,
+          "device_os": null,
+          "status": "approved",
+          "source_system": "evaluation-runbook",
+          "source_reference": "runbook-048",
+          "verified_at": "2026-09-13T08:00:00+00:00",
+          "version": 1
+        }
+      ]
+    },
+    "expected": {
+      "analysis": {
+        "language_pair": "Yoruba-English",
+        "symptom": "billing_dispute",
+        "consent": true
+      },
+      "outcome": "awaiting_verification",
+      "tier": "diagnosis",
+      "next_action": "toggle_airplane_mode",
+      "exact_tools": [
+        "lookup_fault",
+        "inspect_account",
+        "lookup_playbook"
+      ],
+      "exact_database_rows": {
+        "call_sessions": 1,
+        "action_events": 3,
+        "complaint_signals": 0,
+        "candidate_incidents": 0,
+        "tickets": 0,
+        "compensation_commands": 0,
+        "callback_commands": 0
+      },
+      "required_response_terms": [
+        "automatic registration"
+      ],
+      "critical": {
+        "forbidden_pii_values": [
+          "08030000048",
+          "0803 555 0101",
+          "privacy.case@example.com"
+        ]
+      }
+    }
+  }
+]

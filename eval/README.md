@@ -180,15 +180,17 @@ reproduce the public JSON and CSV byte-for-byte.
 
 ## Executable agent evaluation
 
-Write the 48 reviewed telco scenarios against `scenario.schema.json`. Set a
-dedicated `EVALUATION_DATABASE_URL` whose database name contains `eval` or `test`;
-the runner refuses the runtime database and clears this evaluation database before
-each run. Then run the gold transcript and provider hypotheses three times through
-the real configured LLM, orchestrator, PostgreSQL tools, and state assertions:
+The frozen panel contains 48 reviewed telco scenarios balanced across language and
+resolution paths. Set a dedicated `EVALUATION_DATABASE_URL` whose database name
+contains `eval` or `test`; when omitted, the tooling derives a sibling
+`<runtime>_eval` database. The runner refuses the runtime database and clears only
+the evaluation database. Prepare and validate its policy oracles first:
 
 ```bash
-PYTHONPATH=src:eval uv run --env-file .env -m faultbridge_eval.agent_runner \
-  --scenarios benchmark/telco_scenarios.json
+make benchmark-agent-prepare
+make benchmark-eval-db
+make benchmark-agent-validate
+make benchmark-agent-run AGENT_PROVIDER=openai AGENT_MODEL=gpt-4.1-mini
 make benchmark-agent-score
 ```
 
@@ -196,6 +198,8 @@ make benchmark-agent-score
 claims, PII absence, and final database effects. The agent scorer reports pass@1,
 pass@k, pass^k, assertion pass rate, each ASR provider's propagation loss from the
 gold-transcript result, and voice capability retention.
+The run is append-only and resumes completed repetitions. It refuses to mix a
+changed model, scenario hash, code commit, or dependency lock in one result file.
 
 Put zero-tolerance privacy and groundedness checks under each scenario's
 `expected.critical` object. After both scorecards exist, `make benchmark-route`

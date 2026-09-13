@@ -95,5 +95,7 @@ industry-grounded evaluation protocol. The dedicated
 transcript loss, segment loss, accuracy, and the native-listener audit;
 the [completed automatic TTS report](docs/TTS_BENCHMARK_REPORT.md) records the
 200-output, three-judge results; the [privacy report](docs/PRIVACY_BENCHMARK_REPORT.md)
-records the deterministic PII scorecard; and [`eval/README.md`](eval/README.md)
-contains the reproducible commands.
+records the deterministic PII scorecard; the
+[agent benchmark protocol](docs/AGENT_BENCHMARK_PROTOCOL.md) defines the 48
+executable scenarios; and [`eval/README.md`](eval/README.md) contains the
+reproducible commands.
