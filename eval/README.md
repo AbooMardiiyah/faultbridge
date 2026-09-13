@@ -210,3 +210,13 @@ For the dedicated redaction set, keep labelled inputs in the ignored
 `make benchmark-privacy-score` reports exact typed-span precision/recall/F1,
 per-type scores, exact-case failures, and the hard leakage count without copying
 PII text into the result artifact.
+
+Rebuild the deterministic 100-case synthetic panel before scoring it:
+
+```bash
+make benchmark-privacy-prepare
+make benchmark-privacy-score
+```
+
+The aggregate is committed as `benchmark/results/privacy_summary.json`; the
+identifier-shaped test inputs remain ignored.

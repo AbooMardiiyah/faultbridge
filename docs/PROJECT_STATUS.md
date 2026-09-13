@@ -39,6 +39,10 @@ sessions; the Git history remains the authoritative implementation record.
   cover organizer-requested WER, hallucination, transcript loss, segment loss,
   and strict accuracy. A deterministic 40-output bilingual audit is prepared;
   human ratings remain pending and no MOS is claimed.
+- The reproducible PII scorecard covers 100 synthetic code-switched telco cases,
+  balanced across four language pairs, with 100 typed phone, email, account/SIM,
+  and numeric-identifier spans. It achieved 100% exact typed-span precision,
+  recall, and F1 with zero hard leakages within this declared rule-based scope.
 - One natural Hausa-English Sahara STT pilot succeeded after a transient provider
   failure: normalized WER 28.6%, CER 7.4%, and 5.31 seconds of post-audio latency.
   The sample size is one and must not appear as a model-level conclusion.
@@ -103,8 +107,7 @@ and spaced 2.1 seconds apart for the documented 30-request-per-minute limit.
 2. Test the caller and operations interfaces against live providers.
 3. Complete and score the agent scenarios and derive evidence-based routing
    recommendations.
-4. Complete the privacy set, five-minute demo, and submission
-   package.
+4. Complete the five-minute demo and submission package.
 
 Hardware use and foreground validation are now authorized. Keep delivery workers
 disabled until real operator webhooks are configured.

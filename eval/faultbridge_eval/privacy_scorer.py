@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from collections import defaultdict
 from pathlib import Path
@@ -20,7 +21,8 @@ def run(args: argparse.Namespace) -> None:
     totals: dict[str, dict[str, int]] = defaultdict(
         lambda: {"expected": 0, "predicted": 0, "true_positive": 0}
     )
-    cases = failures = leakages = 0
+    cases = failures = leakages = false_positive_cases = false_negative_cases = 0
+    cases_with_pii = 0
     for line_number, line in enumerate(
         args.cases.read_text(encoding="utf-8").splitlines(), start=1
     ):
@@ -36,7 +38,10 @@ def run(args: argparse.Namespace) -> None:
             (match.pii_type, match.start, match.end) for match in find_pii(text)
         }
         cases += 1
+        cases_with_pii += bool(expected)
         failures += expected != predicted
+        false_positive_cases += bool(predicted - expected)
+        false_negative_cases += bool(expected - predicted)
         for pii_type, _, _ in expected:
             totals[pii_type]["expected"] += 1
         for pii_type, _, _ in predicted:
@@ -53,8 +58,13 @@ def run(args: argparse.Namespace) -> None:
     }
     report = {
         "scorer_version": "faultbridge-pii-scorer-v1",
+        "cases_sha256": hashlib.sha256(args.cases.read_bytes()).hexdigest(),
         "cases": cases,
+        "cases_with_pii": cases_with_pii,
+        "negative_cases": cases - cases_with_pii,
         "exact_case_failure_rate": failures / cases,
+        "false_positive_case_rate": false_positive_cases / cases,
+        "false_negative_case_rate": false_negative_cases / cases,
         "leakage_count": leakages,
         "leakage_rate": leakages / cases,
         "overall": {

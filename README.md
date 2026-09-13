@@ -94,5 +94,6 @@ industry-grounded evaluation protocol. The dedicated
 [TTS benchmark protocol](docs/TTS_BENCHMARK_PROTOCOL.md) defines hallucination,
 transcript loss, segment loss, accuracy, and the native-listener audit;
 the [completed automatic TTS report](docs/TTS_BENCHMARK_REPORT.md) records the
-200-output, three-judge results; and [`eval/README.md`](eval/README.md) contains
-the reproducible commands.
+200-output, three-judge results; the [privacy report](docs/PRIVACY_BENCHMARK_REPORT.md)
+records the deterministic PII scorecard; and [`eval/README.md`](eval/README.md)
+contains the reproducible commands.

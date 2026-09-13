@@ -14,4 +14,5 @@ benchmark/tts_audio/
 benchmark/tts_generated.csv
 benchmark/raw_outputs/
 benchmark/model_cache/
+benchmark/pii_cases.jsonl
 eval/results/

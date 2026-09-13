@@ -1,0 +1,54 @@
+{
+  "scorer_version": "faultbridge-pii-scorer-v1",
+  "cases_sha256": "6ac7ada24eff73d0a817b1393bc7c90cf25f96fed90ebcf1b0667c497c719091",
+  "cases": 100,
+  "cases_with_pii": 90,
+  "negative_cases": 10,
+  "exact_case_failure_rate": 0.0,
+  "false_positive_case_rate": 0.0,
+  "false_negative_case_rate": 0.0,
+  "leakage_count": 0,
+  "leakage_rate": 0.0,
+  "overall": {
+    "expected": 100,
+    "predicted": 100,
+    "true_positive": 100,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0
+  },
+  "by_type": {
+    "account": {
+      "expected": 25,
+      "predicted": 25,
+      "true_positive": 25,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "email": {
+      "expected": 25,
+      "predicted": 25,
+      "true_positive": 25,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "numeric_identifier": {
+      "expected": 25,
+      "predicted": 25,
+      "true_positive": 25,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "phone": {
+      "expected": 25,
+      "predicted": 25,
+      "true_positive": 25,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  }
+}

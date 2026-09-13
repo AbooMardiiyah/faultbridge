@@ -6,16 +6,23 @@ from dataclasses import dataclass
 _EMAIL = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
 _PHONE = re.compile(r"(?<!\w)(?:\+?234|0)[\s-]?[789]\d(?:[\s-]?\d){8}(?!\w)")
 _ACCOUNT = re.compile(
-    r"\b(?:account|acct|subscriber|customer)\s*(?:number|no|id)?\s*[:#-]?\s*[A-Z0-9-]{6,}\b",
+    r"\b(?:account|acct|subscriber|customer|sim|iccid|imsi)\s*"
+    r"(?:number|no|id|serial)?\s*(?:is\s+)?[:#-]?\s*"
+    r"(?P<value>[A-Z0-9-]{6,})\b",
     re.IGNORECASE,
 )
 _CARD_OR_GOVERNMENT_ID = re.compile(r"(?<!\w)(?:\d[\s-]?){10,16}(?!\w)", re.IGNORECASE)
 
 _PII_PATTERNS = (
-    ("email", _EMAIL, "[EMAIL_REDACTED]"),
-    ("phone", _PHONE, "[PHONE_REDACTED]"),
-    ("account", _ACCOUNT, "[ACCOUNT_REDACTED]"),
-    ("numeric_identifier", _CARD_OR_GOVERNMENT_ID, "[NUMERIC_IDENTIFIER_REDACTED]"),
+    ("email", _EMAIL, "[EMAIL_REDACTED]", None),
+    ("phone", _PHONE, "[PHONE_REDACTED]", None),
+    ("account", _ACCOUNT, "[ACCOUNT_REDACTED]", "value"),
+    (
+        "numeric_identifier",
+        _CARD_OR_GOVERNMENT_ID,
+        "[NUMERIC_IDENTIFIER_REDACTED]",
+        None,
+    ),
 )
 
 
@@ -30,14 +37,12 @@ class PIIMatch:
 def find_pii(text: str) -> tuple[PIIMatch, ...]:
     """Return deterministic, non-overlapping PII spans in priority order."""
     selected: list[PIIMatch] = []
-    for pii_type, pattern, replacement in _PII_PATTERNS:
+    for pii_type, pattern, replacement, value_group in _PII_PATTERNS:
         for match in pattern.finditer(text):
-            if any(
-                match.start() < item.end and match.end() > item.start
-                for item in selected
-            ):
+            start, end = match.span(value_group) if value_group else match.span()
+            if any(start < item.end and end > item.start for item in selected):
                 continue
-            selected.append(PIIMatch(pii_type, match.start(), match.end(), replacement))
+            selected.append(PIIMatch(pii_type, start, end, replacement))
     return tuple(sorted(selected, key=lambda item: item.start))
 
 
