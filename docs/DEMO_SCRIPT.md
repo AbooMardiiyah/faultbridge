@@ -28,17 +28,25 @@ calls into evidence for network operations.”
 
 ### 0:25 to 1:45 | Resolve a known fault
 
-**Show:** Select `Hausa-English`, area `Evaluation Area 02`, cell `EVAL-002`, and
+**Show:** Select `Pidgin-English`, area `Evaluation Area 02`, cell `EVAL-002`, and
 synthetic callback number `08030000002`. Check consent and start the call.
 
-**Play or say:** “Network dina ya daina aiki, babu signal kwata-kwata. I consent
-to automated processing.”
+**Say:** “Abeg, wetin dey happen to the network for this area? I don off and on
+my phone tire, but signal still no dey since morning. I consent to automated
+processing.”
 
-Prepared audio: `benchmark/agent_audio/female/downstream-agent-002-known-fault-eligible-female-r1.wav`.
+This paraphrases a recurring public complaint structure: location, duration,
+failed phone restart, and no signal. It contains no copied username, phone number,
+or operator accusation.
+
+Public wording references: a reported no-signal complaint after repeated phone
+restarts in [Business A.M.](https://www.businessamlive.com/wp-content/uploads/2025/03/371-17-March-23-March-2025.pdf),
+and the broader data, connectivity, and call-quality complaint pattern summarized
+by [X](https://x.com/i/trending/1819696088829534387?lang=en).
 
 **Show:** The grounded response and completed actions.
 
-**Say:** “Sahara transcribes the code-switched speech with an explicit Hausa
+**Say:** “Sahara transcribes the code-switched speech with an explicit Pidgin
 language value. FaultBridge redacts sensitive text before analysis. The agent
 looks up this exact cell, finds a verified fibre-cut incident, checks the account,
 and queues only the compensation and callback allowed by policy. It does not

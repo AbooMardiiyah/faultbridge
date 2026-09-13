@@ -5,26 +5,26 @@
 1. **Problem and solution description.** A short portal response explaining the
    telco fault-information gap, the four code-switched language pairs, and the
    three-tier resolution and discovery flow.
-2. **Working application URL.** The public Railway URL for the caller experience
-   and operations console. This is supporting evidence even if the form labels it
-   optional.
-3. **Demo video.** A public or unlisted YouTube link, no longer than five minutes,
+2. **Demo video.** A public or unlisted YouTube link, no longer than five minutes,
    showing real code-switching and a working prototype. Test the link while signed
    out and in an incognito window.
-4. **Open-source code and documentation.** The public GitHub repository at the
+3. **Open-source code and documentation.** The public GitHub repository at the
    exact submitted commit, with setup, architecture, privacy, benchmark, and
    deployment instructions.
-5. **Benchmark report.** A maximum three-page PDF comparing Sahara, SBPN,
+4. **Benchmark report.** A maximum three-page PDF comparing Sahara, SBPN,
    Faster-Whisper, and OmniASR. It must cover data, preprocessing, metric
    definitions, per-language ASR results, TTS results, downstream task performance,
    qualitative findings, limitations, and reproducibility.
-6. **Responsible AI note.** Link or upload `docs/RESPONSIBLE_AI.md`, covering
+5. **Responsible AI note.** Link or upload `docs/RESPONSIBLE_AI.md`, covering
    consent, redaction, pseudonymization, retention, deletion, grounding, candidate
    incident review, and dataset limits.
-7. **Optional benchmark-audio bonus.** A Hugging Face dataset link containing only
+6. **Optional benchmark-audio bonus.** A Hugging Face dataset link containing only
    publishable, de-identified synthetic domain audio plus metadata and provenance.
    AfriSwitch audio must follow its access and licence terms and should not be
    republished casually.
+7. **Optional working application URL.** A public Railway deployment lets judges
+   try the caller and operations interfaces, but it is supporting evidence rather
+   than an official required deliverable. Do not delay the required package for it.
 
 ## Five-Minute Video Story
 
@@ -53,6 +53,6 @@ that the agent used verified state, then use clear result visuals.
 - README: final Railway, YouTube, report, and Hugging Face links.
 - GitHub release or immutable commit tag used by every submitted link.
 
-The submission is therefore a **working product plus evidence**, not only a
-frontend: deployed application, video, source code, three-page benchmark PDF,
-Responsible AI note, and optional public benchmark audio.
+The required submission is a **working prototype plus evidence**: video, source
+code, three-page benchmark PDF, and Responsible AI note. A public deployment and
+publishable benchmark audio are valuable optional additions.
