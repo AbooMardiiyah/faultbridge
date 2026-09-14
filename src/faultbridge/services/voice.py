@@ -13,6 +13,11 @@ from faultbridge.domain.orchestrator import FaultBridgeOrchestrator
 from faultbridge.services.privacy import redact_text
 
 
+def _tts_safe(text: str) -> str:
+    """Remove punctuation that Sahara TTS reads aloud."""
+    return text.replace(".", ",").replace(";", ",").rstrip(",").strip()
+
+
 class VoicePipeline:
     """Provider-neutral audio turn pipeline with a policy-controlled agent core."""
 
@@ -67,7 +72,7 @@ class VoicePipeline:
         )
         audio_chunks: list[bytes] = []
         async for chunk in self.tts.synthesize(
-            session.response,
+            _tts_safe(session.response),
             language=voice_language,
             accent=voice_accent,
         ):
@@ -99,7 +104,7 @@ class VoicePipeline:
         session = self.orchestrator.verify_resolution(session, resolved=resolved)
         audio_chunks: list[bytes] = []
         async for chunk in self.tts.synthesize(
-            session.response,
+            _tts_safe(session.response),
             language=voice_language,
             accent=voice_accent,
         ):

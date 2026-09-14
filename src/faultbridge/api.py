@@ -143,7 +143,7 @@ app.mount("/assets", StaticFiles(directory=static_directory), name="assets")
 
 @app.exception_handler(SaharaError)
 async def sahara_failure(_, error: SaharaError) -> JSONResponse:
-    logger.warning("sahara_provider_failure type=%s", type(error).__name__)
+    logger.warning("sahara_provider_failure type=%s error=%s", type(error).__name__, error)
     return JSONResponse(
         status_code=502,
         content={"detail": "Sahara voice service is temporarily unavailable"},

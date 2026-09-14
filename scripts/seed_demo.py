@@ -36,8 +36,8 @@ def main() -> None:
 
     incident = {
         "operator": "FaultBridge Demo Network",
-        "cell_id": "EVAL-002",
-        "area": "Evaluation Area 02",
+        "cell_id": "ABJ-LGB-009",
+        "area": "Lugbe, Abuja",
         "fault_type": "fibre cut",
         "status": "active",
         "cause": "confirmed third-party road works",
@@ -68,7 +68,7 @@ def main() -> None:
             f"Could not seed the running FaultBridge API: {error}"
         ) from error
 
-    print("Synthetic demo state is ready for EVAL-002 and 08030000002.")
+    print("Synthetic demo state is ready for ABJ-LGB-009 (Lugbe, Abuja) and 08030000002.")
     print(f"Restoration estimate: {restoration.isoformat()} (displayed in WAT)")
 
 

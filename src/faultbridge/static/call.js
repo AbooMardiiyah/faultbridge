@@ -405,6 +405,7 @@ async function stopRecording() {
     state.callId = payload.call?.call_id || state.callId;
     state.responseAudio = Array.isArray(payload.response_audio_chunks_base64) ? payload.response_audio_chunks_base64 : [];
     elements.playResponse.hidden = state.responseAudio.length === 0;
+    if (state.responseAudio.length) playResponseAudio();
     const awaitingVerification = payload.call?.outcome === "awaiting_verification";
     state.phase = awaitingVerification ? "verify" : "complete";
     elements.recordButton.disabled = !awaitingVerification;
