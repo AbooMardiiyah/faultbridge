@@ -18,3 +18,10 @@ benchmark/raw_outputs/
 benchmark/model_cache/
 benchmark/pii_cases.jsonl
 eval/results/
+
+# Local submission working files and generated report source.
+docs/DEMO_REHEARSAL.md
+docs/SUBMISSION_PLAN.md
+docs/SAHARA_ASR_BENCHMARK_RESULT.md
+docs/SBPN_BENCHMARK_RESULT.md
+docs/BENCHMARK_REPORT.html

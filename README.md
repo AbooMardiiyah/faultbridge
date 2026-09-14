@@ -99,7 +99,6 @@ full explanation in the
 - [Benchmark report](docs/BENCHMARK_REPORT.pdf)
 - [Responsible AI note](docs/RESPONSIBLE_AI.md)
 - [Exact demo script](docs/DEMO_SCRIPT.md)
-- [Submission checklist](docs/SUBMISSION_PLAN.md)
 - [Operations and deployment](docs/OPERATIONS.md)
 
 The final local video master is
