@@ -12,8 +12,9 @@
 - **Responsible AI note:** [RESPONSIBLE_AI.md](RESPONSIBLE_AI.md).
 - **Code and documentation:** tested repository with Docker, Make, architecture,
   operations, evaluation, and reproduction guidance.
-- **Optional evidence:** private, hash-pinned Hugging Face ASR bundle at revision
-  `ef320d7f367e040c47b4021a397011dae894fe00`.
+- **Optional evidence:** private, hash-pinned
+  [`Tiamz/faultbridge-asr-benchmark-evidence`](https://huggingface.co/datasets/Tiamz/faultbridge-asr-benchmark-evidence)
+  bundle at revision `ef320d7f367e040c47b4021a397011dae894fe00`.
 
 ## Required Submission Fields
 
