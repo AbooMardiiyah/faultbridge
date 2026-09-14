@@ -117,7 +117,6 @@ Credentials belong only in the ignored `.env` file. Review
 
 ## License
 
-Copyright © 2026 Hamzat Tiamiyu. All rights reserved. Hackathon organizers and
-judges may run the project for evaluation. No permission is granted for other use,
-copying, modification, redistribution, deployment, or commercial exploitation.
-See the [proprietary license](LICENSE) for the complete terms.
+Copyright © 2026 Hamzat Tiamiyu. All rights reserved. No permission is granted for
+use, copying, modification, redistribution, deployment, or commercial
+exploitation. See the [proprietary license](LICENSE) for the complete terms.
