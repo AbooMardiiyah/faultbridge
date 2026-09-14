@@ -124,7 +124,7 @@ official comparison retains the default VAD-on results.
 
 ## Code-switched TTS evaluation
 
-The separate [TTS protocol](../docs/TTS_BENCHMARK_PROTOCOL.md) freezes 100 genuine
+The separate [benchmark methodology](../docs/BENCHMARK_METHODOLOGY.md) freezes 100 genuine
 code-switched text prompts and generates every prompt once with each Sahara voice:
 200 paired outputs in total. It preserves every request failure and audio hash:
 

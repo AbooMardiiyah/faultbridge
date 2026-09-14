@@ -66,8 +66,8 @@ flowchart LR
 Only the policy engine can invoke tools. Confirmed outage answers require an exact
 match against a verified incident record. Approximate retrieval is never used as
 proof of a fault. Read [Architecture](docs/ARCHITECTURE.md) and
-[Architecture Decisions](docs/ARCHITECTURE_DECISIONS.md) for the boundaries and
-tradeoffs.
+[Benchmark Methodology](docs/BENCHMARK_METHODOLOGY.md) for the boundaries,
+tradeoffs, and evaluation design.
 
 ## Benchmark Evidence
 
@@ -97,9 +97,10 @@ full explanation in the
 ## Submission Materials
 
 - [Benchmark report](docs/BENCHMARK_REPORT.pdf)
+- [Benchmark methodology](docs/BENCHMARK_METHODOLOGY.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Technical guide](docs/FAULTBRIDGE_TECHNICAL_GUIDE.md)
 - [Responsible AI note](docs/RESPONSIBLE_AI.md)
-- [Exact demo script](docs/DEMO_SCRIPT.md)
-- [Operations and deployment](docs/OPERATIONS.md)
 
 The final local video master is
 `artifacts/demo-video/FaultBridge-Intron-Demo.mp4`. Generated media is ignored

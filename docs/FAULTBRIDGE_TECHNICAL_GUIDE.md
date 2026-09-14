@@ -123,7 +123,8 @@ The completed routing review keeps Sahara as the submission default. No local
 alternative has both a statistically supported paired WER advantage and comparable
 deployed p95 latency. `routing_recommender.py` will recommend another ASR only when
 paired accuracy improves, failure and latency budgets pass, and critical agent
-gates remain safe. See `docs/ROUTING_RECOMMENDATION.md`.
+gates remain safe. The decision gates are recorded in
+`docs/BENCHMARK_METHODOLOGY.md`.
 
 ## What the Interfaces Show
 
@@ -280,9 +281,8 @@ make benchmark-agent-validate  # all 48 policy oracles
 make benchmark-verify-agent-evidence # reproduce downstream agent scores
 ```
 
-The current reports are `docs/ASR_BENCHMARK_REPORT.md`,
-`docs/TTS_BENCHMARK_REPORT.md`, `docs/PRIVACY_BENCHMARK_REPORT.md`, and
-`docs/AGENT_BENCHMARK_REPORT.md`. Research rationale and citations are in
+The final results are in `docs/BENCHMARK_REPORT.pdf`, with the frozen protocol in
+`docs/BENCHMARK_METHODOLOGY.md`. Research rationale and citations are in
 `docs/VOICE_BENCHMARK_RESEARCH.md`.
 
 ## Current Limits and Honest Claims

@@ -41,3 +41,25 @@ NOC and CRM systems publish verified state through authenticated internal API
 boundaries. Every record carries a source system, source reference, and verification
 time. Compensation and callbacks use durable, idempotent command tables so external
 workers can execute them without losing work or duplicating actions.
+
+## Key Decisions
+
+Sahara is the default speech path because it led the frozen four-model ASR panel.
+Every speech request includes an explicit language. An evidence-gated router is
+implemented, but remains disabled because no alternative passed the accuracy,
+latency, and downstream safety gates across all four language pairs.
+
+PostgreSQL stores operational truth and supports concurrent API and worker access,
+row locking, durable command queues, JSON audit events, and idempotency constraints.
+It also keeps local Docker and hosted deployments on the same schema.
+
+Verified incidents and approved playbooks use exact, versioned queries with
+provenance. Semantic retrieval cannot establish that a network fault exists, so a
+vector database is outside the authoritative decision path. Privacy checks happen
+before external model reasoning: caller identifiers are pseudonymized, transcripts
+are redacted, and raw audio is processed in memory without retention.
+
+The synthetic demo enters through the authenticated NOC and CRM ingestion API, then
+uses the same Sahara, Together, policy, PostgreSQL, and tool boundaries as a live
+request. This keeps the demonstration repeatable without replacing production logic
+with response fixtures.

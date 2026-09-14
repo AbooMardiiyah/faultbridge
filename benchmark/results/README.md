@@ -31,8 +31,8 @@ The private evidence is uploaded at
 
 ## TTS evidence
 
-The TTS public aggregate is `tts_benchmark_summary.json` and `.csv`; its report is
-`docs/TTS_BENCHMARK_REPORT.md`. The private local archive includes the raw Sahara
+The TTS public aggregate is `tts_benchmark_summary.json` and `.csv`; its results are
+summarized in `docs/BENCHMARK_REPORT.pdf`. The private local archive includes the raw Sahara
 generation log, 600 independent-ASR hypotheses, 200 generated WAVs, their hash
 manifest, and the blinded audit materials. After extracting the archive at the
 repository root, run:

@@ -20,8 +20,8 @@ The winning benchmark therefore has three linked tracks:
 2. **Code-switched TTS track:** Sahara synthesizes a frozen 100-prompt panel with
    both documented voices. Three independent ASR judges and bilingual listeners
    measure WER, hallucination, transcript loss, segment loss, exact accuracy,
-   naturalness, pronunciation, switch appropriateness, and latency. The complete
-   protocol is in `docs/TTS_BENCHMARK_PROTOCOL.md`.
+   naturalness, pronunciation, switch appropriateness, and latency. The frozen
+   protocol is in `docs/BENCHMARK_METHODOLOGY.md`.
 3. **End-to-end agent track:** the gold transcript and every model hypothesis pass
    through the same frozen FaultBridge agent and PostgreSQL scenario. Executable
    assertions grade the selected tier, tool sequence, arguments, database state,
