@@ -4,10 +4,36 @@ FaultBridge is a code-switched voice support agent for Nigerian mobile networks.
 It turns a caller's complaint into a verified answer, a safe action, and useful
 network evidence.
 
+![FaultBridge caller support interface](docs/assets/faultbridge-caller.webp)
+
+## Why FaultBridge Matters
+
 A telco may know about a fibre cut before its customers do, yet every caller still
 explains the same outage from scratch. FaultBridge connects the customer support
 call to verified NOC and account data. It supports Pidgin-English, Hausa-English,
 Igbo-English, and Yoruba-English.
+
+The scale and channel are measurable:
+
+- Of 3,019 complaints received by the NCC in Q1 2021, 91.4% arrived through its
+  voice contact centre, which manages the 622 toll-free line. Billing, voice
+  quality, and data quality were the leading complaint types
+  ([Voice of Nigeria](https://von.gov.ng/ncc-resolves-99percent-telecom-consumer-complaints-in-q1-2021/)).
+- Nigeria recorded 19,384 fibre cuts between January and August 2025. The NCC said
+  these disruptions caused prolonged outages and delayed restoration
+  ([BusinessDay](https://businessday.ng/news/article/ncc-records-over-19000-fibre-cuts-in-8-months-maida/)).
+- More than 75 million affected subscribers received compensation after an NCC
+  service-quality directive
+  ([The Guardian Nigeria](https://guardian.ng/featured/telcos-compensate-75-million-subscribers-says-ncc/)).
+
+The language gap is also an industry priority. The GSMA, Airtel, MTN, Masakhane,
+and other partners formed a continent-wide initiative for inclusive African
+language models ([GSMA](https://www.gsma.com/newsroom/press-release/gsma-africas-leading-mobile-operators-and-the-ai-ecosystem-unite-to-accelerate-development-of-inclusive-african-ai/)).
+At the network layer, the ITU's €35,000 AI Telco Troubleshooting Challenge applies
+language models to root-cause analysis of telecom faults
+([ITU AI for Good](https://aiforgood.itu.int/ai-telco-troubleshooting-challenge/)).
+FaultBridge carries verified fault knowledge to customers and sends recurring,
+unresolved customer evidence back to network operations.
 
 ## What the Agent Does
 
@@ -19,6 +45,11 @@ Igbo-English, and Yoruba-English.
 6. Unresolved complaints become tickets and distinct-caller network signals.
 7. Three matching unresolved callers can propose an **unconfirmed** NOC incident.
 8. Sahara speaks the grounded response in the caller's selected language.
+
+This is an agentic workflow because each call selects a resolution tier, invokes
+typed tools, changes durable operational state, verifies outcomes, and either
+resolves the request or creates a structured handoff. Repeated unresolved calls
+form an evidence-gated candidate incident for NOC review.
 
 The submission uses Sahara for speech and Together-hosted Llama 3.3 70B for
 structured complaint analysis. Speech, model, and telephony implementations sit
