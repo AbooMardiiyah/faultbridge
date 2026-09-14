@@ -148,6 +148,6 @@ Credentials belong only in the ignored `.env` file. Review
 
 ## License
 
-Copyright © 2026 Hamzat Tiamiyu. All rights reserved. No permission is granted for
-use, copying, modification, redistribution, deployment, or commercial
-exploitation. See the [proprietary license](LICENSE) for the complete terms.
+Copyright © 2026 Hamzat Tiamiyu. Licensed under the
+[Apache License 2.0](LICENSE). Attribution and copyright notices must be retained
+when the code is redistributed.
